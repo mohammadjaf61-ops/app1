@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+.expo/
+out/
+coverage/
+
+# Generated files
+*.min.js
+*.min.css
+*.lock
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Prisma
+services/api/prisma/migrations/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Test snapshots (format can break tests)
+**/__snapshots__/
+
+# Auto-generated
+*.d.ts
+!src/**/*.d.ts

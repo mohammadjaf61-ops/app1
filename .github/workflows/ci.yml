@@ -1,4 +1,5 @@
 # Hypermarket Platform - Continuous Integration
+# Quality gates: Lint, Type Check, Security, Tests, Build
 name: CI
 
 on:
@@ -6,6 +7,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,9 +18,11 @@ env:
   NODE_VERSION: 20
 
 jobs:
-  # Lint and Type Check
+  # ============================================
+  # QUALITY GATE 1: Lint & Format
+  # ============================================
   lint:
-    name: Lint & Type Check
+    name: Lint & Format Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,17 +47,155 @@ jobs:
           pnpm --filter @hypermarket/shared-types build
           pnpm --filter @hypermarket/shared-utils build
 
-      - name: Lint
+      - name: Run ESLint
         run: pnpm lint
 
-      - name: Type check
+      - name: Check Prettier formatting
+        run: pnpm format:check
+
+  # ============================================
+  # QUALITY GATE 2: TypeScript Type Check
+  # ============================================
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @hypermarket/shared-types build
+          pnpm --filter @hypermarket/shared-utils build
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @hypermarket/api prisma:generate
+
+      - name: TypeScript type check
         run: pnpm type-check
 
-  # Build API
+  # ============================================
+  # QUALITY GATE 3: Security Audit
+  # ============================================
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run security audit (high severity)
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Check for critical vulnerabilities
+        run: |
+          echo "Checking for critical vulnerabilities..."
+          pnpm audit --audit-level=critical || exit 1
+
+  # ============================================
+  # QUALITY GATE 4: Unit Tests
+  # ============================================
+  test-api:
+    name: API Unit Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: hypermarket_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/hypermarket_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret-key-for-ci-only
+      JWT_EXPIRATION: 1d
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared packages
+        run: |
+          pnpm --filter @hypermarket/shared-types build
+          pnpm --filter @hypermarket/shared-utils build
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @hypermarket/api prisma:generate
+
+      - name: Run API unit tests
+        run: pnpm --filter @hypermarket/api test
+
+      - name: Run API e2e tests
+        run: pnpm --filter @hypermarket/api test:e2e
+        continue-on-error: true
+
+  # ============================================
+  # BUILD: API Service
+  # ============================================
   build-api:
     name: Build API
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, type-check]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -83,11 +225,20 @@ jobs:
       - name: Build API
         run: pnpm --filter @hypermarket/api build
 
-  # Build Admin Web
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-build
+          path: services/api/dist
+          retention-days: 7
+
+  # ============================================
+  # BUILD: Admin Web
+  # ============================================
   build-admin-web:
     name: Build Admin Web
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, type-check]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -114,13 +265,22 @@ jobs:
       - name: Build Admin Web
         run: pnpm --filter @hypermarket/admin-web build
         env:
-          NEXT_PUBLIC_API_URL: https://api.example.com
+          NEXT_PUBLIC_API_URL: https://api.hypermarket.iq
 
-  # Build Docker Images (only on main branch)
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-web-build
+          path: apps/admin-web/.next
+          retention-days: 7
+
+  # ============================================
+  # BUILD: Docker Images (main branch only)
+  # ============================================
   build-docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
-    needs: [build-api, build-admin-web]
+    needs: [build-api, build-admin-web, test-api, security]
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
@@ -148,3 +308,27 @@ jobs:
           tags: hypermarket-admin-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ============================================
+  # PR QUALITY GATE SUMMARY
+  # ============================================
+  pr-quality-gate:
+    name: PR Quality Gate
+    runs-on: ubuntu-latest
+    needs: [lint, type-check, security, test-api, build-api, build-admin-web]
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Quality Gate Summary
+        run: |
+          echo "## Quality Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Format | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type Check | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Audit | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Build | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Admin Web Build | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**All quality gates passed! Ready for review.**" >> $GITHUB_STEP_SUMMARY

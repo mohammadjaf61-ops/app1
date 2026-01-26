@@ -17,11 +17,20 @@
     "lint:fix": "pnpm -r lint:fix",
     "type-check": "pnpm -r type-check",
     "test": "pnpm -r test",
+    "test:cov": "pnpm -r test:cov",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "prepare": "husky install",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "security:audit": "pnpm audit --audit-level=high",
+    "security:check": "pnpm audit --audit-level=critical",
+    "quality": "pnpm lint && pnpm format:check && pnpm type-check",
+    "quality:fix": "pnpm lint:fix && pnpm format",
+    "precommit": "pnpm quality && pnpm test",
     "api:dev": "pnpm --filter @hypermarket/api dev",
     "api:build": "pnpm --filter @hypermarket/api build",
     "api:start": "pnpm --filter @hypermarket/api start:prod",
+    "api:test": "pnpm --filter @hypermarket/api test",
     "admin:dev": "pnpm --filter @hypermarket/admin-web dev",
     "admin:build": "pnpm --filter @hypermarket/admin-web build",
     "customer:dev": "pnpm --filter @hypermarket/customer-mobile start",
@@ -36,11 +45,13 @@
   },
   "devDependencies": {
     "husky": "^9.0.0",
-    "lint-staged": "^15.0.0"
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.2.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
+      "eslint --fix",
+      "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [
       "prettier --write"
