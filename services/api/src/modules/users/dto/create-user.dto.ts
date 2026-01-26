@@ -1,7 +1,22 @@
-import { IsString, IsNotEmpty, MinLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  MinLength,
+  Matches,
+  IsEnum,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRole } from '@hypermarket/shared-types';
 
-export class LoginDto {
+export class CreateUserDto {
+  @ApiProperty({
+    description: 'Full name in Arabic',
+    example: 'أحمد محمد',
+  })
+  @IsString({ message: 'الاسم يجب أن يكون نصاً' })
+  @IsNotEmpty({ message: 'الاسم مطلوب' })
+  fullName: string;
+
   @ApiProperty({
     description: 'Phone number (Iraqi format)',
     example: '07701234567',
@@ -12,11 +27,19 @@ export class LoginDto {
   phone: string;
 
   @ApiProperty({
-    description: 'User password',
+    description: 'Password (minimum 8 characters)',
     example: 'Password123',
   })
   @IsString({ message: 'كلمة المرور يجب أن تكون نصاً' })
   @IsNotEmpty({ message: 'كلمة المرور مطلوبة' })
   @MinLength(8, { message: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' })
   password: string;
+
+  @ApiProperty({
+    description: 'User role',
+    enum: UserRole,
+    example: UserRole.PICKER,
+  })
+  @IsEnum(UserRole, { message: 'الدور غير صالح' })
+  role: UserRole;
 }

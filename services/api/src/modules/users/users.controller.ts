@@ -1,13 +1,27 @@
-import { Controller, Get, Patch, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 import { UserRole } from '@hypermarket/shared-types';
 
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 
 import { UsersService } from './users.service';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -15,25 +29,59 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('me')
-  @ApiOperation({ summary: 'Get current user profile' })
-  async getProfile(@CurrentUser('sub') userId: string) {
-    return this.usersService.findById(userId);
+  @Post()
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Create a new user (admin/manager only)' })
+  async create(@Body() dto: CreateUserDto) {
+    return this.usersService.create(dto);
   }
 
-  @Patch('me')
-  @ApiOperation({ summary: 'Update current user profile' })
-  async updateProfile(
-    @CurrentUser('sub') userId: string,
-    @Body() dto: UpdateProfileDto,
+  @Get()
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'List all users with pagination and filters' })
+  @ApiQuery({ name: 'role', required: false, enum: UserRole })
+  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async findAll(
+    @Query('role') role?: UserRole,
+    @Query('isActive') isActive?: boolean,
+    @Query('search') search?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
-    return this.usersService.updateProfile(userId, dto);
+    return this.usersService.findAll({ role, isActive, search, page, limit });
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get user by ID (admin only)' })
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Get user by ID' })
   async findById(@Param('id') id: string) {
     return this.usersService.findById(id);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Update user' })
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Deactivate user (admin only)' })
+  async deactivate(@Param('id') id: string) {
+    return this.usersService.deactivate(id);
+  }
+
+  @Post(':id/reset-password')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Reset user password' })
+  async resetPassword(
+    @Param('id') id: string,
+    @Body('password') password: string,
+  ) {
+    return this.usersService.resetPassword(id, password);
   }
 }

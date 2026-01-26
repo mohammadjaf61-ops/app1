@@ -1,27 +1,68 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 
-import { OrderStatus, PaginationMeta, PaymentMethod, PaymentStatus } from '@hypermarket/shared-types';
+import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrderQueryDto } from './dto/order-query.dto';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: OrderQueryDto) {
-    const { page = 1, limit = 20, status, customerId, pickerId } = query;
+  /**
+   * Get all orders with filters and pagination
+   */
+  async findAll(params: {
+    status?: OrderStatus;
+    pickerId?: string;
+    isPaid?: boolean;
+    search?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    page?: number;
+    limit?: number;
+  }) {
+    const {
+      status,
+      pickerId,
+      isPaid,
+      search,
+      dateFrom,
+      dateTo,
+      page = 1,
+      limit = 20,
+    } = params;
     const skip = (page - 1) * limit;
 
-    const where = {
-      ...(status && { status }),
-      ...(customerId && { customerId }),
-      ...(pickerId && { pickerId }),
-    };
+    const where: Record<string, unknown> = {};
+
+    if (status) where.status = status;
+    if (pickerId) where.pickerId = pickerId;
+    if (isPaid !== undefined) where.isPaid = isPaid;
+
+    if (search) {
+      where.OR = [
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { customerName: { contains: search, mode: 'insensitive' } },
+        { customerPhone: { contains: search } },
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt['gte'] = dateFrom;
+      if (dateTo) where.createdAt['lte'] = dateTo;
+    }
 
     const [orders, total] = await Promise.all([
       this.prisma.order.findMany({
@@ -30,90 +71,50 @@ export class OrdersService {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          customer: {
-            select: { id: true, firstName: true, lastName: true, phoneNumber: true },
-          },
+          picker: { select: { id: true, fullName: true } },
           items: {
             include: {
-              product: {
-                select: { id: true, nameAr: true, nameEn: true, sku: true },
-              },
+              product: { select: { id: true, sku: true, nameAr: true } },
             },
           },
+          _count: { select: { items: true } },
         },
       }),
       this.prisma.order.count({ where }),
     ]);
 
-    const meta: PaginationMeta = {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasNext: page * limit < total,
-      hasPrevious: page > 1,
+    return {
+      data: orders,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: skip + orders.length < total,
+        hasPrevious: page > 1,
+      },
     };
-
-    return { data: orders, meta };
   }
 
-  async findByCustomer(customerId: string, query: OrderQueryDto) {
-    const { page = 1, limit = 20, status } = query;
-    const skip = (page - 1) * limit;
-
-    const where = {
-      customerId,
-      ...(status && { status }),
-    };
-
-    const [orders, total] = await Promise.all([
-      this.prisma.order.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          items: {
-            include: {
-              product: {
-                select: { id: true, nameAr: true, nameEn: true, sku: true },
-              },
-            },
-          },
-        },
-      }),
-      this.prisma.order.count({ where }),
-    ]);
-
-    const meta: PaginationMeta = {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasNext: page * limit < total,
-      hasPrevious: page > 1,
-    };
-
-    return { data: orders, meta };
-  }
-
+  /**
+   * Get order by ID
+   */
   async findById(id: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: {
-        customer: {
-          select: { id: true, firstName: true, lastName: true, phoneNumber: true },
-        },
+        picker: { select: { id: true, fullName: true, phone: true } },
         items: {
           include: {
-            product: true,
+            product: {
+              select: { id: true, sku: true, nameAr: true, imageUrl: true },
+            },
           },
         },
-        picker: {
-          select: { id: true, firstName: true, lastName: true },
-        },
-        driver: {
-          select: { id: true, firstName: true, lastName: true, phoneNumber: true },
+        deliveryAssignment: {
+          include: {
+            driver: { select: { id: true, fullName: true, phone: true } },
+          },
         },
       },
     });
@@ -125,28 +126,48 @@ export class OrdersService {
     return order;
   }
 
+  /**
+   * Get order by order number
+   */
+  async findByOrderNumber(orderNumber: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { orderNumber },
+      include: {
+        items: {
+          include: {
+            product: { select: { id: true, sku: true, nameAr: true } },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('الطلب غير موجود');
+    }
+
+    return order;
+  }
+
+  /**
+   * Get picker queue (orders assigned to picker)
+   */
   async getPickerQueue(pickerId: string) {
     return this.prisma.order.findMany({
       where: {
         pickerId,
-        status: { in: [OrderStatus.CONFIRMED, OrderStatus.PICKING] },
+        status: { in: [OrderStatus.PENDING, OrderStatus.PICKING] },
       },
       orderBy: { createdAt: 'asc' },
       include: {
-        customer: {
-          select: { id: true, firstName: true, lastName: true, phoneNumber: true },
-        },
         items: {
           include: {
             product: {
-              select: {
-                id: true,
-                nameAr: true,
-                nameEn: true,
-                sku: true,
-                aisle: true,
-                shelf: true,
-                bin: true,
+              select: { id: true, sku: true, nameAr: true },
+              include: {
+                inventoryItems: {
+                  include: { location: true },
+                  take: 1,
+                },
               },
             },
           },
@@ -155,21 +176,27 @@ export class OrdersService {
     });
   }
 
-  async create(customerId: string, dto: CreateOrderDto) {
-    // Get customer address
-    const address = await this.prisma.customerAddress.findFirst({
-      where: { id: dto.deliveryAddressId, customerId },
+  /**
+   * Create a new order
+   */
+  async create(dto: CreateOrderDto) {
+    // Get delivery fee from settings
+    const deliveryFeeSetting = await this.prisma.setting.findUnique({
+      where: { key: 'delivery_fee_iqd' },
     });
-
-    if (!address) {
-      throw new BadRequestException('عنوان التوصيل غير موجود');
-    }
+    const deliveryFee = deliveryFeeSetting
+      ? parseInt(deliveryFeeSetting.value, 10)
+      : 5000;
 
     // Get products and calculate totals
     const productIds = dto.items.map((item) => item.productId);
     const products = await this.prisma.product.findMany({
-      where: { id: { in: productIds } },
+      where: { id: { in: productIds }, deletedAt: null, isActive: true },
     });
+
+    if (products.length !== productIds.length) {
+      throw new BadRequestException('بعض المنتجات غير متوفرة');
+    }
 
     const productMap = new Map(products.map((p) => [p.id, p]));
 
@@ -179,72 +206,52 @@ export class OrdersService {
       if (!product) {
         throw new BadRequestException(`المنتج غير موجود: ${item.productId}`);
       }
-      if (product.stockQuantity < item.quantity) {
-        throw new BadRequestException(`الكمية غير متوفرة للمنتج: ${product.nameAr}`);
-      }
 
-      const itemTotal = product.price * item.quantity;
+      const itemTotal = product.salePrice * item.quantity;
       subtotal += itemTotal;
 
       return {
         productId: product.id,
+        productNameSnapshot: product.nameAr,
+        productPriceSnapshot: product.salePrice,
         quantity: item.quantity,
-        unitPrice: product.price,
-        totalPrice: itemTotal,
-        productSnapshot: {
-          sku: product.sku,
-          name: product.nameAr,
-          imageUrl: null, // Would come from product images
-          location: {
-            aisle: product.aisle,
-            shelf: product.shelf,
-            bin: product.bin,
-          },
-        },
+        total: itemTotal,
       };
     });
 
-    // TODO: Calculate delivery fee based on zone
-    const deliveryFee = 5000; // Default delivery fee in IQD
-    const discount = 0;
-    const total = subtotal + deliveryFee - discount;
+    const total = subtotal + deliveryFee;
 
     // Create order
     const order = await this.prisma.order.create({
       data: {
         orderNumber: generateOrderNumber(),
-        customerId,
         status: OrderStatus.PENDING,
+        customerName: dto.customerName,
+        customerPhone: dto.customerPhone,
+        deliveryAddressText: dto.deliveryAddressText,
         subtotal,
         deliveryFee,
-        discount,
         total,
-        paymentMethod: PaymentMethod.CASH_ON_DELIVERY,
-        paymentStatus: PaymentStatus.PENDING,
-        deliveryAddress: address.address as object,
-        notes: dto.notes,
+        paymentMethod: PaymentMethod.COD,
+        isPaid: false,
+        notes: dto.notes || null,
         items: {
           create: orderItems,
         },
       },
       include: {
-        items: {
-          include: { product: true },
-        },
+        items: true,
       },
     });
 
-    // Update product stock
-    for (const item of dto.items) {
-      await this.prisma.product.update({
-        where: { id: item.productId },
-        data: { stockQuantity: { decrement: item.quantity } },
-      });
-    }
+    this.logger.log(`Order created: ${order.orderNumber}`);
 
     return order;
   }
 
+  /**
+   * Update order status
+   */
   async updateStatus(id: string, dto: UpdateOrderStatusDto) {
     const order = await this.findById(id);
 
@@ -253,81 +260,155 @@ export class OrdersService {
 
     const updateData: Record<string, unknown> = { status: dto.status };
 
-    if (dto.status === OrderStatus.PICKED) {
+    if (dto.status === OrderStatus.READY) {
       updateData.pickedAt = new Date();
     } else if (dto.status === OrderStatus.DELIVERED) {
       updateData.deliveredAt = new Date();
-      updateData.paymentStatus = PaymentStatus.PAID;
-    } else if (dto.status === OrderStatus.CANCELLED) {
-      updateData.cancelledAt = new Date();
-      updateData.cancellationReason = dto.notes;
+      updateData.isPaid = true;
     }
 
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id },
       data: updateData,
       include: {
-        items: { include: { product: true } },
+        items: true,
       },
     });
+
+    this.logger.log(`Order ${id} status changed to ${dto.status}`);
+
+    return updated;
   }
 
+  /**
+   * Assign picker to order
+   */
   async assignPicker(orderId: string, pickerId: string) {
     const order = await this.findById(orderId);
 
-    if (order.status !== OrderStatus.CONFIRMED) {
+    if (order.status !== OrderStatus.PENDING) {
       throw new BadRequestException('لا يمكن تعيين جامع لهذا الطلب');
     }
 
-    return this.prisma.order.update({
+    // Validate picker exists and has PICKER role
+    const picker = await this.prisma.user.findFirst({
+      where: { id: pickerId, role: 'PICKER', isActive: true },
+    });
+
+    if (!picker) {
+      throw new BadRequestException('الجامع غير موجود أو غير نشط');
+    }
+
+    const updated = await this.prisma.order.update({
       where: { id: orderId },
       data: {
         pickerId,
         status: OrderStatus.PICKING,
       },
     });
+
+    this.logger.log(`Picker ${pickerId} assigned to order ${orderId}`);
+
+    return updated;
   }
 
-  async cancel(id: string, reason: string, _userId: string) {
+  /**
+   * Mark order as paid
+   */
+  async markAsPaid(orderId: string, isPaid: boolean) {
+    const order = await this.findById(orderId);
+
+    const updated = await this.prisma.order.update({
+      where: { id: orderId },
+      data: { isPaid },
+    });
+
+    this.logger.log(`Order ${orderId} marked as ${isPaid ? 'paid' : 'unpaid'}`);
+
+    return updated;
+  }
+
+  /**
+   * Cancel order
+   */
+  async cancel(id: string, reason: string) {
     const order = await this.findById(id);
 
-    const cancellableStatuses = [OrderStatus.PENDING, OrderStatus.CONFIRMED];
+    const cancellableStatuses = [OrderStatus.PENDING, OrderStatus.PICKING];
     if (!cancellableStatuses.includes(order.status as OrderStatus)) {
       throw new BadRequestException('لا يمكن إلغاء هذا الطلب');
     }
 
-    // Restore stock
-    for (const item of order.items) {
-      await this.prisma.product.update({
-        where: { id: item.productId },
-        data: { stockQuantity: { increment: item.quantity } },
-      });
-    }
-
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id },
       data: {
         status: OrderStatus.CANCELLED,
-        cancelledAt: new Date(),
-        cancellationReason: reason,
+        notes: reason ? `سبب الإلغاء: ${reason}` : order.notes,
       },
     });
+
+    this.logger.log(`Order ${id} cancelled. Reason: ${reason}`);
+
+    return updated;
   }
 
+  /**
+   * Get order statistics
+   */
+  async getStatistics(dateFrom?: Date, dateTo?: Date) {
+    const where: Record<string, unknown> = {};
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt['gte'] = dateFrom;
+      if (dateTo) where.createdAt['lte'] = dateTo;
+    }
+
+    const [
+      totalOrders,
+      pendingOrders,
+      pickingOrders,
+      readyOrders,
+      deliveredOrders,
+      cancelledOrders,
+      revenueResult,
+    ] = await Promise.all([
+      this.prisma.order.count({ where }),
+      this.prisma.order.count({ where: { ...where, status: OrderStatus.PENDING } }),
+      this.prisma.order.count({ where: { ...where, status: OrderStatus.PICKING } }),
+      this.prisma.order.count({ where: { ...where, status: OrderStatus.READY } }),
+      this.prisma.order.count({ where: { ...where, status: OrderStatus.DELIVERED } }),
+      this.prisma.order.count({ where: { ...where, status: OrderStatus.CANCELLED } }),
+      this.prisma.order.aggregate({
+        where: { ...where, status: OrderStatus.DELIVERED },
+        _sum: { total: true },
+      }),
+    ]);
+
+    return {
+      totalOrders,
+      pendingOrders,
+      pickingOrders,
+      readyOrders,
+      deliveredOrders,
+      cancelledOrders,
+      totalRevenue: revenueResult._sum.total || 0,
+    };
+  }
+
+  /**
+   * Validate status transitions
+   */
   private validateStatusTransition(
     currentStatus: OrderStatus,
     newStatus: OrderStatus,
   ): void {
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
-      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-      [OrderStatus.CONFIRMED]: [OrderStatus.PICKING, OrderStatus.CANCELLED],
-      [OrderStatus.PICKING]: [OrderStatus.PICKED],
-      [OrderStatus.PICKED]: [OrderStatus.READY_FOR_DELIVERY],
-      [OrderStatus.READY_FOR_DELIVERY]: [OrderStatus.OUT_FOR_DELIVERY],
+      [OrderStatus.PENDING]: [OrderStatus.PICKING, OrderStatus.CANCELLED],
+      [OrderStatus.PICKING]: [OrderStatus.READY, OrderStatus.CANCELLED],
+      [OrderStatus.READY]: [OrderStatus.OUT_FOR_DELIVERY],
       [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED],
-      [OrderStatus.DELIVERED]: [OrderStatus.REFUNDED],
+      [OrderStatus.DELIVERED]: [],
       [OrderStatus.CANCELLED]: [],
-      [OrderStatus.REFUNDED]: [],
     };
 
     if (!validTransitions[currentStatus]?.includes(newStatus)) {

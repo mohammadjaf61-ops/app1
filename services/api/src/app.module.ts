@@ -7,10 +7,12 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
-import { ProductsModule } from './modules/products/products.module';
-import { CategoriesModule } from './modules/categories/categories.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -37,10 +39,12 @@ import { DeliveryModule } from './modules/delivery/delivery.module';
     HealthModule,
     AuthModule,
     UsersModule,
-    ProductsModule,
-    CategoriesModule,
+    CatalogModule,
+    InventoryModule,
     OrdersModule,
     DeliveryModule,
+    ReportsModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

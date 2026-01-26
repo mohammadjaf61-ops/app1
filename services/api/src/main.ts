@@ -6,6 +6,7 @@ import helmet from 'helmet';
 
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { CorrelationIdInterceptor } from './common/interceptors/correlation-id.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
@@ -45,7 +46,11 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   // Global interceptors
-  app.useGlobalInterceptors(new LoggingInterceptor(), new TransformInterceptor());
+  app.useGlobalInterceptors(
+    new CorrelationIdInterceptor(),
+    new LoggingInterceptor(),
+    new TransformInterceptor(),
+  );
 
   // Swagger documentation
   if (configService.get<string>('NODE_ENV') !== 'production') {
@@ -56,10 +61,12 @@ async function bootstrap(): Promise<void> {
       .addBearerAuth()
       .addTag('auth', 'Authentication endpoints')
       .addTag('users', 'User management')
-      .addTag('products', 'Product catalog')
-      .addTag('categories', 'Product categories')
+      .addTag('catalog', 'Product catalog and categories')
+      .addTag('inventory', 'Inventory management')
       .addTag('orders', 'Order management')
       .addTag('delivery', 'Delivery management')
+      .addTag('reports', 'Reports and analytics')
+      .addTag('audit', 'Audit logs')
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);

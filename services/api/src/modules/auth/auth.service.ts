@@ -1,19 +1,39 @@
 import {
   Injectable,
   UnauthorizedException,
-  ConflictException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
-import { UserRole, TokenResponse, JwtPayload } from '@hypermarket/shared-types';
+import { UserRole, JwtPayload } from '@hypermarket/shared-types';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+
+/**
+ * Mock OTP for MVP - always use this code
+ */
+const MOCK_OTP = '123456';
+
+/**
+ * Access token response (no refresh tokens in MVP)
+ */
+interface AccessTokenResponse {
+  accessToken: string;
+  expiresIn: number;
+  tokenType: 'Bearer';
+  user: {
+    id: string;
+    fullName: string;
+    phone: string;
+    role: UserRole;
+  };
+}
 
 @Injectable()
 export class AuthService {
@@ -22,45 +42,22 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<TokenResponse> {
-    // Check if phone number already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { phoneNumber: dto.phoneNumber },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('رقم الهاتف مسجل مسبقاً');
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    // Create user
-    const user = await this.prisma.user.create({
-      data: {
-        phoneNumber: dto.phoneNumber,
-        password: hashedPassword,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        role: UserRole.CUSTOMER,
-      },
-    });
-
-    this.logger.log(`New customer registered: ${user.id}`);
-
-    return this.generateTokens(user.id, user.role as UserRole);
-  }
-
-  async login(dto: LoginDto): Promise<TokenResponse> {
+  /**
+   * Login with phone and password (staff login)
+   */
+  async login(dto: LoginDto): Promise<AccessTokenResponse> {
     const user = await this.prisma.user.findUnique({
-      where: { phoneNumber: dto.phoneNumber },
+      where: { phone: dto.phone },
     });
 
     if (!user) {
       throw new UnauthorizedException('رقم الهاتف أو كلمة المرور غير صحيحة');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('الحساب معطل');
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
@@ -69,44 +66,69 @@ export class AuthService {
       throw new UnauthorizedException('رقم الهاتف أو كلمة المرور غير صحيحة');
     }
 
-    // Update last login
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
+    this.logger.log(`User logged in: ${user.id} (${user.role})`);
 
-    this.logger.log(`User logged in: ${user.id}`);
-
-    return this.generateTokens(user.id, user.role as UserRole);
+    return this.generateAccessToken(user);
   }
 
-  async refreshToken(refreshToken: string): Promise<TokenResponse> {
-    try {
-      const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      });
-
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-      });
-
-      if (!user) {
-        throw new UnauthorizedException('رمز التحديث غير صالح');
-      }
-
-      return this.generateTokens(user.id, user.role as UserRole);
-    } catch {
-      throw new UnauthorizedException('رمز التحديث غير صالح أو منتهي الصلاحية');
-    }
-  }
-
-  async validateUser(userId: string): Promise<JwtPayload | null> {
+  /**
+   * Send OTP to phone (mock implementation for MVP)
+   */
+  async sendOtp(dto: SendOtpDto): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, role: true },
+      where: { phone: dto.phone },
     });
 
     if (!user) {
+      throw new BadRequestException('رقم الهاتف غير مسجل');
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestException('الحساب معطل');
+    }
+
+    // Mock OTP - In production, send SMS here
+    this.logger.log(`[MOCK OTP] Sending OTP ${MOCK_OTP} to ${dto.phone}`);
+
+    return { message: 'تم إرسال رمز التحقق' };
+  }
+
+  /**
+   * Verify OTP and return access token
+   */
+  async verifyOtp(dto: VerifyOtpDto): Promise<AccessTokenResponse> {
+    // Verify mock OTP
+    if (dto.otp !== MOCK_OTP) {
+      throw new BadRequestException('رمز التحقق غير صحيح');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { phone: dto.phone },
+    });
+
+    if (!user) {
+      throw new BadRequestException('رقم الهاتف غير مسجل');
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestException('الحساب معطل');
+    }
+
+    this.logger.log(`OTP verified for user: ${user.id}`);
+
+    return this.generateAccessToken(user);
+  }
+
+  /**
+   * Validate user from JWT payload
+   */
+  async validateUser(userId: string): Promise<JwtPayload | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role: true, isActive: true },
+    });
+
+    if (!user || !user.isActive) {
       return null;
     }
 
@@ -116,24 +138,58 @@ export class AuthService {
     };
   }
 
-  private generateTokens(userId: string, role: UserRole): TokenResponse {
+  /**
+   * Get current user profile
+   */
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        phone: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('المستخدم غير موجود');
+    }
+
+    return user;
+  }
+
+  /**
+   * Generate access token (no refresh token in MVP)
+   */
+  private generateAccessToken(user: {
+    id: string;
+    fullName: string;
+    phone: string;
+    role: string;
+  }): AccessTokenResponse {
     const payload: JwtPayload = {
-      sub: userId,
-      role,
+      sub: user.id,
+      role: user.role as UserRole,
     };
 
-    const accessToken = this.jwtService.sign(payload);
-
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d'),
+    const expiresIn = 86400; // 24 hours in seconds
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: `${expiresIn}s`,
     });
 
     return {
       accessToken,
-      refreshToken,
-      expiresIn: 900, // 15 minutes in seconds
+      expiresIn,
       tokenType: 'Bearer',
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        phone: user.phone,
+        role: user.role as UserRole,
+      },
     };
   }
 }

@@ -1,83 +1,101 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-
 import {
-  DeliveryStatus,
-  OrderStatus,
-  PaymentStatus,
-  PaginationMeta,
-} from '@hypermarket/shared-types';
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
+
+import { DeliveryStatus, OrderStatus } from '@hypermarket/shared-types';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
-import { AssignDeliveryDto } from './dto/assign-delivery.dto';
-import { CompleteDeliveryDto } from './dto/complete-delivery.dto';
-import { FailDeliveryDto } from './dto/fail-delivery.dto';
-import { DeliveryQueryDto } from './dto/delivery-query.dto';
-
 @Injectable()
 export class DeliveryService {
+  private readonly logger = new Logger(DeliveryService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: DeliveryQueryDto) {
-    const { page = 1, limit = 20, status, driverId } = query;
+  /**
+   * Get all delivery assignments with filters
+   */
+  async findAll(params: {
+    status?: DeliveryStatus;
+    driverId?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    page?: number;
+    limit?: number;
+  }) {
+    const { status, driverId, dateFrom, dateTo, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
-    const where = {
-      ...(status && { status }),
-      ...(driverId && { driverId }),
-    };
+    const where: Record<string, unknown> = {};
+
+    if (status) where.status = status;
+    if (driverId) where.driverId = driverId;
+
+    if (dateFrom || dateTo) {
+      where.assignedAt = {};
+      if (dateFrom) where.assignedAt['gte'] = dateFrom;
+      if (dateTo) where.assignedAt['lte'] = dateTo;
+    }
 
     const [deliveries, total] = await Promise.all([
-      this.prisma.delivery.findMany({
+      this.prisma.deliveryAssignment.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { assignedAt: 'desc' },
         include: {
           order: {
             select: {
               id: true,
               orderNumber: true,
+              customerName: true,
+              customerPhone: true,
+              deliveryAddressText: true,
               total: true,
-              items: { select: { quantity: true } },
             },
           },
           driver: {
-            select: { id: true, firstName: true, lastName: true, phoneNumber: true },
+            select: { id: true, fullName: true, phone: true },
           },
         },
       }),
-      this.prisma.delivery.count({ where }),
+      this.prisma.deliveryAssignment.count({ where }),
     ]);
 
-    const meta: PaginationMeta = {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasNext: page * limit < total,
-      hasPrevious: page > 1,
+    return {
+      data: deliveries,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: skip + deliveries.length < total,
+        hasPrevious: page > 1,
+      },
     };
-
-    return { data: deliveries, meta };
   }
 
+  /**
+   * Get delivery by ID
+   */
   async findById(id: string) {
-    const delivery = await this.prisma.delivery.findUnique({
+    const delivery = await this.prisma.deliveryAssignment.findUnique({
       where: { id },
       include: {
         order: {
           include: {
-            customer: {
-              select: { id: true, firstName: true, lastName: true, phoneNumber: true },
-            },
             items: {
-              include: { product: true },
+              include: {
+                product: { select: { id: true, sku: true, nameAr: true } },
+              },
             },
           },
         },
         driver: {
-          select: { id: true, firstName: true, lastName: true, phoneNumber: true },
+          select: { id: true, fullName: true, phone: true },
         },
       },
     });
@@ -89,8 +107,11 @@ export class DeliveryService {
     return delivery;
   }
 
+  /**
+   * Get driver's delivery queue
+   */
   async getDriverQueue(driverId: string) {
-    return this.prisma.delivery.findMany({
+    return this.prisma.deliveryAssignment.findMany({
       where: {
         driverId,
         status: {
@@ -98,129 +119,157 @@ export class DeliveryService {
             DeliveryStatus.ASSIGNED,
             DeliveryStatus.PICKED_UP,
             DeliveryStatus.IN_TRANSIT,
-            DeliveryStatus.ARRIVED,
           ],
         },
       },
       orderBy: { assignedAt: 'asc' },
       include: {
         order: {
-          include: {
-            customer: {
-              select: { id: true, firstName: true, lastName: true, phoneNumber: true },
-            },
-            items: { select: { quantity: true } },
+          select: {
+            id: true,
+            orderNumber: true,
+            customerName: true,
+            customerPhone: true,
+            deliveryAddressText: true,
+            total: true,
+            notes: true,
           },
         },
       },
     });
   }
 
-  async assign(dto: AssignDeliveryDto) {
+  /**
+   * Assign delivery to driver
+   */
+  async assign(orderId: string, driverId: string) {
     const order = await this.prisma.order.findUnique({
-      where: { id: dto.orderId },
-      include: {
-        customer: {
-          select: { id: true, firstName: true, lastName: true, phoneNumber: true },
-        },
-      },
+      where: { id: orderId },
     });
 
     if (!order) {
       throw new NotFoundException('الطلب غير موجود');
     }
 
-    if (order.status !== OrderStatus.READY_FOR_DELIVERY) {
+    if (order.status !== OrderStatus.READY) {
       throw new BadRequestException('الطلب غير جاهز للتوصيل');
     }
 
-    // Create delivery record
-    const delivery = await this.prisma.delivery.create({
+    // Check if already assigned
+    const existing = await this.prisma.deliveryAssignment.findUnique({
+      where: { orderId },
+    });
+
+    if (existing) {
+      throw new BadRequestException('الطلب مُعيّن للتوصيل مسبقاً');
+    }
+
+    // Validate driver
+    const driver = await this.prisma.user.findFirst({
+      where: { id: driverId, role: 'DRIVER', isActive: true },
+    });
+
+    if (!driver) {
+      throw new BadRequestException('السائق غير موجود أو غير نشط');
+    }
+
+    // Create delivery assignment
+    const delivery = await this.prisma.deliveryAssignment.create({
       data: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        driverId: dto.driverId,
+        orderId,
+        driverId,
         status: DeliveryStatus.ASSIGNED,
-        deliveryAddress: order.deliveryAddress as object,
-        customerName: `${order.customer.firstName} ${order.customer.lastName}`,
-        customerPhone: order.customer.phoneNumber,
-        itemCount: await this.prisma.orderItem.count({ where: { orderId: order.id } }),
-        totalAmount: order.total,
         assignedAt: new Date(),
-        deliveryNotes: dto.notes,
+      },
+      include: {
+        order: true,
+        driver: { select: { id: true, fullName: true, phone: true } },
       },
     });
 
     // Update order status
     await this.prisma.order.update({
-      where: { id: order.id },
-      data: {
-        status: OrderStatus.OUT_FOR_DELIVERY,
-        driverId: dto.driverId,
-      },
+      where: { id: orderId },
+      data: { status: OrderStatus.OUT_FOR_DELIVERY },
     });
+
+    this.logger.log(`Delivery assigned: order=${orderId}, driver=${driverId}`);
 
     return delivery;
   }
 
-  async pickup(id: string) {
+  /**
+   * Mark delivery as picked up from store
+   */
+  async pickup(id: string, driverId: string) {
     const delivery = await this.findById(id);
+
+    if (delivery.driverId !== driverId) {
+      throw new BadRequestException('ليس لديك صلاحية لهذا التوصيل');
+    }
 
     if (delivery.status !== DeliveryStatus.ASSIGNED) {
       throw new BadRequestException('لا يمكن تحديث حالة التوصيل');
     }
 
-    return this.prisma.delivery.update({
+    const updated = await this.prisma.deliveryAssignment.update({
       where: { id },
       data: {
         status: DeliveryStatus.PICKED_UP,
         pickedUpAt: new Date(),
       },
     });
+
+    this.logger.log(`Delivery picked up: ${id}`);
+
+    return updated;
   }
 
-  async startDelivery(id: string) {
+  /**
+   * Start delivery (in transit)
+   */
+  async startDelivery(id: string, driverId: string) {
     const delivery = await this.findById(id);
+
+    if (delivery.driverId !== driverId) {
+      throw new BadRequestException('ليس لديك صلاحية لهذا التوصيل');
+    }
 
     if (delivery.status !== DeliveryStatus.PICKED_UP) {
       throw new BadRequestException('لا يمكن بدء التوصيل');
     }
 
-    return this.prisma.delivery.update({
+    const updated = await this.prisma.deliveryAssignment.update({
       where: { id },
       data: { status: DeliveryStatus.IN_TRANSIT },
     });
+
+    this.logger.log(`Delivery in transit: ${id}`);
+
+    return updated;
   }
 
-  async arrive(id: string) {
+  /**
+   * Complete delivery
+   */
+  async complete(id: string, driverId: string, collectedAmount: number) {
     const delivery = await this.findById(id);
 
-    if (delivery.status !== DeliveryStatus.IN_TRANSIT) {
-      throw new BadRequestException('لا يمكن تحديث حالة الوصول');
+    if (delivery.driverId !== driverId) {
+      throw new BadRequestException('ليس لديك صلاحية لهذا التوصيل');
     }
 
-    return this.prisma.delivery.update({
-      where: { id },
-      data: { status: DeliveryStatus.ARRIVED },
-    });
-  }
-
-  async complete(id: string, dto: CompleteDeliveryDto) {
-    const delivery = await this.findById(id);
-
-    if (delivery.status !== DeliveryStatus.ARRIVED) {
+    if (delivery.status !== DeliveryStatus.IN_TRANSIT) {
       throw new BadRequestException('لا يمكن إتمام التوصيل');
     }
 
     // Update delivery
-    const updatedDelivery = await this.prisma.delivery.update({
+    const updated = await this.prisma.deliveryAssignment.update({
       where: { id },
       data: {
         status: DeliveryStatus.DELIVERED,
         deliveredAt: new Date(),
-        collectedAmount: dto.collectedAmount,
-        customerSignature: dto.signature,
-        deliveryNotes: dto.notes,
+        collectedAmount,
       },
     });
 
@@ -230,35 +279,89 @@ export class DeliveryService {
       data: {
         status: OrderStatus.DELIVERED,
         deliveredAt: new Date(),
-        paymentStatus: PaymentStatus.PAID,
+        isPaid: true,
       },
     });
 
-    return updatedDelivery;
+    this.logger.log(`Delivery completed: ${id}, collected=${collectedAmount}`);
+
+    return updated;
   }
 
-  async fail(id: string, dto: FailDeliveryDto) {
+  /**
+   * Mark delivery as failed
+   */
+  async fail(id: string, driverId: string, reason: string) {
     const delivery = await this.findById(id);
+
+    if (delivery.driverId !== driverId) {
+      throw new BadRequestException('ليس لديك صلاحية لهذا التوصيل');
+    }
 
     const failableStatuses = [
       DeliveryStatus.ASSIGNED,
       DeliveryStatus.PICKED_UP,
       DeliveryStatus.IN_TRANSIT,
-      DeliveryStatus.ARRIVED,
     ];
 
     if (!failableStatuses.includes(delivery.status as DeliveryStatus)) {
       throw new BadRequestException('لا يمكن تحديث حالة التوصيل');
     }
 
-    return this.prisma.delivery.update({
+    const updated = await this.prisma.deliveryAssignment.update({
       where: { id },
       data: {
         status: DeliveryStatus.FAILED,
         failedAt: new Date(),
-        failureReason: dto.reason,
-        failureNotes: dto.notes,
+        failureReason: reason,
       },
     });
+
+    this.logger.log(`Delivery failed: ${id}, reason=${reason}`);
+
+    return updated;
+  }
+
+  /**
+   * Get delivery statistics
+   */
+  async getStatistics(driverId?: string) {
+    const where = driverId ? { driverId } : {};
+
+    const [total, delivered, failed, inProgress, totalCollected] =
+      await Promise.all([
+        this.prisma.deliveryAssignment.count({ where }),
+        this.prisma.deliveryAssignment.count({
+          where: { ...where, status: DeliveryStatus.DELIVERED },
+        }),
+        this.prisma.deliveryAssignment.count({
+          where: { ...where, status: DeliveryStatus.FAILED },
+        }),
+        this.prisma.deliveryAssignment.count({
+          where: {
+            ...where,
+            status: {
+              in: [
+                DeliveryStatus.ASSIGNED,
+                DeliveryStatus.PICKED_UP,
+                DeliveryStatus.IN_TRANSIT,
+              ],
+            },
+          },
+        }),
+        this.prisma.deliveryAssignment.aggregate({
+          where: { ...where, status: DeliveryStatus.DELIVERED },
+          _sum: { collectedAmount: true },
+        }),
+      ]);
+
+    return {
+      total,
+      delivered,
+      failed,
+      inProgress,
+      totalCollected: totalCollected._sum.collectedAmount || 0,
+      successRate: total > 0 ? ((delivered / total) * 100).toFixed(1) : 0,
+    };
   }
 }

@@ -7,17 +7,22 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 
-import { UserRole } from '@hypermarket/shared-types';
+import { UserRole, OrderStatus, JwtPayload } from '@hypermarket/shared-types';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrderQueryDto } from './dto/order-query.dto';
 
 @ApiTags('orders')
 @ApiBearerAuth()
@@ -26,47 +31,69 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Get()
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get all orders (admin only)' })
-  async findAll(@Query() query: OrderQueryDto) {
-    return this.ordersService.findAll(query);
-  }
-
-  @Get('my-orders')
-  @Roles(UserRole.CUSTOMER)
-  @ApiOperation({ summary: 'Get current customer orders' })
-  async getMyOrders(
-    @CurrentUser('sub') customerId: string,
-    @Query() query: OrderQueryDto,
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER)
+  @ApiOperation({ summary: 'Get all orders with filters' })
+  @ApiQuery({ name: 'status', required: false, enum: OrderStatus })
+  @ApiQuery({ name: 'pickerId', required: false, type: String })
+  @ApiQuery({ name: 'isPaid', required: false, type: Boolean })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async findAll(
+    @Query('status') status?: OrderStatus,
+    @Query('pickerId') pickerId?: string,
+    @Query('isPaid') isPaid?: boolean,
+    @Query('search') search?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
-    return this.ordersService.findByCustomer(customerId, query);
+    return this.ordersService.findAll({
+      status,
+      pickerId,
+      isPaid,
+      search,
+      page,
+      limit,
+    });
   }
 
   @Get('picker/queue')
   @Roles(UserRole.PICKER)
   @ApiOperation({ summary: 'Get picker order queue' })
-  async getPickerQueue(@CurrentUser('sub') pickerId: string) {
-    return this.ordersService.getPickerQueue(pickerId);
+  async getPickerQueue(@CurrentUser() user: JwtPayload) {
+    return this.ordersService.getPickerQueue(user.sub);
+  }
+
+  @Get('statistics')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Get order statistics' })
+  async getStatistics() {
+    return this.ordersService.getStatistics();
+  }
+
+  @Get('number/:orderNumber')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER, UserRole.PICKER, UserRole.DRIVER)
+  @ApiOperation({ summary: 'Get order by order number' })
+  async findByOrderNumber(@Param('orderNumber') orderNumber: string) {
+    return this.ordersService.findByOrderNumber(orderNumber);
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER, UserRole.PICKER, UserRole.DRIVER)
   @ApiOperation({ summary: 'Get order by ID' })
   async findById(@Param('id') id: string) {
     return this.ordersService.findById(id);
   }
 
   @Post()
-  @Roles(UserRole.CUSTOMER)
-  @ApiOperation({ summary: 'Create a new order' })
-  async create(
-    @CurrentUser('sub') customerId: string,
-    @Body() dto: CreateOrderDto,
-  ) {
-    return this.ordersService.create(customerId, dto);
+  @Public()
+  @ApiOperation({ summary: 'Create a new order (public - customer order)' })
+  async create(@Body() dto: CreateOrderDto) {
+    return this.ordersService.create(dto);
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.ADMIN, UserRole.PICKER)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.PICKER)
   @ApiOperation({ summary: 'Update order status' })
   async updateStatus(
     @Param('id') id: string,
@@ -76,7 +103,7 @@ export class OrdersController {
   }
 
   @Patch(':id/assign-picker')
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Assign picker to order' })
   async assignPicker(
     @Param('id') id: string,
@@ -85,13 +112,23 @@ export class OrdersController {
     return this.ordersService.assignPicker(id, pickerId);
   }
 
+  @Patch(':id/mark-paid')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER)
+  @ApiOperation({ summary: 'Mark order as paid/unpaid' })
+  async markAsPaid(
+    @Param('id') id: string,
+    @Body('isPaid') isPaid: boolean,
+  ) {
+    return this.ordersService.markAsPaid(id, isPaid);
+  }
+
   @Patch(':id/cancel')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Cancel an order' })
   async cancel(
     @Param('id') id: string,
     @Body('reason') reason: string,
-    @CurrentUser('sub') userId: string,
   ) {
-    return this.ordersService.cancel(id, reason, userId);
+    return this.ordersService.cancel(id, reason);
   }
 }
