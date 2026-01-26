@@ -49,7 +49,8 @@ export class AnalyticsProcessor {
       });
 
       return { orderCount, categoryCount };
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await this.governance.logJobExecution(jobName, 'FAILED', {
         startedAt,
         completedAt: new Date(),
@@ -78,7 +79,8 @@ export class AnalyticsProcessor {
       });
 
       return { productCount };
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await this.governance.logJobExecution(jobName, 'FAILED', {
         startedAt,
         completedAt: new Date(),
@@ -108,7 +110,8 @@ export class AnalyticsProcessor {
       });
 
       return { forecastCount };
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await this.governance.logJobExecution(jobName, 'FAILED', {
         startedAt,
         completedAt: new Date(),
@@ -136,7 +139,8 @@ export class AnalyticsProcessor {
       });
 
       return { recommendationCount };
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await this.governance.logJobExecution(jobName, 'FAILED', {
         startedAt,
         completedAt: new Date(),
@@ -166,7 +170,8 @@ export class AnalyticsProcessor {
       });
 
       return { analysisCount };
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await this.governance.logJobExecution(jobName, 'FAILED', {
         startedAt,
         completedAt: new Date(),
@@ -194,7 +199,8 @@ export class AnalyticsProcessor {
       });
 
       return { anomalyCount };
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await this.governance.logJobExecution(jobName, 'FAILED', {
         startedAt,
         completedAt: new Date(),
@@ -221,7 +227,8 @@ export class AnalyticsProcessor {
       });
 
       return { success: true };
-    } catch (error) {
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
       await this.governance.logJobExecution(jobName, 'FAILED', {
         startedAt,
         completedAt: new Date(),

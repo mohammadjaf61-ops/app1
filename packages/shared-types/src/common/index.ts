@@ -96,3 +96,11 @@ export enum SettingKey {
  * Environment type
  */
 export type Environment = 'development' | 'staging' | 'production';
+
+/**
+ * Money amount with currency
+ */
+export interface MoneyAmount {
+  amount: number;
+  currency: 'IQD';
+}

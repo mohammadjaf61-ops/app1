@@ -2,8 +2,6 @@
  * Financial types
  */
 
-import type { BaseEntity } from '../common';
-
 /**
  * Refund record
  */

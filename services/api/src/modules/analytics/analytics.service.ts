@@ -265,7 +265,13 @@ export class AnalyticsService {
         ? ((todayOrders._sum.totalAmountIqd || 0) - yesterdayOrders._sum.totalAmountIqd) /
           yesterdayOrders._sum.totalAmountIqd
         : 0,
-      alerts: alertCounts.reduce((acc, a) => ({ ...acc, [a.severity]: a._count }), {}),
+      alerts: alertCounts.reduce(
+        (acc: Record<string, number>, a: { severity: string; _count: number }) => ({
+          ...acc,
+          [a.severity]: a._count,
+        }),
+        {},
+      ),
       pendingReorders,
       lowStockProducts: Number(lowStock[0]?.count || 0),
     };

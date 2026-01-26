@@ -2,8 +2,6 @@
  * Audit and logging types
  */
 
-import type { BaseEntity } from '../common';
-
 /**
  * Audit action types
  */
