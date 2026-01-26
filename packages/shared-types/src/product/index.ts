@@ -2,39 +2,21 @@
  * Product-related types
  */
 
-import type {
-  BaseEntity,
-  SoftDelete,
-  LocalizedContent,
-  StoreLocation,
-  MoneyAmount,
-} from '../common';
-
-/**
- * Product status
- */
-export enum ProductStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  OUT_OF_STOCK = 'OUT_OF_STOCK',
-  DISCONTINUED = 'DISCONTINUED',
-}
+import type { BaseEntity } from '../common';
 
 /**
  * Category
  */
-export interface Category extends BaseEntity, SoftDelete {
-  name: LocalizedContent;
-  slug: string;
-  description?: LocalizedContent;
-  imageUrl?: string;
-  parentId?: string;
+export interface Category extends BaseEntity {
+  nameAr: string;
+  parentId: string | null;
   sortOrder: number;
   isActive: boolean;
+  children?: Category[];
 }
 
 /**
- * Category tree node
+ * Category tree node (with children)
  */
 export interface CategoryTree extends Category {
   children: CategoryTree[];
@@ -43,50 +25,24 @@ export interface CategoryTree extends Category {
 /**
  * Product
  */
-export interface Product extends BaseEntity, SoftDelete {
+export interface Product extends BaseEntity {
   sku: string;
-  barcode?: string;
-  name: LocalizedContent;
-  description?: LocalizedContent;
+  barcode: string | null;
+  nameAr: string;
+  descriptionAr: string | null;
+  imageUrl: string | null;
   categoryId: string;
-  price: MoneyAmount;
-  compareAtPrice?: MoneyAmount;
-  images: ProductImage[];
-  status: ProductStatus;
-  stockQuantity: number;
-  lowStockThreshold: number;
-  location: StoreLocation;
-  weight?: number; // in grams
-  unit: ProductUnit;
-  unitValue: number; // e.g., 500 for 500g
-  tags: string[];
+  costPrice: number; // سعر التكلفة
+  salePrice: number; // سعر البيع
   isActive: boolean;
-  isFeatured: boolean;
+  deletedAt: Date | null;
 }
 
 /**
- * Product image
+ * Product with category info
  */
-export interface ProductImage {
-  id: string;
-  url: string;
-  alt?: string;
-  sortOrder: number;
-  isPrimary: boolean;
-}
-
-/**
- * Product unit types
- */
-export enum ProductUnit {
-  PIECE = 'PIECE', // قطعة
-  KG = 'KG', // كيلوغرام
-  GRAM = 'GRAM', // غرام
-  LITER = 'LITER', // لتر
-  ML = 'ML', // مليلتر
-  PACK = 'PACK', // عبوة
-  BOX = 'BOX', // صندوق
-  DOZEN = 'DOZEN', // درزن
+export interface ProductWithCategory extends Product {
+  category: Category;
 }
 
 /**
@@ -94,55 +50,58 @@ export enum ProductUnit {
  */
 export interface ProductFilters {
   categoryId?: string;
-  status?: ProductStatus;
+  isActive?: boolean;
   search?: string;
   minPrice?: number;
   maxPrice?: number;
-  inStock?: boolean;
-  isFeatured?: boolean;
-  tags?: string[];
 }
 
 /**
- * Product creation DTO
+ * Create product DTO
  */
 export interface CreateProductDto {
   sku: string;
   barcode?: string;
-  name: LocalizedContent;
-  description?: LocalizedContent;
+  nameAr: string;
+  descriptionAr?: string;
+  imageUrl?: string;
   categoryId: string;
-  price: number;
-  compareAtPrice?: number;
-  stockQuantity: number;
-  lowStockThreshold?: number;
-  location: StoreLocation;
-  weight?: number;
-  unit: ProductUnit;
-  unitValue: number;
-  tags?: string[];
+  costPrice: number;
+  salePrice: number;
   isActive?: boolean;
-  isFeatured?: boolean;
 }
 
 /**
- * Stock update DTO
+ * Update product DTO
  */
-export interface StockUpdateDto {
-  productId: string;
-  quantity: number;
-  reason: StockUpdateReason;
-  notes?: string;
+export interface UpdateProductDto {
+  sku?: string;
+  barcode?: string;
+  nameAr?: string;
+  descriptionAr?: string;
+  imageUrl?: string;
+  categoryId?: string;
+  costPrice?: number;
+  salePrice?: number;
+  isActive?: boolean;
 }
 
 /**
- * Stock update reasons
+ * Create category DTO
  */
-export enum StockUpdateReason {
-  PURCHASE = 'PURCHASE',
-  SALE = 'SALE',
-  RETURN = 'RETURN',
-  ADJUSTMENT = 'ADJUSTMENT',
-  DAMAGE = 'DAMAGE',
-  EXPIRED = 'EXPIRED',
+export interface CreateCategoryDto {
+  nameAr: string;
+  parentId?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+}
+
+/**
+ * Update category DTO
+ */
+export interface UpdateCategoryDto {
+  nameAr?: string;
+  parentId?: string;
+  sortOrder?: number;
+  isActive?: boolean;
 }

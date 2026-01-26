@@ -2,92 +2,68 @@
  * Delivery-related types
  */
 
-import type { BaseEntity, DeliveryAddress, MoneyAmount } from '../common';
+import type { BaseEntity } from '../common';
 
 /**
  * Delivery status
  */
 export enum DeliveryStatus {
-  PENDING = 'PENDING', // في انتظار التعيين
   ASSIGNED = 'ASSIGNED', // تم التعيين
   PICKED_UP = 'PICKED_UP', // تم الاستلام من المتجر
   IN_TRANSIT = 'IN_TRANSIT', // في الطريق
-  ARRIVED = 'ARRIVED', // وصل للموقع
   DELIVERED = 'DELIVERED', // تم التوصيل
   FAILED = 'FAILED', // فشل التوصيل
-  RETURNED = 'RETURNED', // تم الإرجاع
 }
 
 /**
- * Delivery failure reasons
+ * Delivery assignment
  */
-export enum DeliveryFailureReason {
-  CUSTOMER_UNAVAILABLE = 'CUSTOMER_UNAVAILABLE', // العميل غير متواجد
-  WRONG_ADDRESS = 'WRONG_ADDRESS', // عنوان خاطئ
-  CUSTOMER_REFUSED = 'CUSTOMER_REFUSED', // العميل رفض الاستلام
-  PAYMENT_ISSUE = 'PAYMENT_ISSUE', // مشكلة في الدفع
-  OTHER = 'OTHER', // سبب آخر
-}
-
-/**
- * Delivery record
- */
-export interface Delivery extends BaseEntity {
+export interface DeliveryAssignment extends BaseEntity {
   orderId: string;
-  orderNumber: string;
   driverId: string;
   status: DeliveryStatus;
-  deliveryAddress: DeliveryAddress;
-  customerName: string;
-  customerPhone: string;
-  itemCount: number;
-  totalAmount: MoneyAmount;
-  collectedAmount?: MoneyAmount;
   assignedAt: Date;
-  pickedUpAt?: Date;
-  deliveredAt?: Date;
-  failedAt?: Date;
-  failureReason?: DeliveryFailureReason;
-  failureNotes?: string;
-  deliveryNotes?: string;
-  customerSignature?: string; // Base64 signature
+  pickedUpAt: Date | null;
+  deliveredAt: Date | null;
+  failedAt: Date | null;
+  failureReason: string | null;
+  collectedAmount: number | null; // Amount collected (IQD)
 }
 
 /**
- * Driver's active deliveries
+ * Delivery with order details (for driver app)
  */
-export interface DriverDeliveryQueue {
-  driverId: string;
-  deliveries: Delivery[];
-  totalPending: number;
+export interface DeliveryWithOrder extends DeliveryAssignment {
+  order: {
+    orderNumber: string;
+    customerName: string;
+    customerPhone: string;
+    deliveryAddressText: string;
+    total: number;
+    notes: string | null;
+  };
 }
 
 /**
- * Delivery assignment DTO
+ * Assign delivery DTO
  */
 export interface AssignDeliveryDto {
   orderId: string;
   driverId: string;
-  notes?: string;
 }
 
 /**
  * Complete delivery DTO
  */
 export interface CompleteDeliveryDto {
-  deliveryId: string;
   collectedAmount: number;
-  signature?: string;
-  notes?: string;
 }
 
 /**
  * Fail delivery DTO
  */
 export interface FailDeliveryDto {
-  deliveryId: string;
-  reason: DeliveryFailureReason;
-  notes?: string;
+  reason: string;
 }
 
 /**
@@ -101,25 +77,22 @@ export interface DeliveryFilters {
 }
 
 /**
- * Delivery zone configuration
+ * Driver's active deliveries queue
  */
-export interface DeliveryZone extends BaseEntity {
-  name: string;
-  governorate: string;
-  districts: string[];
-  deliveryFee: MoneyAmount;
-  estimatedMinutes: number;
-  isActive: boolean;
+export interface DriverDeliveryQueue {
+  driverId: string;
+  deliveries: DeliveryWithOrder[];
+  totalPending: number;
+  totalCompleted: number;
 }
 
 /**
- * Delivery time slot
+ * Delivery summary for reports
  */
-export interface DeliveryTimeSlot {
-  id: string;
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
-  maxOrders: number;
-  currentOrders: number;
-  isAvailable: boolean;
+export interface DeliverySummary {
+  totalDeliveries: number;
+  successfulDeliveries: number;
+  failedDeliveries: number;
+  totalCollected: number; // IQD
+  averageDeliveryTime: number; // minutes
 }

@@ -2,113 +2,55 @@
  * User-related types
  */
 
-import type { UserRole, AdminPermission } from '../auth';
-import type { BaseEntity, SoftDelete, DeliveryAddress } from '../common';
+import type { UserRole } from '../auth';
+import type { BaseEntity } from '../common';
 
 /**
- * User status
+ * User (Staff member)
+ * Note: Customers are not users in this system - their info is stored directly on orders
  */
-export enum UserStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  PENDING_VERIFICATION = 'PENDING_VERIFICATION',
-}
-
-/**
- * Base user interface
- */
-export interface User extends BaseEntity, SoftDelete {
-  phoneNumber: string;
-  email?: string;
+export interface User extends BaseEntity {
+  fullName: string;
+  phone: string;
   role: UserRole;
-  status: UserStatus;
-  isPhoneVerified: boolean;
-  lastLoginAt?: Date;
+  isActive: boolean;
 }
 
 /**
- * Customer profile
+ * Create user DTO
  */
-export interface Customer extends User {
-  role: UserRole.CUSTOMER;
-  firstName: string;
-  lastName: string;
-  addresses: CustomerAddress[];
-  defaultAddressId?: string;
-}
-
-/**
- * Customer saved address
- */
-export interface CustomerAddress extends BaseEntity {
-  customerId: string;
-  label: string; // e.g., "المنزل", "العمل"
-  address: DeliveryAddress;
-  isDefault: boolean;
-}
-
-/**
- * Admin user
- */
-export interface Admin extends User {
-  role: UserRole.ADMIN;
-  firstName: string;
-  lastName: string;
-  permissions: AdminPermission[];
-  isSuperAdmin: boolean;
-}
-
-/**
- * Picker (in-store staff)
- */
-export interface Picker extends User {
-  role: UserRole.PICKER;
-  firstName: string;
-  lastName: string;
-  employeeId: string;
-  isAvailable: boolean;
-  currentOrderId?: string;
-}
-
-/**
- * Driver (delivery staff)
- */
-export interface Driver extends User {
-  role: UserRole.DRIVER;
-  firstName: string;
-  lastName: string;
-  employeeId: string;
-  vehicleType: VehicleType;
-  vehiclePlateNumber: string;
-  isAvailable: boolean;
-  currentDeliveryId?: string;
-}
-
-/**
- * Vehicle types for drivers
- */
-export enum VehicleType {
-  MOTORCYCLE = 'MOTORCYCLE',
-  CAR = 'CAR',
-  VAN = 'VAN',
-}
-
-/**
- * User registration DTO
- */
-export interface CustomerRegistration {
-  phoneNumber: string;
-  firstName: string;
-  lastName: string;
+export interface CreateUserDto {
+  fullName: string;
+  phone: string;
   password: string;
+  role: UserRole;
 }
 
 /**
- * User profile update DTO
+ * Update user DTO
  */
-export interface UserProfileUpdate {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+export interface UpdateUserDto {
+  fullName?: string;
+  phone?: string;
+  isActive?: boolean;
+}
+
+/**
+ * User list filters
+ */
+export interface UserFilters {
+  role?: UserRole;
+  isActive?: boolean;
+  search?: string;
+}
+
+/**
+ * User profile response (safe for client)
+ */
+export interface UserProfile {
+  id: string;
+  fullName: string;
+  phone: string;
+  role: UserRole;
+  isActive: boolean;
 }

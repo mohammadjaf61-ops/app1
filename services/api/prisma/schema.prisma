@@ -1,8 +1,20 @@
-// Hypermarket Platform Database Schema
-// PostgreSQL with Prisma ORM
+// ============================================
+// Hypermarket Platform - Database Schema
+// PostgreSQL 16 + Prisma ORM
+// ============================================
+//
+// Naming Conventions:
+// - Tables: singular, snake_case (via @@map)
+// - Columns: snake_case (via @map)
+// - IDs: UUID v4
+// - Foreign keys: <entity>_id
+// - Timestamps: created_at, updated_at, deleted_at
+//
+// ============================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
 }
 
 datasource db {
@@ -14,372 +26,371 @@ datasource db {
 // ENUMS
 // ============================================
 
+/// User roles in the hypermarket system
 enum UserRole {
-  ADMIN
-  CUSTOMER
-  PICKER
-  DRIVER
+  ADMIN   // Full system access
+  MANAGER // Store management
+  PICKER  // In-store order fulfillment
+  DRIVER  // Delivery personnel
+  CASHIER // Point of sale operations
 }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-  PENDING_VERIFICATION
-}
-
-enum VehicleType {
-  MOTORCYCLE
-  CAR
-  VAN
-}
-
-enum ProductStatus {
-  ACTIVE
-  INACTIVE
-  OUT_OF_STOCK
-  DISCONTINUED
-}
-
-enum ProductUnit {
-  PIECE
-  KG
-  GRAM
-  LITER
-  ML
-  PACK
-  BOX
-  DOZEN
-}
-
+/// Order lifecycle status
 enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PICKING
-  PICKED
-  READY_FOR_DELIVERY
-  OUT_FOR_DELIVERY
-  DELIVERED
-  CANCELLED
-  REFUNDED
+  PENDING            // Awaiting confirmation
+  CONFIRMED          // Confirmed, ready for picking
+  PICKING            // Being picked by staff
+  PICKED             // All items collected
+  READY_FOR_DELIVERY // Packaged and waiting
+  OUT_FOR_DELIVERY   // With driver
+  DELIVERED          // Successfully delivered
+  CANCELLED          // Cancelled before delivery
 }
 
+/// Payment methods (COD primary for Iraq market)
 enum PaymentMethod {
-  CASH_ON_DELIVERY
+  COD // Cash on Delivery - الدفع عند الاستلام
 }
 
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
-}
-
+/// Delivery assignment status
 enum DeliveryStatus {
-  PENDING
-  ASSIGNED
-  PICKED_UP
-  IN_TRANSIT
-  ARRIVED
-  DELIVERED
-  FAILED
-  RETURNED
+  ASSIGNED  // Assigned to driver
+  PICKED_UP // Driver picked up from store
+  IN_TRANSIT // On the way
+  DELIVERED // Successfully delivered
+  FAILED    // Delivery failed
+  RETURNED  // Returned to store
 }
 
-enum DeliveryFailureReason {
-  CUSTOMER_UNAVAILABLE
-  WRONG_ADDRESS
-  CUSTOMER_REFUSED
-  PAYMENT_ISSUE
-  OTHER
-}
-
-enum StockUpdateReason {
-  PURCHASE
-  SALE
-  RETURN
-  ADJUSTMENT
-  DAMAGE
-  EXPIRED
+/// Audit log action types
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  STATUS_CHANGE
+  ASSIGNMENT
 }
 
 // ============================================
-// USER MODELS
+// USERS & AUTHENTICATION
 // ============================================
 
+/// System users including staff and administrators
+/// All staff members are managed through this table
 model User {
-  id              String     @id @default(uuid())
-  phoneNumber     String     @unique
-  password        String
-  email           String?
-  firstName       String
-  lastName        String
-  role            UserRole
-  status          UserStatus @default(PENDING_VERIFICATION)
-  isPhoneVerified Boolean    @default(false)
-  lastLoginAt     DateTime?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  deletedAt       DateTime?
-
-  // Role-specific fields
-  employeeId         String?
-  vehicleType        VehicleType?
-  vehiclePlateNumber String?
-  isAvailable        Boolean?
-  permissions        String[]     @default([])
-  isSuperAdmin       Boolean      @default(false)
+  id         String   @id @default(uuid())
+  /// Full name in Arabic - الاسم الكامل
+  fullName   String   @map("full_name")
+  /// Iraqi phone number (07XXXXXXXXX)
+  phone      String   @unique
+  /// Hashed password
+  password   String
+  /// User role determines permissions
+  role       UserRole
+  /// Soft active flag for disabling accounts
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relations
-  customerAddresses CustomerAddress[]
-  ordersAsCustomer  Order[]           @relation("CustomerOrders")
-  ordersAsPicker    Order[]           @relation("PickerOrders")
-  ordersAsDriver    Order[]           @relation("DriverOrders")
-  deliveries        Delivery[]
+  pickerAssignments Order[]              @relation("OrderPicker")
+  driverAssignments DeliveryAssignment[] @relation("DeliveryDriver")
+  auditLogs         AuditLog[]           @relation("AuditActor")
 
-  @@index([phoneNumber])
+  @@index([phone])
   @@index([role])
-  @@index([status])
-  @@map("users")
-}
-
-model CustomerAddress {
-  id         String   @id @default(uuid())
-  customerId String
-  label      String // e.g., "المنزل", "العمل"
-  address    Json // DeliveryAddress object
-  isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  @@index([customerId])
-  @@map("customer_addresses")
+  @@index([isActive], map: "idx_user_is_active")
+  @@map("user")
 }
 
 // ============================================
-// PRODUCT MODELS
+// PRODUCT CATALOG
 // ============================================
 
+/// Product categories with hierarchical support
+/// Supports unlimited nesting via parent_id self-reference
 model Category {
-  id            String    @id @default(uuid())
-  nameAr        String
-  nameEn        String?
-  slug          String    @unique
-  descriptionAr String?
-  descriptionEn String?
-  imageUrl      String?
-  parentId      String?
-  sortOrder     Int       @default(0)
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
+  id        String   @id @default(uuid())
+  /// Category name in Arabic - اسم التصنيف
+  nameAr    String   @map("name_ar")
+  /// Parent category for hierarchical structure (null = root)
+  parentId  String?  @map("parent_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  // Self-relation for hierarchy
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryHierarchy")
+
+  // Products in this category
   products Product[]
 
-  @@index([slug])
-  @@index([parentId])
-  @@map("categories")
+  @@index([parentId], map: "idx_category_parent_id")
+  @@map("category")
 }
 
+/// Products available for sale in the hypermarket
+/// Prices stored in IQD (Iraqi Dinar) as integers
 model Product {
-  id                String        @id @default(uuid())
-  sku               String        @unique
-  barcode           String?
-  nameAr            String
-  nameEn            String?
-  descriptionAr     String?
-  descriptionEn     String?
-  categoryId        String
-  price             Int // IQD (no decimals)
-  compareAtPrice    Int?
-  status            ProductStatus @default(ACTIVE)
-  stockQuantity     Int           @default(0)
-  lowStockThreshold Int           @default(10)
-  // Store location
-  aisle             String
-  shelf             String
-  bin               String?
-  weight            Int? // in grams
-  unit              ProductUnit
-  unitValue         Float
-  isActive          Boolean       @default(true)
-  isFeatured        Boolean       @default(false)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  deletedAt         DateTime?
+  id            String   @id @default(uuid())
+  /// Stock Keeping Unit - unique product identifier
+  sku           String   @unique
+  /// Product name in Arabic - اسم المنتج
+  nameAr        String   @map("name_ar")
+  /// Product description in Arabic - وصف المنتج
+  descriptionAr String?  @map("description_ar")
+  /// Reference to product category
+  categoryId    String   @map("category_id")
+  /// Cost price in IQD (procurement cost)
+  costPrice     Int      @map("cost_price")
+  /// Sale price in IQD (customer-facing)
+  salePrice     Int      @map("sale_price")
+  /// Active products are visible in catalog
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  /// Soft delete timestamp
+  deletedAt     DateTime? @map("deleted_at")
 
-  category     Category       @relation(fields: [categoryId], references: [id])
-  images       ProductImage[]
-  orderItems   OrderItem[]
-  stockHistory StockHistory[]
+  // Relations
+  category       Category        @relation(fields: [categoryId], references: [id])
+  inventoryItems InventoryItem[]
+  orderItems     OrderItem[]
 
   @@index([sku])
-  @@index([barcode])
-  @@index([categoryId])
-  @@index([status])
-  @@map("products")
+  @@index([categoryId], map: "idx_product_category_id")
+  @@index([isActive], map: "idx_product_is_active")
+  @@index([deletedAt], map: "idx_product_deleted_at")
+  @@map("product")
 }
 
-model ProductImage {
+// ============================================
+// INVENTORY MANAGEMENT
+// ============================================
+
+/// Physical storage locations within the hypermarket
+/// Used for picker navigation: Aisle → Shelf → Bin
+model InventoryLocation {
   id        String   @id @default(uuid())
-  productId String
-  url       String
-  alt       String?
-  sortOrder Int      @default(0)
-  isPrimary Boolean  @default(false)
-  createdAt DateTime @default(now())
+  /// Aisle identifier (e.g., "A1", "B2") - الممر
+  aisle     String
+  /// Shelf number within aisle - الرف
+  shelf     String
+  /// Bin/compartment within shelf (optional) - الصندوق
+  bin       String?
+  createdAt DateTime @default(now()) @map("created_at")
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // Inventory items at this location
+  inventoryItems InventoryItem[]
 
-  @@index([productId])
-  @@map("product_images")
+  @@unique([aisle, shelf, bin], map: "uq_location_aisle_shelf_bin")
+  @@index([aisle])
+  @@map("inventory_location")
 }
 
-model StockHistory {
-  id        String            @id @default(uuid())
-  productId String
-  quantity  Int
-  reason    StockUpdateReason
-  notes     String?
-  createdBy String?
-  createdAt DateTime          @default(now())
+/// Inventory tracking - links products to physical locations
+/// Supports multiple locations per product and expiry tracking
+model InventoryItem {
+  id         String    @id @default(uuid())
+  /// Reference to product
+  productId  String    @map("product_id")
+  /// Physical location in store
+  locationId String    @map("location_id")
+  /// Current quantity at this location
+  quantity   Int       @default(0)
+  /// Expiry date for perishables (null for non-perishables)
+  expiryDate DateTime? @map("expiry_date")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // Relations
+  product  Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  location InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
-  @@index([productId])
-  @@index([createdAt])
-  @@map("stock_history")
+  @@unique([productId, locationId], map: "uq_inventory_product_location")
+  @@index([productId, locationId], map: "idx_inventory_product_location")
+  @@index([expiryDate], map: "idx_inventory_expiry_date")
+  @@index([quantity], map: "idx_inventory_quantity")
+  @@map("inventory_item")
 }
 
 // ============================================
-// ORDER MODELS
+// ORDERS
 // ============================================
 
+/// Customer orders - main transaction entity
+/// Customer info stored directly (no customer accounts in MVP)
 model Order {
-  id                 String        @id @default(uuid())
-  orderNumber        String        @unique
-  customerId         String
-  status             OrderStatus   @default(PENDING)
-  subtotal           Int // IQD
-  deliveryFee        Int // IQD
-  discount           Int           @default(0) // IQD
-  total              Int // IQD
-  paymentMethod      PaymentMethod @default(CASH_ON_DELIVERY)
-  paymentStatus      PaymentStatus @default(PENDING)
-  deliveryAddress    Json // DeliveryAddress object
-  notes              String?
-  pickerId           String?
-  driverId           String?
-  pickedAt           DateTime?
-  deliveredAt        DateTime?
-  cancelledAt        DateTime?
-  cancellationReason String?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  id                  String        @id @default(uuid())
+  /// Human-readable order number (e.g., "HM-20250126-ABC12")
+  orderNumber         String        @unique @map("order_number")
+  /// Customer name in Arabic - اسم الزبون
+  customerName        String        @map("customer_name")
+  /// Customer phone number for contact
+  customerPhone       String        @map("customer_phone")
+  /// Full delivery address as text - العنوان
+  deliveryAddressText String        @map("delivery_address_text")
+  /// Total order amount in IQD
+  totalAmountIqd      Int           @map("total_amount_iqd")
+  /// Payment method (COD for Iraq)
+  paymentMethod       PaymentMethod @default(COD) @map("payment_method")
+  /// Current order status
+  status              OrderStatus   @default(PENDING)
+  /// Assigned picker (staff member)
+  pickerId            String?       @map("picker_id")
+  /// Order notes from customer
+  notes               String?
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
 
-  customer User        @relation("CustomerOrders", fields: [customerId], references: [id])
-  picker   User?       @relation("PickerOrders", fields: [pickerId], references: [id])
-  driver   User?       @relation("DriverOrders", fields: [driverId], references: [id])
-  items    OrderItem[]
-  delivery Delivery?
+  // Relations
+  picker             User?               @relation("OrderPicker", fields: [pickerId], references: [id])
+  items              OrderItem[]
+  deliveryAssignment DeliveryAssignment?
+  refunds            Refund[]
 
   @@index([orderNumber])
-  @@index([customerId])
-  @@index([status])
-  @@index([pickerId])
-  @@index([driverId])
-  @@index([createdAt])
-  @@map("orders")
+  @@index([status], map: "idx_order_status")
+  @@index([pickerId], map: "idx_order_picker_id")
+  @@index([createdAt], map: "idx_order_created_at")
+  @@index([customerPhone], map: "idx_order_customer_phone")
+  @@map("order")
 }
 
+/// Individual items within an order
+/// Captures price at time of order (immutable)
 model OrderItem {
-  id              String   @id @default(uuid())
-  orderId         String
-  productId       String
-  productSnapshot Json // Product details at time of order
-  quantity        Int
-  unitPrice       Int // IQD
-  totalPrice      Int // IQD
-  pickedQuantity  Int?
-  pickingNotes    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(uuid())
+  /// Parent order reference
+  orderId      String   @map("order_id")
+  /// Product being ordered
+  productId    String   @map("product_id")
+  /// Quantity ordered
+  quantity     Int
+  /// Unit price in IQD at time of order
+  unitPriceIqd Int      @map("unit_price_iqd")
+  createdAt    DateTime @default(now()) @map("created_at")
 
+  // Relations
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 
-  @@index([orderId])
-  @@index([productId])
-  @@map("order_items")
+  @@index([orderId], map: "idx_order_item_order_id")
+  @@index([productId], map: "idx_order_item_product_id")
+  @@map("order_item")
 }
 
 // ============================================
-// DELIVERY MODELS
+// DELIVERY MANAGEMENT
 // ============================================
 
-model Delivery {
-  id                String                 @id @default(uuid())
-  orderId           String                 @unique
-  orderNumber       String
-  driverId          String
-  status            DeliveryStatus         @default(PENDING)
-  deliveryAddress   Json // DeliveryAddress object
-  customerName      String
-  customerPhone     String
-  itemCount         Int
-  totalAmount       Int // IQD
-  collectedAmount   Int? // IQD
-  assignedAt        DateTime
-  pickedUpAt        DateTime?
-  deliveredAt       DateTime?
-  failedAt          DateTime?
-  failureReason     DeliveryFailureReason?
-  failureNotes      String?
-  deliveryNotes     String?
-  customerSignature String? // Base64
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
+/// Delivery assignments - links orders to drivers
+/// Tracks delivery lifecycle and timestamps
+model DeliveryAssignment {
+  id          String         @id @default(uuid())
+  /// Order being delivered
+  orderId     String         @unique @map("order_id")
+  /// Assigned driver
+  driverId    String         @map("driver_id")
+  /// Delivery status
+  status      DeliveryStatus @default(ASSIGNED)
+  /// When driver was assigned
+  assignedAt  DateTime       @default(now()) @map("assigned_at")
+  /// When delivery was completed (null if not delivered)
+  deliveredAt DateTime?      @map("delivered_at")
+  /// Delivery notes (failure reasons, customer feedback)
+  notes       String?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
 
-  order  Order @relation(fields: [orderId], references: [id])
-  driver User  @relation(fields: [driverId], references: [id])
+  // Relations
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver User  @relation("DeliveryDriver", fields: [driverId], references: [id])
 
-  @@index([orderId])
-  @@index([driverId])
-  @@index([status])
-  @@index([assignedAt])
-  @@map("deliveries")
+  @@index([orderId], map: "idx_delivery_order_id")
+  @@index([driverId], map: "idx_delivery_driver_id")
+  @@index([status], map: "idx_delivery_status")
+  @@index([assignedAt], map: "idx_delivery_assigned_at")
+  @@map("delivery_assignment")
 }
 
 // ============================================
-// CONFIGURATION MODELS
+// FINANCIAL
 // ============================================
 
-model DeliveryZone {
-  id               String   @id @default(uuid())
-  name             String
-  governorate      String
-  districts        String[]
-  deliveryFee      Int // IQD
-  estimatedMinutes Int
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+/// Order refunds for returns or cancellations
+/// Tracks partial and full refunds
+model Refund {
+  id        String   @id @default(uuid())
+  /// Order being refunded
+  orderId   String   @map("order_id")
+  /// Refund amount in IQD
+  amountIqd Int      @map("amount_iqd")
+  /// Reason for refund
+  reason    String
+  /// Who processed the refund
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  @@index([governorate])
-  @@map("delivery_zones")
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "idx_refund_order_id")
+  @@index([createdAt], map: "idx_refund_created_at")
+  @@map("refund")
 }
 
+// ============================================
+// AUDIT & LOGGING
+// ============================================
+
+/// Audit log for tracking all critical system mutations
+/// Provides complete traceability for compliance
+model AuditLog {
+  id          String      @id @default(uuid())
+  /// User who performed the action
+  actorUserId String?     @map("actor_user_id")
+  /// Type of entity affected (e.g., "Order", "Product")
+  entityType  String      @map("entity_type")
+  /// ID of the affected entity
+  entityId    String      @map("entity_id")
+  /// Action performed
+  action      AuditAction
+  /// Additional context (JSONB for flexibility)
+  metadata    Json?       @default("{}")
+  /// IP address of the request
+  ipAddress   String?     @map("ip_address")
+  /// User agent string
+  userAgent   String?     @map("user_agent")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId], map: "idx_audit_actor_user_id")
+  @@index([entityType, entityId], map: "idx_audit_entity")
+  @@index([action], map: "idx_audit_action")
+  @@index([createdAt], map: "idx_audit_created_at")
+  @@map("audit_log")
+}
+
+// ============================================
+// SYSTEM CONFIGURATION
+// ============================================
+
+/// Key-value store for system settings
+/// Used for configurable parameters without code changes
 model Setting {
   id        String   @id @default(uuid())
+  /// Unique setting key (e.g., "delivery_fee_iqd")
   key       String   @unique
+  /// Setting value (JSON for flexibility)
   value     Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  /// Description of the setting
+  description String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("settings")
+  @@map("setting")
 }

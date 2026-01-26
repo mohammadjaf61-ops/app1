@@ -2,22 +2,18 @@
  * Order-related types
  */
 
-import type { BaseEntity, MoneyAmount, DeliveryAddress } from '../common';
-import type { Product, StoreLocation } from '../product';
+import type { BaseEntity } from '../common';
 
 /**
  * Order status
  */
 export enum OrderStatus {
   PENDING = 'PENDING', // قيد الانتظار
-  CONFIRMED = 'CONFIRMED', // مؤكد
   PICKING = 'PICKING', // قيد التجهيز
-  PICKED = 'PICKED', // تم التجهيز
-  READY_FOR_DELIVERY = 'READY_FOR_DELIVERY', // جاهز للتوصيل
+  READY = 'READY', // جاهز
   OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY', // في الطريق
   DELIVERED = 'DELIVERED', // تم التوصيل
   CANCELLED = 'CANCELLED', // ملغي
-  REFUNDED = 'REFUNDED', // مسترد
 }
 
 /**
@@ -25,41 +21,28 @@ export enum OrderStatus {
  * COD is primary for Iraq market
  */
 export enum PaymentMethod {
-  CASH_ON_DELIVERY = 'CASH_ON_DELIVERY', // الدفع عند الاستلام
-}
-
-/**
- * Payment status
- */
-export enum PaymentStatus {
-  PENDING = 'PENDING',
-  PAID = 'PAID',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED',
+  COD = 'COD', // الدفع عند الاستلام - Cash on Delivery
 }
 
 /**
  * Order
+ * Note: Customer info stored directly on order (no customer accounts in MVP)
  */
 export interface Order extends BaseEntity {
   orderNumber: string;
-  customerId: string;
   status: OrderStatus;
-  items: OrderItem[];
-  subtotal: MoneyAmount;
-  deliveryFee: MoneyAmount;
-  discount: MoneyAmount;
-  total: MoneyAmount;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddressText: string;
+  subtotal: number; // IQD
+  deliveryFee: number; // IQD
+  total: number; // IQD
   paymentMethod: PaymentMethod;
-  paymentStatus: PaymentStatus;
-  deliveryAddress: DeliveryAddress;
-  notes?: string;
-  pickerId?: string;
-  driverId?: string;
-  pickedAt?: Date;
-  deliveredAt?: Date;
-  cancelledAt?: Date;
-  cancellationReason?: string;
+  isPaid: boolean;
+  notes: string | null;
+  pickerId: string | null;
+  pickedAt: Date | null;
+  deliveredAt: Date | null;
 }
 
 /**
@@ -68,40 +51,27 @@ export interface Order extends BaseEntity {
 export interface OrderItem extends BaseEntity {
   orderId: string;
   productId: string;
-  productSnapshot: OrderProductSnapshot;
+  productNameSnapshot: string;
+  productPriceSnapshot: number; // IQD
   quantity: number;
-  unitPrice: MoneyAmount;
-  totalPrice: MoneyAmount;
-  pickedQuantity?: number;
-  pickingNotes?: string;
+  total: number; // IQD
 }
 
 /**
- * Snapshot of product at time of order
- * Preserved for historical accuracy
+ * Order with items
  */
-export interface OrderProductSnapshot {
-  sku: string;
-  name: string;
-  imageUrl?: string;
-  location: StoreLocation;
-}
-
-/**
- * Cart item (client-side)
- */
-export interface CartItem {
-  productId: string;
-  product: Product;
-  quantity: number;
+export interface OrderWithItems extends Order {
+  items: OrderItem[];
 }
 
 /**
  * Create order DTO
  */
 export interface CreateOrderDto {
+  customerName: string;
+  customerPhone: string;
+  deliveryAddressText: string;
   items: CreateOrderItemDto[];
-  deliveryAddressId: string;
   notes?: string;
 }
 
@@ -118,20 +88,11 @@ export interface CreateOrderItemDto {
  */
 export interface OrderFilters {
   status?: OrderStatus;
-  customerId?: string;
   pickerId?: string;
-  driverId?: string;
   dateFrom?: Date;
   dateTo?: Date;
   search?: string;
-}
-
-/**
- * Picker order view with location info
- */
-export interface PickerOrderItem extends OrderItem {
-  location: StoreLocation;
-  isPicked: boolean;
+  isPaid?: boolean;
 }
 
 /**
@@ -140,4 +101,28 @@ export interface PickerOrderItem extends OrderItem {
 export interface UpdateOrderStatusDto {
   status: OrderStatus;
   notes?: string;
+}
+
+/**
+ * Assign picker DTO
+ */
+export interface AssignPickerDto {
+  pickerId: string;
+}
+
+/**
+ * Mark order paid DTO
+ */
+export interface MarkOrderPaidDto {
+  isPaid: boolean;
+}
+
+/**
+ * Order summary for reports
+ */
+export interface OrderSummary {
+  totalOrders: number;
+  totalRevenue: number; // IQD
+  averageOrderValue: number; // IQD
+  ordersByStatus: Record<OrderStatus, number>;
 }

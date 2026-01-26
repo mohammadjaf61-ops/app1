@@ -56,28 +56,11 @@ export interface SortParams {
 }
 
 /**
- * Iraqi Dinar currency formatting
- * Currency code: IQD
- * No decimal places (IQD uses whole numbers)
- */
-export interface MoneyAmount {
-  amount: number;
-  currency: 'IQD';
-}
-
-/**
- * Timestamp fields for audit
+ * Timestamp fields
  */
 export interface Timestamps {
   createdAt: Date;
   updatedAt: Date;
-}
-
-/**
- * Soft delete field
- */
-export interface SoftDelete {
-  deletedAt: Date | null;
 }
 
 /**
@@ -88,38 +71,25 @@ export interface BaseEntity extends Timestamps {
 }
 
 /**
- * Arabic localized content
+ * System setting (key-value store)
  */
-export interface LocalizedContent {
-  ar: string;
-  en?: string;
+export interface Setting {
+  key: string;
+  value: string;
+  updatedAt: Date;
 }
 
 /**
- * Product location in store
- * Used for picker navigation
+ * Common setting keys
  */
-export interface StoreLocation {
-  aisle: string;
-  shelf: string;
-  bin?: string;
-}
-
-/**
- * Text-based delivery address (no maps)
- * Iraq market specific
- */
-export interface DeliveryAddress {
-  governorate: string; // المحافظة
-  district: string; // المنطقة
-  neighborhood: string; // الحي
-  street: string; // الشارع
-  building?: string; // البناية
-  floor?: string; // الطابق
-  apartment?: string; // الشقة
-  landmark?: string; // علامة مميزة
-  notes?: string; // ملاحظات إضافية
-  phoneNumber: string;
+export enum SettingKey {
+  DELIVERY_FEE_IQD = 'delivery_fee_iqd',
+  MIN_ORDER_AMOUNT_IQD = 'min_order_amount_iqd',
+  STORE_NAME_AR = 'store_name_ar',
+  STORE_PHONE = 'store_phone',
+  STORE_ADDRESS_AR = 'store_address_ar',
+  STORE_OPEN_TIME = 'store_open_time',
+  STORE_CLOSE_TIME = 'store_close_time',
 }
 
 /**
