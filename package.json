@@ -1,0 +1,49 @@
+{
+  "name": "hypermarket-platform",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Full hypermarket platform for Iraq market - Admin Web, Customer/Picker/Driver Mobile Apps, and Backend Services",
+  "author": "Hypermarket Team",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "type-check": "pnpm -r type-check",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "prepare": "husky install",
+    "api:dev": "pnpm --filter @hypermarket/api dev",
+    "api:build": "pnpm --filter @hypermarket/api build",
+    "api:start": "pnpm --filter @hypermarket/api start:prod",
+    "admin:dev": "pnpm --filter @hypermarket/admin-web dev",
+    "admin:build": "pnpm --filter @hypermarket/admin-web build",
+    "customer:dev": "pnpm --filter @hypermarket/customer-mobile start",
+    "picker:dev": "pnpm --filter @hypermarket/picker-mobile start",
+    "driver:dev": "pnpm --filter @hypermarket/driver-mobile start",
+    "db:generate": "pnpm --filter @hypermarket/api prisma:generate",
+    "db:migrate": "pnpm --filter @hypermarket/api prisma:migrate",
+    "db:studio": "pnpm --filter @hypermarket/api prisma:studio",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

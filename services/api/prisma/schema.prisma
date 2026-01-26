@@ -1,0 +1,385 @@
+// Hypermarket Platform Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  PICKER
+  DRIVER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+  VAN
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+  DISCONTINUED
+}
+
+enum ProductUnit {
+  PIECE
+  KG
+  GRAM
+  LITER
+  ML
+  PACK
+  BOX
+  DOZEN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PICKING
+  PICKED
+  READY_FOR_DELIVERY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  ARRIVED
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum DeliveryFailureReason {
+  CUSTOMER_UNAVAILABLE
+  WRONG_ADDRESS
+  CUSTOMER_REFUSED
+  PAYMENT_ISSUE
+  OTHER
+}
+
+enum StockUpdateReason {
+  PURCHASE
+  SALE
+  RETURN
+  ADJUSTMENT
+  DAMAGE
+  EXPIRED
+}
+
+// ============================================
+// USER MODELS
+// ============================================
+
+model User {
+  id              String     @id @default(uuid())
+  phoneNumber     String     @unique
+  password        String
+  email           String?
+  firstName       String
+  lastName        String
+  role            UserRole
+  status          UserStatus @default(PENDING_VERIFICATION)
+  isPhoneVerified Boolean    @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  // Role-specific fields
+  employeeId         String?
+  vehicleType        VehicleType?
+  vehiclePlateNumber String?
+  isAvailable        Boolean?
+  permissions        String[]     @default([])
+  isSuperAdmin       Boolean      @default(false)
+
+  // Relations
+  customerAddresses CustomerAddress[]
+  ordersAsCustomer  Order[]           @relation("CustomerOrders")
+  ordersAsPicker    Order[]           @relation("PickerOrders")
+  ordersAsDriver    Order[]           @relation("DriverOrders")
+  deliveries        Delivery[]
+
+  @@index([phoneNumber])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model CustomerAddress {
+  id         String   @id @default(uuid())
+  customerId String
+  label      String // e.g., "المنزل", "العمل"
+  address    Json // DeliveryAddress object
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("customer_addresses")
+}
+
+// ============================================
+// PRODUCT MODELS
+// ============================================
+
+model Category {
+  id            String    @id @default(uuid())
+  nameAr        String
+  nameEn        String?
+  slug          String    @unique
+  descriptionAr String?
+  descriptionEn String?
+  imageUrl      String?
+  parentId      String?
+  sortOrder     Int       @default(0)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Product {
+  id                String        @id @default(uuid())
+  sku               String        @unique
+  barcode           String?
+  nameAr            String
+  nameEn            String?
+  descriptionAr     String?
+  descriptionEn     String?
+  categoryId        String
+  price             Int // IQD (no decimals)
+  compareAtPrice    Int?
+  status            ProductStatus @default(ACTIVE)
+  stockQuantity     Int           @default(0)
+  lowStockThreshold Int           @default(10)
+  // Store location
+  aisle             String
+  shelf             String
+  bin               String?
+  weight            Int? // in grams
+  unit              ProductUnit
+  unitValue         Float
+  isActive          Boolean       @default(true)
+  isFeatured        Boolean       @default(false)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+
+  category     Category       @relation(fields: [categoryId], references: [id])
+  images       ProductImage[]
+  orderItems   OrderItem[]
+  stockHistory StockHistory[]
+
+  @@index([sku])
+  @@index([barcode])
+  @@index([categoryId])
+  @@index([status])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model StockHistory {
+  id        String            @id @default(uuid())
+  productId String
+  quantity  Int
+  reason    StockUpdateReason
+  notes     String?
+  createdBy String?
+  createdAt DateTime          @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([createdAt])
+  @@map("stock_history")
+}
+
+// ============================================
+// ORDER MODELS
+// ============================================
+
+model Order {
+  id                 String        @id @default(uuid())
+  orderNumber        String        @unique
+  customerId         String
+  status             OrderStatus   @default(PENDING)
+  subtotal           Int // IQD
+  deliveryFee        Int // IQD
+  discount           Int           @default(0) // IQD
+  total              Int // IQD
+  paymentMethod      PaymentMethod @default(CASH_ON_DELIVERY)
+  paymentStatus      PaymentStatus @default(PENDING)
+  deliveryAddress    Json // DeliveryAddress object
+  notes              String?
+  pickerId           String?
+  driverId           String?
+  pickedAt           DateTime?
+  deliveredAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  customer User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  picker   User?       @relation("PickerOrders", fields: [pickerId], references: [id])
+  driver   User?       @relation("DriverOrders", fields: [driverId], references: [id])
+  items    OrderItem[]
+  delivery Delivery?
+
+  @@index([orderNumber])
+  @@index([customerId])
+  @@index([status])
+  @@index([pickerId])
+  @@index([driverId])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String   @id @default(uuid())
+  orderId         String
+  productId       String
+  productSnapshot Json // Product details at time of order
+  quantity        Int
+  unitPrice       Int // IQD
+  totalPrice      Int // IQD
+  pickedQuantity  Int?
+  pickingNotes    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// ============================================
+// DELIVERY MODELS
+// ============================================
+
+model Delivery {
+  id                String                 @id @default(uuid())
+  orderId           String                 @unique
+  orderNumber       String
+  driverId          String
+  status            DeliveryStatus         @default(PENDING)
+  deliveryAddress   Json // DeliveryAddress object
+  customerName      String
+  customerPhone     String
+  itemCount         Int
+  totalAmount       Int // IQD
+  collectedAmount   Int? // IQD
+  assignedAt        DateTime
+  pickedUpAt        DateTime?
+  deliveredAt       DateTime?
+  failedAt          DateTime?
+  failureReason     DeliveryFailureReason?
+  failureNotes      String?
+  deliveryNotes     String?
+  customerSignature String? // Base64
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  order  Order @relation(fields: [orderId], references: [id])
+  driver User  @relation(fields: [driverId], references: [id])
+
+  @@index([orderId])
+  @@index([driverId])
+  @@index([status])
+  @@index([assignedAt])
+  @@map("deliveries")
+}
+
+// ============================================
+// CONFIGURATION MODELS
+// ============================================
+
+model DeliveryZone {
+  id               String   @id @default(uuid())
+  name             String
+  governorate      String
+  districts        String[]
+  deliveryFee      Int // IQD
+  estimatedMinutes Int
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([governorate])
+  @@map("delivery_zones")
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

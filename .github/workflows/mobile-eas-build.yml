@@ -1,0 +1,140 @@
+# Hypermarket Platform - Mobile Apps EAS Build
+name: Mobile EAS Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/customer-mobile/**'
+      - 'apps/picker-mobile/**'
+      - 'apps/driver-mobile/**'
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Which app to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - customer-mobile
+          - picker-mobile
+          - driver-mobile
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+      profile:
+        description: 'Build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+
+jobs:
+  build-customer:
+    name: Build Customer App
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.app == 'all' || github.event.inputs.app == 'customer-mobile' || github.event_name == 'push' }}
+    defaults:
+      run:
+        working-directory: apps/customer-mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Android
+        if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android' }}
+        run: eas build --platform android --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
+
+      - name: Build iOS
+        if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios' }}
+        run: eas build --platform ios --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
+
+  build-picker:
+    name: Build Picker App
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.app == 'all' || github.event.inputs.app == 'picker-mobile' || github.event_name == 'push' }}
+    defaults:
+      run:
+        working-directory: apps/picker-mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Android
+        if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android' }}
+        run: eas build --platform android --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
+
+      - name: Build iOS
+        if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios' }}
+        run: eas build --platform ios --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
+
+  build-driver:
+    name: Build Driver App
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.app == 'all' || github.event.inputs.app == 'driver-mobile' || github.event_name == 'push' }}
+    defaults:
+      run:
+        working-directory: apps/driver-mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Android
+        if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android' }}
+        run: eas build --platform android --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive
+
+      - name: Build iOS
+        if: ${{ github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios' }}
+        run: eas build --platform ios --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive

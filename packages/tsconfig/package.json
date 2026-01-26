@@ -1,0 +1,9 @@
+{
+  "name": "@hypermarket/tsconfig",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared TypeScript configurations for the hypermarket platform",
+  "files": [
+    "*.json"
+  ]
+}
