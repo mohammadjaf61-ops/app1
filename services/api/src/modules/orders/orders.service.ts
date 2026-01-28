@@ -2,6 +2,7 @@ import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 
+import { SettingsService, SETTINGS_KEYS } from '@/modules/settings';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -11,7 +12,10 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settingsService: SettingsService,
+  ) {}
 
   /**
    * Get all orders with filters and pagination
@@ -181,11 +185,8 @@ export class OrdersService {
    * Create a new order
    */
   async create(dto: CreateOrderDto) {
-    // Get delivery fee from settings
-    const deliveryFeeSetting = await this.prisma.setting.findUnique({
-      where: { key: 'delivery_fee_iqd' },
-    });
-    const deliveryFee = deliveryFeeSetting ? parseInt(deliveryFeeSetting.value, 10) : 5000;
+    // Get delivery fee from settings (cached)
+    const deliveryFee = await this.settingsService.getNumber(SETTINGS_KEYS.DELIVERY_FEE_IQD);
 
     // Get products and calculate totals
     const productIds = dto.items.map((item) => item.productId);

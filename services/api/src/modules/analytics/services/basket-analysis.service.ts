@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { SettingsService, SETTINGS_KEYS } from '../../settings';
 
 import { AiGovernanceService } from './ai-governance.service';
 
@@ -24,13 +25,19 @@ export class BasketAnalysisService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly governance: AiGovernanceService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   /**
    * Perform basket analysis to find frequently co-purchased products
    */
-  async analyzeBaskets(periodDays: number = 30): Promise<number> {
+  async analyzeBaskets(periodDaysOverride?: number): Promise<number> {
     const startTime = Date.now();
+
+    // Get period days from settings or use override
+    const periodDays =
+      periodDaysOverride ?? (await this.settingsService.getNumber(SETTINGS_KEYS.BASKET_PERIOD_DAYS));
+
     this.logger.log(`Analyzing baskets for last ${periodDays} days`);
 
     const periodStart = new Date();

@@ -1,7 +1,7 @@
 import { Process, Processor } from '@nestjs/bull';
-import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 
+import { RequestContext, StructuredLogger } from '../../../common/observability';
 import { AggregationService } from '../services/aggregation.service';
 import { AiGovernanceService } from '../services/ai-governance.service';
 import { AnomalyDetectionService } from '../services/anomaly-detection.service';
@@ -11,7 +11,15 @@ import { ReorderService } from '../services/reorder.service';
 
 @Processor('analytics')
 export class AnalyticsProcessor {
-  private readonly logger = new Logger(AnalyticsProcessor.name);
+  private readonly logger = new StructuredLogger(AnalyticsProcessor.name);
+
+  /**
+   * Run job within a RequestContext for proper logging
+   */
+  private async runWithContext<T>(jobName: string, jobId: string, fn: () => Promise<T>): Promise<T> {
+    const context = RequestContext.createJobContext(jobName, jobId);
+    return RequestContext.runAsync(context, fn);
+  }
 
   constructor(
     private readonly aggregation: AggregationService,
@@ -24,41 +32,44 @@ export class AnalyticsProcessor {
 
   @Process('daily-sales-aggregation')
   async handleDailySalesAggregation(job: Job) {
-    const startedAt = new Date();
     const jobName = 'daily-sales-aggregation';
+    return this.runWithContext(jobName, job.id?.toString() || '', async () => {
+      const startedAt = new Date();
+      this.logger.log('Job started', { jobName, jobId: job.id });
 
-    this.logger.log(`Processing ${jobName}`);
+      try {
+        const date = job.data.date ? new Date(job.data.date) : new Date();
 
-    try {
-      const date = job.data.date ? new Date(job.data.date) : new Date();
+        // Compute daily sales
+        const orderCount = await this.aggregation.computeDailySales(date);
 
-      // Compute daily sales
-      const orderCount = await this.aggregation.computeDailySales(date);
+        // Compute category sales
+        const categoryCount = await this.aggregation.computeCategorySales(date);
 
-      // Compute category sales
-      const categoryCount = await this.aggregation.computeCategorySales(date);
+        // Refresh materialized views
+        await this.aggregation.refreshMaterializedViews();
 
-      // Refresh materialized views
-      await this.aggregation.refreshMaterializedViews();
+        await this.governance.logJobExecution(jobName, 'COMPLETED', {
+          startedAt,
+          completedAt: new Date(),
+          recordsProcessed: orderCount + categoryCount,
+          metadata: { date: date.toISOString() },
+        });
 
-      await this.governance.logJobExecution(jobName, 'COMPLETED', {
-        startedAt,
-        completedAt: new Date(),
-        recordsProcessed: orderCount + categoryCount,
-        metadata: { date: date.toISOString() },
-      });
-
-      return { orderCount, categoryCount };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      await this.governance.logJobExecution(jobName, 'FAILED', {
-        startedAt,
-        completedAt: new Date(),
-        errorMessage: error.message,
-        errorStack: error.stack,
-      });
-      throw error;
-    }
+        this.logger.log('Job completed', { jobName, orderCount, categoryCount });
+        return { orderCount, categoryCount };
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        this.logger.error('Job failed', error.stack, { jobName, error: error.message });
+        await this.governance.logJobExecution(jobName, 'FAILED', {
+          startedAt,
+          completedAt: new Date(),
+          errorMessage: error.message,
+          errorStack: error.stack,
+        });
+        throw error;
+      }
+    });
   }
 
   @Process('product-analytics')

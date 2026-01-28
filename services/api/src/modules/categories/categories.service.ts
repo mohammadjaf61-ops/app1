@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { CacheService, CACHE_KEYS, CACHE_TTL, createCacheKey } from '@/modules/cache';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -15,18 +16,87 @@ export interface CategoryTree {
   children: CategoryTree[];
 }
 
+export interface CategoryWithRelations {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  slug: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  imageUrl: string | null;
+  parentId: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+  parent: {
+    id: string;
+    nameAr: string;
+    nameEn: string | null;
+    slug: string;
+  } | null;
+  children: Array<{
+    id: string;
+    nameAr: string;
+    nameEn: string | null;
+    slug: string;
+  }>;
+}
+
+export interface CategoryBase {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  slug: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  imageUrl: string | null;
+  parentId: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(CategoriesService.name);
 
-  async findAll() {
-    return this.prisma.category.findMany({
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
+
+  async findAll(): Promise<CategoryBase[]> {
+    const cacheKey = CACHE_KEYS.CATEGORIES_LIST;
+
+    // Try cache first
+    const cached = await this.cacheService.get<CategoryBase[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const categories = await this.prisma.category.findMany({
       where: { deletedAt: null, isActive: true },
       orderBy: [{ sortOrder: 'asc' }, { nameAr: 'asc' }],
     });
+
+    await this.cacheService.set(cacheKey, categories, CACHE_TTL.CATEGORIES_LIST);
+
+    return categories;
   }
 
   async getTree(): Promise<CategoryTree[]> {
+    const cacheKey = CACHE_KEYS.CATEGORIES_TREE;
+
+    // Try cache first
+    const cached = await this.cacheService.get<CategoryTree[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const categories = await this.prisma.category.findMany({
       where: { deletedAt: null, isActive: true },
       orderBy: [{ sortOrder: 'asc' }, { nameAr: 'asc' }],
@@ -36,8 +106,7 @@ export class CategoriesService {
     const map = new Map<string, CategoryTree>();
     const roots: CategoryTree[] = [];
 
-    type CategoryRecord = (typeof categories)[number];
-    categories.forEach((cat: CategoryRecord) => {
+    for (const cat of categories) {
       map.set(cat.id, {
         id: cat.id,
         nameAr: cat.nameAr,
@@ -47,7 +116,7 @@ export class CategoriesService {
         sortOrder: cat.sortOrder,
         children: [],
       });
-    });
+    }
 
     map.forEach((cat) => {
       if (cat.parentId) {
@@ -60,16 +129,33 @@ export class CategoriesService {
       }
     });
 
+    await this.cacheService.set(cacheKey, roots, CACHE_TTL.CATEGORIES_TREE);
+
     return roots;
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<CategoryWithRelations> {
+    const cacheKey = createCacheKey(CACHE_KEYS.CATEGORY_BY_ID, id);
+
+    // Try cache first
+    const cached = await this.cacheService.get<CategoryWithRelations>(cacheKey);
+    if (cached) {
+      if (cached.deletedAt) {
+        await this.cacheService.del(cacheKey);
+        throw new NotFoundException('التصنيف غير موجود');
+      }
+      return cached;
+    }
+
     const category = await this.prisma.category.findUnique({
       where: { id },
       include: {
-        parent: true,
+        parent: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
         children: {
           where: { deletedAt: null, isActive: true },
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
         },
       },
     });
@@ -78,16 +164,33 @@ export class CategoriesService {
       throw new NotFoundException('التصنيف غير موجود');
     }
 
-    return category;
+    await this.cacheService.set(cacheKey, category, CACHE_TTL.CATEGORY_DETAIL);
+
+    return category as CategoryWithRelations;
   }
 
-  async findBySlug(slug: string) {
+  async findBySlug(slug: string): Promise<CategoryWithRelations> {
+    const cacheKey = createCacheKey(CACHE_KEYS.CATEGORY_BY_SLUG, slug);
+
+    // Try cache first
+    const cached = await this.cacheService.get<CategoryWithRelations>(cacheKey);
+    if (cached) {
+      if (cached.deletedAt) {
+        await this.cacheService.del(cacheKey);
+        throw new NotFoundException('التصنيف غير موجود');
+      }
+      return cached;
+    }
+
     const category = await this.prisma.category.findUnique({
       where: { slug },
       include: {
-        parent: true,
+        parent: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
         children: {
           where: { deletedAt: null, isActive: true },
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
         },
       },
     });
@@ -96,11 +199,13 @@ export class CategoriesService {
       throw new NotFoundException('التصنيف غير موجود');
     }
 
-    return category;
+    await this.cacheService.set(cacheKey, category, CACHE_TTL.CATEGORY_DETAIL);
+
+    return category as CategoryWithRelations;
   }
 
   async create(dto: CreateCategoryDto) {
-    return this.prisma.category.create({
+    const category = await this.prisma.category.create({
       data: {
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
@@ -113,24 +218,68 @@ export class CategoriesService {
         isActive: dto.isActive ?? true,
       },
     });
+
+    this.logger.log(`Category created: ${category.id}`);
+
+    // Invalidate list and tree caches
+    await this.invalidateListCaches();
+
+    return category;
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
-    await this.findById(id);
+    const existing = await this.findById(id);
 
-    return this.prisma.category.update({
+    const category = await this.prisma.category.update({
       where: { id },
       data: dto,
     });
+
+    this.logger.log(`Category updated: ${id}`);
+
+    // Invalidate all related caches
+    await Promise.all([
+      this.invalidateListCaches(),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATEGORY_BY_ID, id)),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATEGORY_BY_SLUG, existing.slug)),
+      // If slug changed, also invalidate new slug
+      dto.slug && dto.slug !== existing.slug
+        ? this.cacheService.del(createCacheKey(CACHE_KEYS.CATEGORY_BY_SLUG, dto.slug))
+        : Promise.resolve(true),
+    ]);
+
+    return category;
   }
 
   async delete(id: string) {
-    await this.findById(id);
+    const existing = await this.findById(id);
 
     // Soft delete
-    return this.prisma.category.update({
+    const category = await this.prisma.category.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    this.logger.log(`Category deleted: ${id}`);
+
+    // Invalidate all related caches
+    await Promise.all([
+      this.invalidateListCaches(),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATEGORY_BY_ID, id)),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATEGORY_BY_SLUG, existing.slug)),
+    ]);
+
+    return category;
+  }
+
+  /**
+   * Invalidate list and tree caches
+   * Called after any category mutation
+   */
+  private async invalidateListCaches(): Promise<void> {
+    await Promise.all([
+      this.cacheService.del(CACHE_KEYS.CATEGORIES_LIST),
+      this.cacheService.del(CACHE_KEYS.CATEGORIES_TREE),
+    ]);
   }
 }

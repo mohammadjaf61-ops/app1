@@ -1,0 +1,28 @@
+{
+  "name": "@hypermarket/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared Zod schemas and type contracts for the hypermarket platform",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@hypermarket/eslint-config": "workspace:*",
+    "@hypermarket/tsconfig": "workspace:*",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.0"
+  }
+}
