@@ -1,5 +1,35 @@
 import * as SecureStore from 'expo-secure-store';
+
 import { API_URL, STORAGE_KEYS } from './constants';
+
+interface UserProfile {
+  id: string;
+  phone: string;
+  fullName: string | null;
+  role: string;
+}
+
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: UserProfile;
+}
+
+interface DeliveryOrder {
+  id: string;
+  orderNumber: string;
+  status: string;
+  total: number;
+  createdAt: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryAddressText: string;
+  items: Array<{
+    id: string;
+    productId: string;
+    quantity: number;
+  }>;
+}
 
 class ApiClient {
   private baseUrl: string;
@@ -22,19 +52,16 @@ class ApiClient {
     this.accessToken = token;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.accessToken) {
-      (headers as any)['Authorization'] = `Bearer ${this.accessToken}`;
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
     try {
@@ -50,8 +77,8 @@ class ApiClient {
       }
 
       return data;
-    } catch (error: any) {
-      if (error.message === 'Network request failed') {
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Network request failed') {
         throw new Error('لا يوجد اتصال بالإنترنت');
       }
       throw error;
@@ -67,60 +94,53 @@ class ApiClient {
   }
 
   async verifyOtp(phone: string, code: string) {
-    return this.request<{
-      accessToken: string;
-      refreshToken: string;
-      user: any;
-    }>('/auth/verify-otp', {
+    return this.request<AuthResponse>('/auth/verify-otp', {
       method: 'POST',
       body: JSON.stringify({ phone, code }),
     });
   }
 
   async refreshToken(refreshToken: string) {
-    return this.request<{
-      accessToken: string;
-      refreshToken: string;
-    }>('/auth/refresh', {
+    return this.request<{ accessToken: string; refreshToken: string }>('/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     });
   }
 
   async getProfile() {
-    return this.request<any>('/auth/me');
+    return this.request<UserProfile>('/auth/me');
   }
 
   // Driver delivery endpoints
   async getAssignedDeliveries() {
-    return this.request<any[]>('/orders/driver/assigned');
+    return this.request<DeliveryOrder[]>('/orders/driver/assigned');
   }
 
   async getDelivery(orderId: string) {
-    return this.request<any>(`/orders/${orderId}`);
+    return this.request<DeliveryOrder>(`/orders/${orderId}`);
   }
 
   async confirmPickup(orderId: string) {
-    return this.request<any>(`/orders/${orderId}/pickup`, {
+    return this.request<DeliveryOrder>(`/orders/${orderId}/pickup`, {
       method: 'POST',
     });
   }
 
   async startDelivery(orderId: string) {
-    return this.request<any>(`/orders/${orderId}/start-delivery`, {
+    return this.request<DeliveryOrder>(`/orders/${orderId}/start-delivery`, {
       method: 'POST',
     });
   }
 
   async completeDelivery(orderId: string, notes?: string) {
-    return this.request<any>(`/orders/${orderId}/complete-delivery`, {
+    return this.request<DeliveryOrder>(`/orders/${orderId}/complete-delivery`, {
       method: 'POST',
       body: JSON.stringify({ notes }),
     });
   }
 
   async failDelivery(orderId: string, reason: string, notes?: string) {
-    return this.request<any>(`/orders/${orderId}/fail-delivery`, {
+    return this.request<DeliveryOrder>(`/orders/${orderId}/fail-delivery`, {
       method: 'POST',
       body: JSON.stringify({ reason, notes }),
     });

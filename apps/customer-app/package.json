@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
+    "@hypermarket/contracts": "workspace:*",
     "@hypermarket/mobile-core": "workspace:*",
     "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",

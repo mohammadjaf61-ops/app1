@@ -1,7 +1,7 @@
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
   extends: [require.resolve('./index.js'), 'next/core-web-vitals'],
-  plugins: ['react', 'react-hooks'],
+  plugins: ['react'],
   env: {
     browser: true,
     node: true,

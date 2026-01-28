@@ -1,27 +1,15 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
-import { RootStackParamList } from '@/navigation/RootNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-interface Category {
-  id: string;
-  nameAr: string;
-  descriptionAr?: string;
-}
 
 export function CategoriesScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -33,22 +21,20 @@ export function CategoriesScreen() {
     limit: 20,
   });
 
-  const products = (productsData as any)?.data || productsData || [];
+  const products = productsData?.data ?? [];
 
   return (
     <ScreenWrapper>
       {/* Header */}
       <View className="bg-white px-4 pt-12 pb-4 border-b border-gray-100">
-        <Text className="text-2xl font-bold text-gray-900 text-right">
-          الأقسام
-        </Text>
+        <Text className="text-2xl font-bold text-gray-900 text-right">الأقسام</Text>
       </View>
 
       <View className="flex-1 flex-row">
         {/* Categories Sidebar */}
         <View className="w-24 bg-white border-l border-gray-100">
           <FlatList
-            data={categories as Category[]}
+            data={categories ?? []}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
@@ -99,9 +85,7 @@ export function CategoriesScreen() {
                 </View>
                 <Text
                   className={`text-xs text-center ${
-                    selectedCategory === item.id
-                      ? 'text-primary font-bold'
-                      : 'text-gray-600'
+                    selectedCategory === item.id ? 'text-primary font-bold' : 'text-gray-600'
                   }`}
                   numberOfLines={2}
                 >
@@ -121,19 +105,17 @@ export function CategoriesScreen() {
           ) : (
             <FlatList
               data={products}
-              keyExtractor={(item: any) => item.id}
+              keyExtractor={(item) => item.id}
               numColumns={2}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ padding: 8 }}
               columnWrapperStyle={{ justifyContent: 'space-between' }}
               ItemSeparatorComponent={() => <View className="h-3" />}
-              renderItem={({ item }: any) => (
+              renderItem={({ item }) => (
                 <View className="w-[48%]">
                   <ProductCard
                     product={item}
-                    onPress={() =>
-                      navigation.navigate('Product', { productId: item.id })
-                    }
+                    onPress={() => navigation.navigate('Product', { productId: item.id })}
                   />
                 </View>
               )}
