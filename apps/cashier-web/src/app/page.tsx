@@ -1,7 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Barcode, Minus, Plus, ShoppingCart, Trash2, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  Barcode,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Trash2,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
 
 import { posApi, PosOrderResponse } from '@/lib/api';
 import { useCart, CartItem } from '@/hooks/use-cart';
@@ -172,9 +181,7 @@ export default function PosPage() {
                 required
               />
             </div>
-            {loginError && (
-              <div className="text-red-500 text-sm text-center">{loginError}</div>
-            )}
+            {loginError && <div className="text-red-500 text-sm text-center">{loginError}</div>}
             <button
               type="submit"
               disabled={isLoading}
@@ -208,7 +215,9 @@ export default function PosPage() {
             <div className="border-t pt-4 space-y-2">
               {lastOrder.items.map((item, idx) => (
                 <div key={idx} className="flex justify-between text-sm">
-                  <span>{item.nameAr} x{item.quantity}</span>
+                  <span>
+                    {item.nameAr} x{item.quantity}
+                  </span>
                   <span>{item.totalIqd.toLocaleString()} د.ع</span>
                 </div>
               ))}
@@ -229,9 +238,7 @@ export default function PosPage() {
             بيع جديد (Enter)
           </button>
 
-          <p className="text-center text-sm text-gray-500 mt-4">
-            اضغط Enter لبدء بيع جديد
-          </p>
+          <p className="text-center text-sm text-gray-500 mt-4">اضغط Enter لبدء بيع جديد</p>
         </div>
       </div>
     );
@@ -354,10 +361,18 @@ export default function PosPage() {
           <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-500">
             <p className="font-medium mb-2">اختصارات لوحة المفاتيح:</p>
             <ul className="space-y-1">
-              <li><kbd className="bg-gray-200 px-1 rounded">Enter</kbd> إضافة المنتج</li>
-              <li><kbd className="bg-gray-200 px-1 rounded">F12</kbd> دفع</li>
-              <li><kbd className="bg-gray-200 px-1 rounded">Esc</kbd> مسح السلة</li>
-              <li><kbd className="bg-gray-200 px-1 rounded">F2</kbd> التركيز على الباركود</li>
+              <li>
+                <kbd className="bg-gray-200 px-1 rounded">Enter</kbd> إضافة المنتج
+              </li>
+              <li>
+                <kbd className="bg-gray-200 px-1 rounded">F12</kbd> دفع
+              </li>
+              <li>
+                <kbd className="bg-gray-200 px-1 rounded">Esc</kbd> مسح السلة
+              </li>
+              <li>
+                <kbd className="bg-gray-200 px-1 rounded">F2</kbd> التركيز على الباركود
+              </li>
             </ul>
           </div>
         </div>
@@ -390,17 +405,11 @@ function CartItemRow({
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          onClick={onDecrement}
-          className="p-1 rounded bg-gray-200 hover:bg-gray-300"
-        >
+        <button onClick={onDecrement} className="p-1 rounded bg-gray-200 hover:bg-gray-300">
           <Minus className="w-4 h-4" />
         </button>
         <span className="w-8 text-center font-medium">{item.quantity}</span>
-        <button
-          onClick={onIncrement}
-          className="p-1 rounded bg-gray-200 hover:bg-gray-300"
-        >
+        <button onClick={onIncrement} className="p-1 rounded bg-gray-200 hover:bg-gray-300">
           <Plus className="w-4 h-4" />
         </button>
       </div>
@@ -410,10 +419,7 @@ function CartItemRow({
         <p className="text-xs text-gray-500">د.ع</p>
       </div>
 
-      <button
-        onClick={onRemove}
-        className="p-1 rounded text-red-500 hover:bg-red-50"
-      >
+      <button onClick={onRemove} className="p-1 rounded text-red-500 hover:bg-red-50">
         <Trash2 className="w-4 h-4" />
       </button>
     </div>

@@ -74,7 +74,8 @@ async function bootstrap(): Promise<void> {
   if (configService.get<string>('NODE_ENV') !== 'production') {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Hypermarket API')
-      .setDescription(`
+      .setDescription(
+        `
 # واجهة برمجة تطبيقات الهايبرماركت
 
 API documentation for the Hypermarket platform.
@@ -103,7 +104,8 @@ All errors follow a standard format:
 | RESOURCE_NOT_FOUND | المورد غير موجود |
 | INVENTORY_OUT_OF_STOCK | المنتج غير متوفر |
 | ORDER_PRICE_CHANGED | تغير سعر المنتج |
-      `)
+      `,
+      )
       .setVersion('1.0')
       .setContact('Hypermarket Team', '', 'support@hypermarket.iq')
       .addBearerAuth(

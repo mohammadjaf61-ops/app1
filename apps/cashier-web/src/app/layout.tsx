@@ -8,11 +8,7 @@ export const metadata: Metadata = {
   description: 'نظام نقطة البيع للهايبر ماركت',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
       <body className="font-sans antialiased">

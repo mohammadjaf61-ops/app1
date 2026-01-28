@@ -36,7 +36,8 @@ export class BasketAnalysisService {
 
     // Get period days from settings or use override
     const periodDays =
-      periodDaysOverride ?? (await this.settingsService.getNumber(SETTINGS_KEYS.BASKET_PERIOD_DAYS));
+      periodDaysOverride ??
+      (await this.settingsService.getNumber(SETTINGS_KEYS.BASKET_PERIOD_DAYS));
 
     this.logger.log(`Analyzing baskets for last ${periodDays} days`);
 

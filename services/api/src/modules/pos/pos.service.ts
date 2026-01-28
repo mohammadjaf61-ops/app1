@@ -1,8 +1,4 @@
-import {
-  OrderStatus,
-  PaymentMethod,
-  PaymentStatus,
-} from '@hypermarket/shared-types';
+import { OrderStatus, PaymentMethod, PaymentStatus } from '@hypermarket/shared-types';
 import { Prisma } from '@prisma/client';
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 
@@ -93,10 +89,7 @@ export class PosService {
    * Create a POS order with instant payment and inventory deduction
    * This is a single transaction for speed and consistency
    */
-  async createOrder(
-    dto: CreatePosOrderDto,
-    cashierId: string,
-  ): Promise<PosOrderResponseDto> {
+  async createOrder(dto: CreatePosOrderDto, cashierId: string): Promise<PosOrderResponseDto> {
     const startTime = Date.now();
 
     // 1. Look up all products by SKU
@@ -336,13 +329,19 @@ export class PosService {
     return {
       id: order.id,
       orderNumber: order.orderNumber,
-      items: order.items.map((item: { product: { sku: string; nameAr: string }; quantity: number; unitPriceIqd: number }) => ({
-        sku: item.product.sku,
-        nameAr: item.product.nameAr,
-        quantity: item.quantity,
-        unitPriceIqd: item.unitPriceIqd,
-        totalIqd: item.quantity * item.unitPriceIqd,
-      })),
+      items: order.items.map(
+        (item: {
+          product: { sku: string; nameAr: string };
+          quantity: number;
+          unitPriceIqd: number;
+        }) => ({
+          sku: item.product.sku,
+          nameAr: item.product.nameAr,
+          quantity: item.quantity,
+          unitPriceIqd: item.unitPriceIqd,
+          totalIqd: item.quantity * item.unitPriceIqd,
+        }),
+      ),
       subtotalIqd: order.totalAmountIqd,
       totalIqd: order.totalAmountIqd,
       paymentStatus: order.payment?.status || 'UNKNOWN',
@@ -424,13 +423,22 @@ export class PosService {
       },
     });
 
-    return orders.map((order: { id: string; orderNumber: string; totalAmountIqd: number; status: string; createdAt: Date; _count: { items: number } }) => ({
-      id: order.id,
-      orderNumber: order.orderNumber,
-      totalIqd: order.totalAmountIqd,
-      status: order.status,
-      itemCount: order._count.items,
-      createdAt: order.createdAt,
-    }));
+    return orders.map(
+      (order: {
+        id: string;
+        orderNumber: string;
+        totalAmountIqd: number;
+        status: string;
+        createdAt: Date;
+        _count: { items: number };
+      }) => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        totalIqd: order.totalAmountIqd,
+        status: order.status,
+        itemCount: order._count.items,
+        createdAt: order.createdAt,
+      }),
+    );
   }
 }

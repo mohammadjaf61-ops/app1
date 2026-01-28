@@ -55,9 +55,7 @@ class ApiClient {
 
     // Extract requestId from response headers for debugging
     const requestId =
-      response.headers.get('x-request-id') ||
-      response.headers.get('x-correlation-id') ||
-      undefined;
+      response.headers.get('x-request-id') || response.headers.get('x-correlation-id') || undefined;
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

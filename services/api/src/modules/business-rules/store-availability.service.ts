@@ -99,7 +99,7 @@ export class StoreAvailabilityService {
    */
   async getStoreHoursForDay(day: DayOfWeek): Promise<StoreHoursInfo | null> {
     const allHours = await this.getAllStoreHours();
-    return allHours.find(h => h.dayOfWeek === day) ?? null;
+    return allHours.find((h) => h.dayOfWeek === day) ?? null;
   }
 
   /**
@@ -217,7 +217,7 @@ export class StoreAvailabilityService {
       nextDate.setDate(nextDate.getDate() + i);
       const dayOfWeek = JS_DAY_TO_ENUM[nextDate.getDay()];
 
-      const hours = allHours.find(h => h.dayOfWeek === dayOfWeek);
+      const hours = allHours.find((h) => h.dayOfWeek === dayOfWeek);
       if (hours && !hours.isClosed) {
         return {
           nextOpenDay: dayOfWeek,

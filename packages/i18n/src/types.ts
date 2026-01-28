@@ -51,9 +51,7 @@ export type TranslationNamespace = keyof TranslationResources;
  * Example: 'common.loading' | 'auth.login' | etc.
  */
 export type TranslationKey<NS extends TranslationNamespace = TranslationNamespace> =
-  NS extends keyof TranslationResources
-    ? `${NS}.${StringKeyOf<TranslationResources[NS]>}`
-    : never;
+  NS extends keyof TranslationResources ? `${NS}.${StringKeyOf<TranslationResources[NS]>}` : never;
 
 /**
  * Helper type to get string keys of an object (excluding nested objects for simplicity)
@@ -71,10 +69,7 @@ export interface InterpolationParams {
 /**
  * Translation function type
  */
-export type TranslateFunction = (
-  key: string,
-  params?: InterpolationParams
-) => string;
+export type TranslateFunction = (key: string, params?: InterpolationParams) => string;
 
 /**
  * i18n configuration options

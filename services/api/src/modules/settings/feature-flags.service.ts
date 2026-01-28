@@ -67,11 +67,7 @@ export class FeatureFlagsService {
   /**
    * Run a function only if feature is enabled, with fallback
    */
-  async runIfEnabledOr<T>(
-    flag: FeatureFlagKey,
-    fn: () => Promise<T>,
-    fallback: T,
-  ): Promise<T> {
+  async runIfEnabledOr<T>(flag: FeatureFlagKey, fn: () => Promise<T>, fallback: T): Promise<T> {
     if (await this.isEnabled(flag)) {
       return fn();
     }

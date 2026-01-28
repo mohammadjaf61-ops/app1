@@ -12,10 +12,7 @@ import type { InterpolationParams } from './types';
  * interpolate('Hello {{name}}!', { name: 'World' }) // 'Hello World!'
  * interpolate('{{count}} items', { count: 5 }) // '5 items'
  */
-export function interpolate(
-  text: string,
-  params?: InterpolationParams
-): string {
+export function interpolate(text: string, params?: InterpolationParams): string {
   if (!params) return text;
 
   return text.replace(/\{\{(\w+)\}\}/g, (_, key) => {
@@ -32,7 +29,7 @@ export function interpolate(
  */
 export function getNestedValue<T = string>(
   obj: Record<string, unknown>,
-  path: string
+  path: string,
 ): T | undefined {
   const keys = path.split('.');
   let current: unknown = obj;
@@ -56,7 +53,7 @@ export function getNestedValue<T = string>(
 export function formatNumber(
   value: number,
   locale: string,
-  options?: Intl.NumberFormatOptions
+  options?: Intl.NumberFormatOptions,
 ): string {
   return new Intl.NumberFormat(locale, options).format(value);
 }
@@ -64,10 +61,7 @@ export function formatNumber(
 /**
  * Format currency (IQD - Iraqi Dinar)
  */
-export function formatCurrency(
-  value: number,
-  locale: string = 'ar-IQ'
-): string {
+export function formatCurrency(value: number, locale: string = 'ar-IQ'): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'IQD',
@@ -82,7 +76,7 @@ export function formatCurrency(
 export function formatDate(
   date: Date | string | number,
   locale: string,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ): string {
   const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
   return new Intl.DateTimeFormat(locale, options).format(d);
@@ -91,10 +85,7 @@ export function formatDate(
 /**
  * Format relative time (e.g., "2 days ago")
  */
-export function formatRelativeTime(
-  date: Date | string | number,
-  locale: string = 'ar'
-): string {
+export function formatRelativeTime(date: Date | string | number, locale: string = 'ar'): string {
   const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();

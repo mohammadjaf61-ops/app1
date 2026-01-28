@@ -7,13 +7,7 @@ import { BaseEntitySchema } from './common';
 /**
  * User roles enum
  */
-export const UserRoleSchema = z.enum([
-  'ADMIN',
-  'MANAGER',
-  'PICKER',
-  'DRIVER',
-  'CASHIER',
-]);
+export const UserRoleSchema = z.enum(['ADMIN', 'MANAGER', 'PICKER', 'DRIVER', 'CASHIER']);
 
 export type UserRole = z.infer<typeof UserRoleSchema>;
 

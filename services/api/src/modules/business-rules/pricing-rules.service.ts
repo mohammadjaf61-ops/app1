@@ -97,10 +97,7 @@ export class PricingRulesService {
   /**
    * Validate minimum order amount for a zone
    */
-  async validateMinOrder(
-    totalAmountIqd: number,
-    zoneId: string,
-  ): Promise<PricingValidationResult> {
+  async validateMinOrder(totalAmountIqd: number, zoneId: string): Promise<PricingValidationResult> {
     const zone = await this.getDeliveryZoneById(zoneId);
 
     if (!zone) {

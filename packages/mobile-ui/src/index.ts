@@ -9,7 +9,12 @@ export { Input } from './components/Input';
 export type { InputProps, InputSize } from './components/Input';
 
 // Loading States (Micro-interaction #3)
-export { Skeleton, SkeletonCard, SkeletonListItem, SkeletonProductGrid } from './components/Skeleton';
+export {
+  Skeleton,
+  SkeletonCard,
+  SkeletonListItem,
+  SkeletonProductGrid,
+} from './components/Skeleton';
 export type { SkeletonProps } from './components/Skeleton';
 
 // Animations & Micro-interactions

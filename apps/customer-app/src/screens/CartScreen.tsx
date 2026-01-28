@@ -68,10 +68,12 @@ export function CartScreen() {
             <Ionicons name="cart-outline" size={48} color="#9ca3af" />
           </View>
           <Text className="text-xl font-bold text-gray-900 mb-2">{t('cart.emptyCart')}</Text>
-          <Text className="text-gray-500 text-center mb-6">
-            {t('cart.emptyCartMessage')}
-          </Text>
-          <Button title={t('cart.startShopping')} onPress={() => navigation.navigate('Main')} size="lg" />
+          <Text className="text-gray-500 text-center mb-6">{t('cart.emptyCartMessage')}</Text>
+          <Button
+            title={t('cart.startShopping')}
+            onPress={() => navigation.navigate('Main')}
+            size="lg"
+          />
         </View>
       </ScreenWrapper>
     );

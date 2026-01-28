@@ -15,13 +15,7 @@ export type {
   I18nConfig,
 } from './types';
 
-export {
-  DEFAULT_LOCALE,
-  LOCALES,
-  DEFAULT_I18N_CONFIG,
-  getLocaleDirection,
-  isRtl,
-} from './types';
+export { DEFAULT_LOCALE, LOCALES, DEFAULT_I18N_CONFIG, getLocaleDirection, isRtl } from './types';
 
 // Utilities
 export {

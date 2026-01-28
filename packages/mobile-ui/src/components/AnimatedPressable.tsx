@@ -83,7 +83,9 @@ export function AnimatedPressable({
 
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} {...props}>
-      <Animated.View style={[style, { transform: [{ scale: scaleValue }] }]}>{children}</Animated.View>
+      <Animated.View style={[style, { transform: [{ scale: scaleValue }] }]}>
+        {children}
+      </Animated.View>
     </Pressable>
   );
 }

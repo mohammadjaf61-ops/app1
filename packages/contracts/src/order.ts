@@ -127,9 +127,11 @@ export const OrderSchema = BaseEntitySchema.extend({
   picker: UserRefSchema.nullable().optional(),
   items: z.array(OrderItemSchema).optional(),
   deliveryAssignment: DeliveryAssignmentSchema.nullable().optional(),
-  _count: z.object({
-    items: z.number(),
-  }).optional(),
+  _count: z
+    .object({
+      items: z.number(),
+    })
+    .optional(),
 });
 
 export type Order = z.infer<typeof OrderSchema>;

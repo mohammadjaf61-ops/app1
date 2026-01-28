@@ -1,18 +1,23 @@
 # ADR 0013: i18n Foundations (Arabic-first, Extensible)
 
 ## Status
+
 Accepted
 
 ## Date
+
 2026-01-28
 
 ## Context
+
 The codebase had hardcoded Arabic strings scattered across:
+
 - Customer mobile app (React Native)
 - Admin web dashboard (Next.js)
 - Backend validation messages (NestJS)
 
 This made it difficult to:
+
 - Maintain consistent terminology
 - Support additional languages in the future
 - Reuse translation strings across apps
@@ -95,7 +100,7 @@ Support for dynamic values:
 ```
 
 ```typescript
-t('cart.itemsCount', { count: 5 }) // "5 عنصر"
+t('cart.itemsCount', { count: 5 }); // "5 عنصر"
 ```
 
 ### Backend Error Codes
@@ -127,9 +132,11 @@ document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
 ## Files Created/Modified
 
 ### New Package
+
 - `packages/i18n/` - Shared translations and utilities
 
 ### Customer App (React Native)
+
 - `apps/customer-app/src/lib/i18n.ts` - i18next setup
 - `apps/customer-app/src/hooks/use-t.ts` - Translation hook
 - `apps/customer-app/App.tsx` - Import i18n
@@ -137,12 +144,14 @@ document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
 - `apps/customer-app/src/screens/CartScreen.tsx` - Use translations
 
 ### Admin Web (Next.js)
+
 - `apps/admin-web/src/lib/i18n.ts` - i18next setup
 - `apps/admin-web/src/hooks/use-t.ts` - Translation hook
 - `apps/admin-web/src/components/providers.tsx` - Import i18n
 - `apps/admin-web/src/components/layout/dashboard-layout.tsx` - Use translations
 
 ### Backend
+
 - `services/api/src/modules/products/dto/create-product.dto.ts` - Error codes
 
 ## Translation Workflow
@@ -173,17 +182,21 @@ document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
 ## Alternatives Considered
 
 ### 1. Per-app Translation Files
+
 Rejected - duplication and inconsistency issues.
 
 ### 2. react-intl
+
 Considered but i18next is more flexible and better supported in React Native.
 
 ### 3. Built-in Next.js i18n
+
 Only works for Next.js, not React Native.
 
 ## Consequences
 
 ### Positive
+
 - Single source of truth for translations
 - Type-safe translation keys (TypeScript)
 - Easy to add new languages
@@ -192,6 +205,7 @@ Only works for Next.js, not React Native.
 - RTL handled automatically
 
 ### Negative
+
 - Requires package rebuild when adding strings
 - Slightly more setup overhead
 - Missing keys show key path (not critical for Arabic-first)

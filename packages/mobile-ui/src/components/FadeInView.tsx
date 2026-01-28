@@ -46,7 +46,9 @@ export function FadeInView({
   ...props
 }: FadeInViewProps) {
   const opacityValue = useRef(new Animated.Value(0)).current;
-  const translateValue = useRef(new Animated.Value(getInitialTranslate(slide, slideDistance))).current;
+  const translateValue = useRef(
+    new Animated.Value(getInitialTranslate(slide, slideDistance)),
+  ).current;
 
   useEffect(() => {
     const animation = Animated.parallel([
@@ -83,10 +85,7 @@ export function FadeInView({
   );
 }
 
-function getInitialTranslate(
-  slide: FadeInViewProps['slide'],
-  distance: number,
-): number {
+function getInitialTranslate(slide: FadeInViewProps['slide'], distance: number): number {
   if (!slide) return 0;
 
   switch (slide) {

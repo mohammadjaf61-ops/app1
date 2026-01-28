@@ -33,8 +33,18 @@ export class OrdersController {
   })
   @ApiQuery({ name: 'status', required: false, enum: OrderStatus, description: 'Filter by status' })
   @ApiQuery({ name: 'pickerId', required: false, type: String, description: 'Filter by picker' })
-  @ApiQuery({ name: 'isPaid', required: false, type: Boolean, description: 'Filter by payment status' })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by order number' })
+  @ApiQuery({
+    name: 'isPaid',
+    required: false,
+    type: Boolean,
+    description: 'Filter by payment status',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by order number',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
   @ApiResponse({
@@ -141,9 +151,7 @@ export class OrdersController {
         orderNumber: 'ORD-2026-001',
         status: 'PICKING',
         totalAmountIqd: 50000,
-        items: [
-          { productId: 'uuid', productName: 'أرز بسمتي', quantity: 2, priceIqd: 15000 },
-        ],
+        items: [{ productId: 'uuid', productName: 'أرز بسمتي', quantity: 2, priceIqd: 15000 }],
         customer: { phone: '07712345678', name: 'علي' },
       },
     },

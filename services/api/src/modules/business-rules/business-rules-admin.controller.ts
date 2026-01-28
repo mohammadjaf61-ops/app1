@@ -1,14 +1,5 @@
 import { UserRole } from '@hypermarket/shared-types';
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  ParseUUIDPipe,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -159,10 +150,7 @@ export class BusinessRulesAdminController {
   @Put('store-hours/:dayOfWeek')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update store hours for a specific day' })
-  async updateStoreHours(
-    @Param('dayOfWeek') dayOfWeek: string,
-    @Body() dto: UpdateStoreHoursDto,
-  ) {
+  async updateStoreHours(@Param('dayOfWeek') dayOfWeek: string, @Body() dto: UpdateStoreHoursDto) {
     const hours = await this.prisma.storeHours.update({
       where: { dayOfWeek: dayOfWeek as DayOfWeek },
       data: {

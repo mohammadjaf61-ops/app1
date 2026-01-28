@@ -1,13 +1,17 @@
 # ADR 0015: Payments & Local Integrations (Iraq-Ready)
 
 ## Status
+
 Accepted
 
 ## Date
+
 2026-01-28
 
 ## Context
+
 The hypermarket platform needs a payment system that:
+
 - Supports Cash on Delivery (COD) as the primary payment method for Iraq
 - Provides foundation for future card payment gateway integrations
 - Tracks payment status throughout order lifecycle
@@ -15,6 +19,7 @@ The hypermarket platform needs a payment system that:
 - Does not store sensitive payment data
 
 Requirements:
+
 - COD works end-to-end immediately
 - Card payments have placeholder infrastructure (not yet connected)
 - Clear payment status visibility for customers and staff
@@ -22,6 +27,7 @@ Requirements:
 - i18n support for payment-related messages
 
 Explicitly out of scope:
+
 - Full accounting/reconciliation system
 - Bank settlement integration
 - Actual card payment provider integration (ZainCash, AsiaHawala, etc.)
@@ -86,7 +92,9 @@ modules/payments/
 #### PaymentsService
 
 Core methods:
-- `createPayment(params)` - Creates payment record (COD: PENDING, CARD: initiates with provider)
+
+- `createPayment(params)` - Creates payment record (COD: PENDING, CARD:
+  initiates with provider)
 - `getById(paymentId)` - Get payment details
 - `getByOrderId(orderId)` - Get payment by order
 - `markPaid(paymentId, paidBy)` - Manual COD collection confirmation
@@ -131,10 +139,13 @@ return { ...order, payment };
 ```
 
 Order details now include payment information:
+
 ```typescript
 include: {
   payment: {
-    select: { id, method, status, amountIqd, paidAt, paidBy, failureReason }
+    select: {
+      (id, method, status, amountIqd, paidAt, paidBy, failureReason);
+    }
   }
 }
 ```
@@ -143,20 +154,20 @@ include: {
 
 #### Public Endpoints (`/payments/*`)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/payments/order/:orderId` | Get payment status by order |
-| GET | `/payments/methods` | List available payment methods |
+| Method | Path                       | Description                    |
+| ------ | -------------------------- | ------------------------------ |
+| GET    | `/payments/order/:orderId` | Get payment status by order    |
+| GET    | `/payments/methods`        | List available payment methods |
 
 #### Admin Endpoints (`/admin/payments/*`)
 
-| Method | Path | Description | Role |
-|--------|------|-------------|------|
-| GET | `/` | List all payments | Admin, Manager, Cashier |
-| GET | `/stats` | Payment statistics | Admin, Manager |
-| GET | `/:id` | Get payment details | Admin, Manager, Cashier |
-| POST | `/:id/mark-paid` | Mark as paid | Admin, Manager, Cashier, Driver |
-| POST | `/:id/mark-failed` | Mark as failed | Admin, Manager |
+| Method | Path               | Description         | Role                            |
+| ------ | ------------------ | ------------------- | ------------------------------- |
+| GET    | `/`                | List all payments   | Admin, Manager, Cashier         |
+| GET    | `/stats`           | Payment statistics  | Admin, Manager                  |
+| GET    | `/:id`             | Get payment details | Admin, Manager, Cashier         |
+| POST   | `/:id/mark-paid`   | Mark as paid        | Admin, Manager, Cashier, Driver |
+| POST   | `/:id/mark-failed` | Mark as failed      | Admin, Manager                  |
 
 ### COD Flow
 
@@ -212,6 +223,7 @@ await this.prisma.auditLog.create({
 ### i18n Support
 
 Added `payments` namespace with Arabic and English translations:
+
 - Payment method names
 - Payment status labels
 - Action messages (mark paid, mark failed)
@@ -220,24 +232,32 @@ Added `payments` namespace with Arabic and English translations:
 ## Files Created/Modified
 
 ### New Module
+
 - `services/api/src/modules/payments/` - Complete payments module
 
 ### Database
-- `services/api/prisma/schema.prisma` - Added Payment model, PaymentStatus enum, updated PaymentMethod
+
+- `services/api/prisma/schema.prisma` - Added Payment model, PaymentStatus enum,
+  updated PaymentMethod
 
 ### Orders Module
+
 - `services/api/src/modules/orders/orders.service.ts` - Payment integration
-- `services/api/src/modules/orders/dto/create-order.dto.ts` - Added paymentMethod field
+- `services/api/src/modules/orders/dto/create-order.dto.ts` - Added
+  paymentMethod field
 
 ### Shared Types
+
 - `packages/shared-types/src/order/index.ts` - Added PaymentStatus, CARD method
 - `packages/shared-types/src/financial/index.ts` - Added Payment interface
 
 ### i18n
+
 - `packages/i18n/src/locales/ar.json` - Added payments namespace
 - `packages/i18n/src/locales/en.json` - Added payments namespace
 
 ### App Module
+
 - `services/api/src/app.module.ts` - Added PaymentsModule
 
 ## What's Supported Now
@@ -280,17 +300,21 @@ Added `payments` namespace with Arabic and English translations:
 ## Alternatives Considered
 
 ### 1. No Payment Model (Just Order.isPaid)
+
 Rejected - insufficient tracking, no audit trail, can't support future gateways.
 
 ### 2. Full Payment Gateway Integration Now
+
 Rejected - premature complexity, COD is primary method for Iraq market.
 
 ### 3. Third-Party Payment Service
+
 Rejected - overkill for current requirements, adds dependency.
 
 ## Consequences
 
 ### Positive
+
 - COD works immediately for Iraq market
 - Clean architecture for adding payment providers
 - Full audit trail for financial compliance
@@ -298,6 +322,7 @@ Rejected - overkill for current requirements, adds dependency.
 - No sensitive data storage required
 
 ### Negative
+
 - Card payments require additional work to enable
 - No automated reconciliation yet
 - Manual payment confirmation required for COD
@@ -311,6 +336,7 @@ Rejected - overkill for current requirements, adds dependency.
 5. Add webhook endpoint if provider supports callbacks
 
 Example for ZainCash:
+
 ```typescript
 @Injectable()
 export class ZainCashProvider implements PaymentProviderAdapter {

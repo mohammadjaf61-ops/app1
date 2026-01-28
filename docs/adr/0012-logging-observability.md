@@ -1,13 +1,18 @@
 # ADR 0012: Structured Logging & Request Correlation
 
 ## Status
+
 Accepted
 
 ## Date
+
 2026-01-28
 
 ## Context
-The application had scattered console.log statements and inconsistent logging formats, making debugging and troubleshooting difficult. We need:
+
+The application had scattered console.log statements and inconsistent logging
+formats, making debugging and troubleshooting difficult. We need:
+
 - Structured JSON logs for log aggregation (ELK, CloudWatch, etc.)
 - Request correlation IDs propagated through all layers
 - Consistent log levels (debug/log/warn/error)
@@ -56,18 +61,19 @@ JSON output format:
 
 ```typescript
 interface LogEntry {
-  timestamp: string;      // ISO 8601
-  level: string;          // error|warn|log|debug
-  service: string;        // hypermarket-api
-  requestId: string;      // UUID from context
-  message: string;        // Human-readable message
-  context?: string;       // Logger context (class name)
-  durationMs?: number;    // Time since request start
+  timestamp: string; // ISO 8601
+  level: string; // error|warn|log|debug
+  service: string; // hypermarket-api
+  requestId: string; // UUID from context
+  message: string; // Human-readable message
+  context?: string; // Logger context (class name)
+  durationMs?: number; // Time since request start
   meta?: Record<string, unknown>; // Additional data
 }
 ```
 
 Example output:
+
 ```json
 {
   "timestamp": "2026-01-28T14:30:00.000Z",
@@ -118,11 +124,11 @@ Example output:
 
 ### Log Levels
 
-| Level | When to Use |
-|-------|-------------|
-| `error` | Server errors (5xx), unrecoverable failures |
-| `warn` | Client errors (4xx), potential issues |
-| `log` | Normal operations, request completion |
+| Level   | When to Use                                  |
+| ------- | -------------------------------------------- |
+| `error` | Server errors (5xx), unrecoverable failures  |
+| `warn`  | Client errors (4xx), potential issues        |
+| `log`   | Normal operations, request completion        |
 | `debug` | Development details (disabled in production) |
 
 ### Background Jobs
@@ -130,13 +136,14 @@ Example output:
 Jobs create their own context with prefixed requestId:
 
 ```typescript
-RequestContext.createJobContext('daily-sales-aggregation', job.id)
+RequestContext.createJobContext('daily-sales-aggregation', job.id);
 // requestId: "job-daily-sales-aggregation-abc123"
 ```
 
 ### Sensitive Data Filtering
 
 StructuredLogger automatically redacts:
+
 - password, token, secret
 - apiKey, authorization, cookie
 - creditCard, cvv
@@ -157,30 +164,39 @@ interface ApiError {
 ## Files Modified/Created
 
 ### Backend
+
 - `services/api/src/common/observability/` (new module)
 - `services/api/src/main.ts` - Added middleware, removed console.log
-- `services/api/src/common/interceptors/logging.interceptor.ts` - Use StructuredLogger
-- `services/api/src/common/filters/http-exception.filter.ts` - Use StructuredLogger
-- `services/api/src/modules/analytics/processors/analytics.processor.ts` - Job context
+- `services/api/src/common/interceptors/logging.interceptor.ts` - Use
+  StructuredLogger
+- `services/api/src/common/filters/http-exception.filter.ts` - Use
+  StructuredLogger
+- `services/api/src/modules/analytics/processors/analytics.processor.ts` - Job
+  context
 
 ### Frontend
+
 - `apps/admin-web/src/lib/api-client.ts` - Capture requestId
 - `apps/customer-app/src/services/api-client.ts` - Capture requestId
 
 ## Alternatives Considered
 
 ### 1. Winston/Pino
+
 Considered but NestJS Logger is sufficient for MVP. Can migrate later if needed.
 
 ### 2. OpenTelemetry
+
 Deferred - requires infrastructure setup. Current solution is APM-ready.
 
 ### 3. Request-scoped Providers
+
 Rejected - AsyncLocalStorage is simpler and works with background jobs.
 
 ## Consequences
 
 ### Positive
+
 - All logs have consistent JSON format
 - Every request can be traced via requestId
 - No console.log scattered in codebase
@@ -189,6 +205,7 @@ Rejected - AsyncLocalStorage is simpler and works with background jobs.
 - Ready for log aggregation (ELK, CloudWatch)
 
 ### Negative
+
 - AsyncLocalStorage has minimal overhead
 - Requires all loggers to use StructuredLogger
 - Context lost if using raw setTimeout (use runAsync)

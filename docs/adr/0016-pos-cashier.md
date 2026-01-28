@@ -1,13 +1,18 @@
 # ADR 0016: POS / Cashier System
 
 ## Status
+
 Accepted
 
 ## Date
+
 2026-01-28
 
 ## Context
-The hypermarket platform needs a Point of Sale (POS) system for in-store sales that:
+
+The hypermarket platform needs a Point of Sale (POS) system for in-store sales
+that:
+
 - Replaces the existing legacy cashier system
 - Provides a fast, keyboard-first interface for cashiers
 - Supports barcode scanning and SKU lookup
@@ -16,6 +21,7 @@ The hypermarket platform needs a Point of Sale (POS) system for in-store sales t
 - Works with CASH payments only (instant PAID status)
 
 Requirements:
+
 - Single-screen design optimized for speed
 - Barcode/SKU input with auto-focus
 - Cart management with quantity adjustments
@@ -25,6 +31,7 @@ Requirements:
 - Session statistics for cashiers
 
 Explicitly out of scope (deferred to future PRs):
+
 - Receipt printer integration
 - Cash drawer integration
 - Barcode scanner hardware integration
@@ -73,6 +80,7 @@ model Order {
 ```
 
 Key design decisions:
+
 - Customer info optional for POS (walk-in customers)
 - Delivery address null for POS orders
 - Separate `cashierId` field for audit trail
@@ -88,7 +96,8 @@ POS-YYYYMMDD-XXXXX
 
 Example: `POS-20260128-00042` (42nd POS order on 28 Jan 2026)
 
-This distinguishes them from delivery orders (e.g., `ORD-ABC123`) and provides sequential daily numbering for easy reference.
+This distinguishes them from delivery orders (e.g., `ORD-ABC123`) and provides
+sequential daily numbering for easy reference.
 
 ### Backend Architecture
 
@@ -106,13 +115,13 @@ services/api/src/modules/pos/
 
 #### Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/pos/products/lookup/:sku` | Look up product by SKU/barcode |
-| POST | `/pos/orders` | Create POS order (atomic transaction) |
-| GET | `/pos/orders/:orderNumber` | Get order for receipt reprint |
-| GET | `/pos/stats` | Get cashier's session statistics |
-| GET | `/pos/orders` | Get recent orders for cashier |
+| Method | Path                        | Description                           |
+| ------ | --------------------------- | ------------------------------------- |
+| GET    | `/pos/products/lookup/:sku` | Look up product by SKU/barcode        |
+| POST   | `/pos/orders`               | Create POS order (atomic transaction) |
+| GET    | `/pos/orders/:orderNumber`  | Get order for receipt reprint         |
+| GET    | `/pos/stats`                | Get cashier's session statistics      |
+| GET    | `/pos/orders`               | Get recent orders for cashier         |
 
 #### Atomic Transaction
 
@@ -157,6 +166,7 @@ await this.prisma.$transaction(async (tx) => {
 ### Inventory Deduction Strategy
 
 Inventory is deducted using a "highest stock first" approach:
+
 1. Get all inventory items for the product, sorted by quantity descending
 2. Deduct from locations with most stock first
 3. This naturally balances stock across locations
@@ -203,12 +213,12 @@ Three views in a single component:
 
 #### Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| Enter | Add product / Start new sale |
-| F12 | Complete payment |
-| Escape | Clear cart |
-| F2 | Focus barcode input |
+| Key    | Action                       |
+| ------ | ---------------------------- |
+| Enter  | Add product / Start new sale |
+| F12    | Complete payment             |
+| Escape | Clear cart                   |
+| F2     | Focus barcode input          |
 
 #### State Management
 
@@ -233,7 +243,8 @@ export function useCart() {
 }
 ```
 
-No external state library needed - React useState is sufficient for this contained UI.
+No external state library needed - React useState is sufficient for this
+contained UI.
 
 ### i18n Support
 
@@ -258,6 +269,7 @@ Added `pos` namespace to both locale files:
 ## Consequences
 
 ### Positive
+
 - Fast, dedicated POS experience separate from admin interface
 - Keyboard-first design enables rapid transactions
 - Atomic transactions prevent inventory inconsistencies
@@ -266,12 +278,14 @@ Added `pos` namespace to both locale files:
 - Works offline-ready (local state, single API call per sale)
 
 ### Negative
+
 - Duplicate order flow logic (POS vs delivery)
 - No hardware integration yet (printer, scanner, drawer)
 - Basic UI without advanced features (search, categories)
 - Session stats require database queries (could cache)
 
 ### Risks
+
 - Performance under high load (mitigate: database indices, caching)
 - Browser crashes could lose cart (mitigate: localStorage backup)
 - Network issues during sale (mitigate: retry logic, offline mode)
@@ -287,6 +301,7 @@ Added `pos` namespace to both locale files:
 7. **Product Search**: Search/browse products without barcode
 
 ## References
+
 - PR #16: POS / Cashier System
 - ADR 0015: Payments & Local Integrations
 - ADR 0014: Business Rules Core

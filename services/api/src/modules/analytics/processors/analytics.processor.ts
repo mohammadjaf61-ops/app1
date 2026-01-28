@@ -16,7 +16,11 @@ export class AnalyticsProcessor {
   /**
    * Run job within a RequestContext for proper logging
    */
-  private async runWithContext<T>(jobName: string, jobId: string, fn: () => Promise<T>): Promise<T> {
+  private async runWithContext<T>(
+    jobName: string,
+    jobId: string,
+    fn: () => Promise<T>,
+  ): Promise<T> {
     const context = RequestContext.createJobContext(jobName, jobId);
     return RequestContext.runAsync(context, fn);
   }

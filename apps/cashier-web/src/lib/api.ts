@@ -110,19 +110,27 @@ class PosApi {
     return this.request<SessionStats>('/pos/stats');
   }
 
-  async getRecentOrders(limit = 10): Promise<Array<{
-    id: string;
-    orderNumber: string;
-    totalIqd: number;
-    status: string;
-    itemCount: number;
-    createdAt: string;
-  }>> {
+  async getRecentOrders(limit = 10): Promise<
+    Array<{
+      id: string;
+      orderNumber: string;
+      totalIqd: number;
+      status: string;
+      itemCount: number;
+      createdAt: string;
+    }>
+  > {
     return this.request(`/pos/orders?limit=${limit}`);
   }
 
-  async login(phone: string, password: string): Promise<{ token: string; user: { id: string; fullName: string; role: string } }> {
-    const response = await this.request<{ accessToken: string; user: { id: string; fullName: string; role: string } }>('/auth/login', {
+  async login(
+    phone: string,
+    password: string,
+  ): Promise<{ token: string; user: { id: string; fullName: string; role: string } }> {
+    const response = await this.request<{
+      accessToken: string;
+      user: { id: string; fullName: string; role: string };
+    }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ phone, password }),
     });

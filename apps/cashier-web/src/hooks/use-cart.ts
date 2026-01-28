@@ -17,9 +17,7 @@ export function useCart() {
       const existing = prev.find((i) => i.sku === item.sku);
       if (existing) {
         return prev.map((i) =>
-          i.sku === item.sku
-            ? { ...i, quantity: i.quantity + (item.quantity || 1) }
-            : i,
+          i.sku === item.sku ? { ...i, quantity: i.quantity + (item.quantity || 1) } : i,
         );
       }
       return [...prev, { ...item, quantity: item.quantity || 1 }];
@@ -34,18 +32,12 @@ export function useCart() {
     if (quantity <= 0) {
       setItems((prev) => prev.filter((i) => i.sku !== sku));
     } else {
-      setItems((prev) =>
-        prev.map((i) => (i.sku === sku ? { ...i, quantity } : i)),
-      );
+      setItems((prev) => prev.map((i) => (i.sku === sku ? { ...i, quantity } : i)));
     }
   }, []);
 
   const incrementQuantity = useCallback((sku: string) => {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.sku === sku ? { ...i, quantity: i.quantity + 1 } : i,
-      ),
-    );
+    setItems((prev) => prev.map((i) => (i.sku === sku ? { ...i, quantity: i.quantity + 1 } : i)));
   }, []);
 
   const decrementQuantity = useCallback((sku: string) => {
@@ -54,9 +46,7 @@ export function useCart() {
       if (item && item.quantity <= 1) {
         return prev.filter((i) => i.sku !== sku);
       }
-      return prev.map((i) =>
-        i.sku === sku ? { ...i, quantity: i.quantity - 1 } : i,
-      );
+      return prev.map((i) => (i.sku === sku ? { ...i, quantity: i.quantity - 1 } : i));
     });
   }, []);
 
@@ -64,10 +54,7 @@ export function useCart() {
     setItems([]);
   }, []);
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.unitPriceIqd * item.quantity,
-    0,
-  );
+  const subtotal = items.reduce((sum, item) => sum + item.unitPriceIqd * item.quantity, 0);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 

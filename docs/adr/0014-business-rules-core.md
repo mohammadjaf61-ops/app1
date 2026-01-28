@@ -1,13 +1,17 @@
 # ADR 0014: Business Rules Core (Hypermarket Order Validation)
 
 ## Status
+
 Accepted
 
 ## Date
+
 2026-01-28
 
 ## Context
+
 The hypermarket platform needed configurable business rules to:
+
 - Enforce minimum order amounts per delivery zone
 - Define delivery zones with configurable fees
 - Set store operating hours per day of week
@@ -15,12 +19,14 @@ The hypermarket platform needed configurable business rules to:
 - Block order creation when rules are violated
 
 Requirements:
+
 - Simple, interpretable rules (no "smart" AI logic)
 - Admin-configurable without code changes
 - Clear error messages for customers
 - i18n-ready error codes
 
 Explicitly out of scope:
+
 - Coupons and discount codes
 - Loyalty programs
 - Complex pricing tiers
@@ -88,18 +94,21 @@ modules/business-rules/
 ```
 
 #### PricingRulesService
+
 - `getActiveDeliveryZones()` - List zones for frontend selection
 - `validateMinOrder(amount, zoneId)` - Check minimum order met
 - `getDeliveryFee(zoneId)` - Get fee for zone
 - `calculateOrderTotal(subtotal, zoneId)` - Full pricing calculation
 
 #### StoreAvailabilityService
+
 - `getAllStoreHours()` - Get weekly schedule
 - `isStoreOpen(now)` - Simple open/closed check
 - `canPlaceOrder(now)` - Full check including cutoff time
 - `findNextOpenDay(from)` - When will store reopen
 
 #### BusinessRulesService
+
 - `validateOrder(request)` - Combined validation returning detailed result
 - `validateOrderOrThrow(request)` - Throws BadRequestException if invalid
 
@@ -136,13 +145,13 @@ modules/business-rules/
 
 All errors use i18n-ready codes instead of hardcoded Arabic:
 
-| Code | Meaning |
-|------|---------|
-| `businessRules.storeClosed` | Store is currently closed |
-| `businessRules.storeNotOpenYet` | Store hasn't opened yet today |
-| `businessRules.orderCutoffPassed` | Too close to closing time |
-| `businessRules.belowMinimumOrder` | Order below zone minimum |
-| `errors.deliveryUnavailable` | Zone not found or inactive |
+| Code                              | Meaning                       |
+| --------------------------------- | ----------------------------- |
+| `businessRules.storeClosed`       | Store is currently closed     |
+| `businessRules.storeNotOpenYet`   | Store hasn't opened yet today |
+| `businessRules.orderCutoffPassed` | Too close to closing time     |
+| `businessRules.belowMinimumOrder` | Order below zone minimum      |
+| `errors.deliveryUnavailable`      | Zone not found or inactive    |
 
 ### Order Creation Integration
 
@@ -175,10 +184,12 @@ async create(dto: CreateOrderDto, userId: string) {
 ### Caching Strategy
 
 Both services cache data with 5-minute TTL:
+
 - `settings:delivery_zones` - Active zones
 - `settings:store_hours` - Store hours
 
 Cache invalidation called after admin updates:
+
 ```typescript
 await this.cache.del(`${CACHE_KEYS.SETTINGS}:delivery_zones`);
 await this.cache.del(`${CACHE_KEYS.SETTINGS}:store_hours`);
@@ -186,58 +197,69 @@ await this.cache.del(`${CACHE_KEYS.SETTINGS}:store_hours`);
 
 ### Admin Endpoints
 
-| Method | Path | Description | Role |
-|--------|------|-------------|------|
-| GET | `/admin/business-rules/delivery-zones` | List all zones | Any staff |
-| POST | `/admin/business-rules/delivery-zones` | Create zone | Admin |
-| PUT | `/admin/business-rules/delivery-zones/:id` | Update zone | Admin |
-| DELETE | `/admin/business-rules/delivery-zones/:id` | Delete zone | Admin |
-| GET | `/admin/business-rules/store-hours` | List all hours | Any staff |
-| PUT | `/admin/business-rules/store-hours/:day` | Update day | Admin |
-| POST | `/admin/business-rules/store-hours/init-defaults` | Init 7 days | Admin |
+| Method | Path                                              | Description    | Role      |
+| ------ | ------------------------------------------------- | -------------- | --------- |
+| GET    | `/admin/business-rules/delivery-zones`            | List all zones | Any staff |
+| POST   | `/admin/business-rules/delivery-zones`            | Create zone    | Admin     |
+| PUT    | `/admin/business-rules/delivery-zones/:id`        | Update zone    | Admin     |
+| DELETE | `/admin/business-rules/delivery-zones/:id`        | Delete zone    | Admin     |
+| GET    | `/admin/business-rules/store-hours`               | List all hours | Any staff |
+| PUT    | `/admin/business-rules/store-hours/:day`          | Update day     | Admin     |
+| POST   | `/admin/business-rules/store-hours/init-defaults` | Init 7 days    | Admin     |
 
 ### Public Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/business-rules/delivery-zones` | Active zones for selection |
-| GET | `/business-rules/store-hours` | Weekly schedule display |
-| GET | `/business-rules/store-availability` | Current open/closed status |
-| POST | `/business-rules/validate-order` | Pre-validate before checkout |
+| Method | Path                                 | Description                  |
+| ------ | ------------------------------------ | ---------------------------- |
+| GET    | `/business-rules/delivery-zones`     | Active zones for selection   |
+| GET    | `/business-rules/store-hours`        | Weekly schedule display      |
+| GET    | `/business-rules/store-availability` | Current open/closed status   |
+| POST   | `/business-rules/validate-order`     | Pre-validate before checkout |
 
 ## Files Created/Modified
 
 ### New Module
+
 - `services/api/src/modules/business-rules/` - Complete module
 
 ### Database
-- `services/api/prisma/schema.prisma` - Added DeliveryZone, StoreHours, DayOfWeek
+
+- `services/api/prisma/schema.prisma` - Added DeliveryZone, StoreHours,
+  DayOfWeek
 
 ### Orders Module
+
 - `services/api/src/modules/orders/orders.service.ts` - Integration
-- `services/api/src/modules/orders/dto/create-order.dto.ts` - Added deliveryZoneId
+- `services/api/src/modules/orders/dto/create-order.dto.ts` - Added
+  deliveryZoneId
 
 ### i18n
+
 - `packages/i18n/src/locales/ar.json` - Added businessRules namespace
 - `packages/i18n/src/locales/en.json` - Added businessRules namespace
 
 ## Alternatives Considered
 
 ### 1. Hardcoded Rules in Environment Variables
+
 Rejected - not admin-configurable, requires redeployment.
 
 ### 2. JSON Configuration Files
+
 Rejected - no audit trail, harder to manage via admin UI.
 
 ### 3. Complex Rule Engine (Drools-style)
+
 Rejected - over-engineered for simple boolean rules.
 
 ### 4. Validation at Frontend Only
+
 Rejected - backend must be source of truth for security.
 
 ## Consequences
 
 ### Positive
+
 - Clear separation of business rule logic
 - Admin can adjust rules without code changes
 - Consistent validation at API and order creation
@@ -246,6 +268,7 @@ Rejected - backend must be source of truth for security.
 - Easy to extend with new rules
 
 ### Negative
+
 - Requires database migration for new rule types
 - Cache TTL means rule changes take up to 5 minutes to propagate
 - Frontend must handle validation errors gracefully

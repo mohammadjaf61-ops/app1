@@ -1,12 +1,6 @@
 import { UserRole } from '@hypermarket/shared-types';
 import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiResponse,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from '@nestjs/swagger';
 
 import { Public } from '@/common/decorators/public.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -32,8 +26,20 @@ export class CategoriesController {
     description: 'Categories list - قائمة التصنيفات',
     schema: {
       example: [
-        { id: 'uuid', nameAr: 'خضروات وفواكه', nameEn: 'Fruits & Vegetables', slug: 'fruits-vegetables', sortOrder: 1 },
-        { id: 'uuid', nameAr: 'أرز وحبوب', nameEn: 'Rice & Grains', slug: 'rice-grains', sortOrder: 2 },
+        {
+          id: 'uuid',
+          nameAr: 'خضروات وفواكه',
+          nameEn: 'Fruits & Vegetables',
+          slug: 'fruits-vegetables',
+          sortOrder: 1,
+        },
+        {
+          id: 'uuid',
+          nameAr: 'أرز وحبوب',
+          nameEn: 'Rice & Grains',
+          slug: 'rice-grains',
+          sortOrder: 2,
+        },
       ],
     },
   })

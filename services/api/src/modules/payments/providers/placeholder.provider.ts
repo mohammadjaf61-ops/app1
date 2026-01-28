@@ -25,8 +25,6 @@ export class PlaceholderPaymentProvider implements PaymentProviderAdapter {
   }
 
   async verifyPayment(_providerRef: string): Promise<VerifyPaymentResponse> {
-    throw new NotImplementedException(
-      'Card payment verification is not yet available.',
-    );
+    throw new NotImplementedException('Card payment verification is not yet available.');
   }
 }

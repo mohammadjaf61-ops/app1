@@ -126,10 +126,7 @@ export class BaseApiClient {
    * @param options - Request options including optional schema
    * @returns Parsed and validated response data
    */
-  protected async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  protected async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     const headers: Record<string, string> = {
@@ -190,7 +187,7 @@ export class BaseApiClient {
   protected async typedRequest<TSchema extends ZodTypeAny>(
     endpoint: string,
     schema: TSchema,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<TSchema['_output']> {
     const data = await this.request<unknown>(endpoint, options);
 
@@ -207,10 +204,7 @@ export class BaseApiClient {
         data,
       });
 
-      throw new ValidationError(
-        'استجابة الخادم لا تطابق الصيغة المتوقعة',
-        issues
-      );
+      throw new ValidationError('استجابة الخادم لا تطابق الصيغة المتوقعة', issues);
     }
 
     return result.data;
@@ -228,7 +222,7 @@ export class BaseApiClient {
    */
   getTyped<TSchema extends ZodTypeAny>(
     endpoint: string,
-    schema: TSchema
+    schema: TSchema,
   ): Promise<TSchema['_output']> {
     return this.typedRequest(endpoint, schema, { method: 'GET' });
   }
@@ -249,7 +243,7 @@ export class BaseApiClient {
   postTyped<TSchema extends ZodTypeAny>(
     endpoint: string,
     schema: TSchema,
-    data?: unknown
+    data?: unknown,
   ): Promise<TSchema['_output']> {
     return this.typedRequest(endpoint, schema, {
       method: 'POST',
@@ -273,7 +267,7 @@ export class BaseApiClient {
   putTyped<TSchema extends ZodTypeAny>(
     endpoint: string,
     schema: TSchema,
-    data?: unknown
+    data?: unknown,
   ): Promise<TSchema['_output']> {
     return this.typedRequest(endpoint, schema, {
       method: 'PUT',
@@ -297,7 +291,7 @@ export class BaseApiClient {
   patchTyped<TSchema extends ZodTypeAny>(
     endpoint: string,
     schema: TSchema,
-    data?: unknown
+    data?: unknown,
   ): Promise<TSchema['_output']> {
     return this.typedRequest(endpoint, schema, {
       method: 'PATCH',
@@ -317,7 +311,7 @@ export class BaseApiClient {
    */
   deleteTyped<TSchema extends ZodTypeAny>(
     endpoint: string,
-    schema: TSchema
+    schema: TSchema,
   ): Promise<TSchema['_output']> {
     return this.typedRequest(endpoint, schema, { method: 'DELETE' });
   }

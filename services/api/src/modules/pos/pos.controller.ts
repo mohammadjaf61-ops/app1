@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -71,7 +62,8 @@ export class PosController {
   @Roles(UserRole.CASHIER, UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({
     summary: 'Create POS order',
-    description: 'Create a point-of-sale order. Payment is instant (CASH/PAID). Inventory is deducted immediately.',
+    description:
+      'Create a point-of-sale order. Payment is instant (CASH/PAID). Inventory is deducted immediately.',
   })
   @ApiResponse({
     status: 201,
@@ -143,10 +135,7 @@ export class PosController {
     status: 200,
     description: 'Recent orders',
   })
-  async getRecentOrders(
-    @Req() req: AuthenticatedRequest,
-    @Query('limit') limit?: number,
-  ) {
+  async getRecentOrders(@Req() req: AuthenticatedRequest, @Query('limit') limit?: number) {
     return this.posService.getRecentOrders(req.user.id, limit || 10);
   }
 }

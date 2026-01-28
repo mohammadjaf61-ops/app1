@@ -8,15 +8,7 @@ import { StoreAvailabilityService } from './store-availability.service';
 @Global()
 @Module({
   controllers: [BusinessRulesController, BusinessRulesAdminController],
-  providers: [
-    BusinessRulesService,
-    PricingRulesService,
-    StoreAvailabilityService,
-  ],
-  exports: [
-    BusinessRulesService,
-    PricingRulesService,
-    StoreAvailabilityService,
-  ],
+  providers: [BusinessRulesService, PricingRulesService, StoreAvailabilityService],
+  exports: [BusinessRulesService, PricingRulesService, StoreAvailabilityService],
 })
 export class BusinessRulesModule {}

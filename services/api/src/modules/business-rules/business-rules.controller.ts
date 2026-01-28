@@ -28,7 +28,11 @@ export class BusinessRulesController {
   @Get('delivery-zones')
   @Public()
   @ApiOperation({ summary: 'Get active delivery zones' })
-  @ApiResponse({ status: 200, description: 'List of delivery zones', type: [DeliveryZoneResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of delivery zones',
+    type: [DeliveryZoneResponseDto],
+  })
   async getDeliveryZones(): Promise<DeliveryZoneResponseDto[]> {
     return this.pricingRules.getActiveDeliveryZones();
   }
@@ -40,7 +44,11 @@ export class BusinessRulesController {
   @Get('store-hours')
   @Public()
   @ApiOperation({ summary: 'Get store working hours' })
-  @ApiResponse({ status: 200, description: 'Store hours for each day', type: [StoreHoursResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Store hours for each day',
+    type: [StoreHoursResponseDto],
+  })
   async getStoreHours(): Promise<StoreHoursResponseDto[]> {
     return this.storeAvailability.getAllStoreHours();
   }
@@ -52,7 +60,11 @@ export class BusinessRulesController {
   @Get('store-availability')
   @Public()
   @ApiOperation({ summary: 'Check if store is currently open and accepting orders' })
-  @ApiResponse({ status: 200, description: 'Store availability status', type: StoreAvailabilityResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Store availability status',
+    type: StoreAvailabilityResponseDto,
+  })
   async checkStoreAvailability(): Promise<StoreAvailabilityResponseDto> {
     return this.storeAvailability.canPlaceOrder();
   }

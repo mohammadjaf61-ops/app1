@@ -10,43 +10,48 @@ Accepted
 
 ## Context
 
-The Hypermarket API serves multiple clients (admin web, customer app, driver app, picker app) with frequent reads on product catalogs and categories. Without caching, every request hits the PostgreSQL database directly, which:
+The Hypermarket API serves multiple clients (admin web, customer app, driver
+app, picker app) with frequent reads on product catalogs and categories. Without
+caching, every request hits the PostgreSQL database directly, which:
 
 1. Increases database load unnecessarily for static/semi-static data
 2. Adds latency to commonly accessed endpoints
 3. Limits scalability as client count grows
 
-Redis is already deployed for BullMQ job queues, making it a natural choice for caching.
+Redis is already deployed for BullMQ job queues, making it a natural choice for
+caching.
 
 ## Decision
 
-Implement read-through caching with explicit invalidation for the following read-heavy paths:
+Implement read-through caching with explicit invalidation for the following
+read-heavy paths:
 
 ### What IS Cached
 
-| Data | Cache Key Pattern | TTL | Rationale |
-|------|-------------------|-----|-----------|
-| Product by ID | `product:id:v1:{id}` | 10 min | Frequent lookups by mobile apps |
-| Product by SKU | `product:sku:v1:{sku}` | 10 min | POS/scanner lookups |
-| Category list | `categories:list:v1` | 15 min | Homepage display |
-| Category tree | `categories:tree:v1` | 15 min | Navigation menus |
-| Category by ID | `category:id:v1:{id}` | 15 min | Category detail pages |
-| Category by slug | `category:slug:v1:{slug}` | 15 min | URL-based lookups |
-| Catalog category tree | `catalog:category-tree:v1` | 15 min | Mobile app navigation |
+| Data                  | Cache Key Pattern          | TTL    | Rationale                       |
+| --------------------- | -------------------------- | ------ | ------------------------------- |
+| Product by ID         | `product:id:v1:{id}`       | 10 min | Frequent lookups by mobile apps |
+| Product by SKU        | `product:sku:v1:{sku}`     | 10 min | POS/scanner lookups             |
+| Category list         | `categories:list:v1`       | 15 min | Homepage display                |
+| Category tree         | `categories:tree:v1`       | 15 min | Navigation menus                |
+| Category by ID        | `category:id:v1:{id}`      | 15 min | Category detail pages           |
+| Category by slug      | `category:slug:v1:{slug}`  | 15 min | URL-based lookups               |
+| Catalog category tree | `catalog:category-tree:v1` | 15 min | Mobile app navigation           |
 
 ### What is NOT Cached
 
-| Data | Reason |
-|------|--------|
+| Data                       | Reason                                            |
+| -------------------------- | ------------------------------------------------- |
 | Product lists with filters | Dynamic filters + pagination = low cache hit rate |
-| Orders | Frequently changing, user-specific, sensitive |
-| Inventory levels | Real-time accuracy required |
-| User data | Security sensitive, frequently changing |
-| Authentication tokens | Security sensitive |
+| Orders                     | Frequently changing, user-specific, sensitive     |
+| Inventory levels           | Real-time accuracy required                       |
+| User data                  | Security sensitive, frequently changing           |
+| Authentication tokens      | Security sensitive                                |
 
 ### Cache Invalidation Strategy
 
-**Write-through invalidation**: On any mutation (create/update/delete), relevant cache keys are explicitly deleted.
+**Write-through invalidation**: On any mutation (create/update/delete), relevant
+cache keys are explicitly deleted.
 
 ```
 Product mutations:
@@ -95,12 +100,12 @@ Category mutations:
 
 ### Risks & Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Stale data after mutation | Explicit invalidation on all CUD operations |
-| Cache stampede | TTL is long enough; future: implement locking if needed |
-| Memory pressure | Fixed TTLs ensure automatic eviction; monitor Redis memory |
-| Redis unavailable | Graceful degradation - app works without cache |
+| Risk                      | Mitigation                                                 |
+| ------------------------- | ---------------------------------------------------------- |
+| Stale data after mutation | Explicit invalidation on all CUD operations                |
+| Cache stampede            | TTL is long enough; future: implement locking if needed    |
+| Memory pressure           | Fixed TTLs ensure automatic eviction; monitor Redis memory |
+| Redis unavailable         | Graceful degradation - app works without cache             |
 
 ## Testing
 

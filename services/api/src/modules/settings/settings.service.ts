@@ -152,8 +152,9 @@ export class SettingsService implements OnModuleInit {
   async getNumber(key: SettingKey, defaultOverride?: number): Promise<number> {
     const value = await this.get<number>(key);
     if (typeof value === 'number') return value;
-    if (typeof value === 'string') return parseFloat(value) || (defaultOverride ?? SETTINGS_DEFAULTS[key] as number);
-    return defaultOverride ?? SETTINGS_DEFAULTS[key] as number;
+    if (typeof value === 'string')
+      return parseFloat(value) || (defaultOverride ?? (SETTINGS_DEFAULTS[key] as number));
+    return defaultOverride ?? (SETTINGS_DEFAULTS[key] as number);
   }
 
   /**
@@ -163,7 +164,7 @@ export class SettingsService implements OnModuleInit {
     const value = await this.get<boolean>(key);
     if (typeof value === 'boolean') return value;
     if (typeof value === 'string') return value === 'true' || value === '1';
-    return defaultOverride ?? SETTINGS_DEFAULTS[key] as boolean;
+    return defaultOverride ?? (SETTINGS_DEFAULTS[key] as boolean);
   }
 
   /**

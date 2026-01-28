@@ -3,13 +3,7 @@
  * Arabic-first, with English fallback
  */
 
-import {
-  ar,
-  en,
-  DEFAULT_LOCALE,
-  getLocaleDirection,
-  type Locale,
-} from '@hypermarket/i18n';
+import { ar, en, DEFAULT_LOCALE, getLocaleDirection, type Locale } from '@hypermarket/i18n';
 import * as Localization from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
