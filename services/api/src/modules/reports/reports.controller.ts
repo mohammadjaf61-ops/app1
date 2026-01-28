@@ -12,9 +12,21 @@ import { ReportsService } from './reports.service';
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
+  @Get('sales')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Get sales report with POS/Delivery breakdown' })
+  @ApiQuery({ name: 'dateFrom', required: false, type: String, description: 'ISO date string' })
+  @ApiQuery({ name: 'dateTo', required: false, type: String, description: 'ISO date string' })
+  async getSalesReport(@Query('dateFrom') dateFrom?: string, @Query('dateTo') dateTo?: string) {
+    return this.reportsService.getSalesReport({
+      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+      dateTo: dateTo ? new Date(dateTo) : undefined,
+    });
+  }
+
   @Get('sales/summary')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({ summary: 'Get sales summary report' })
+  @ApiOperation({ summary: 'Get detailed sales summary report' })
   @ApiQuery({ name: 'dateFrom', required: false, type: String, description: 'ISO date string' })
   @ApiQuery({ name: 'dateTo', required: false, type: String, description: 'ISO date string' })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
@@ -28,6 +40,39 @@ export class ReportsController {
       dateTo: dateTo ? new Date(dateTo) : undefined,
       categoryId,
     });
+  }
+
+  @Get('top-products')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Get top selling products' })
+  @ApiQuery({ name: 'dateFrom', required: false, type: String, description: 'ISO date string' })
+  @ApiQuery({ name: 'dateTo', required: false, type: String, description: 'ISO date string' })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: ['quantity', 'revenue'],
+    description: 'Sort by quantity or revenue',
+  })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of products' })
+  async getTopProducts(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('sortBy') sortBy?: 'quantity' | 'revenue',
+    @Query('limit') limit?: string,
+  ) {
+    return this.reportsService.getTopProducts({
+      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+      dateTo: dateTo ? new Date(dateTo) : undefined,
+      sortBy,
+      limit: limit ? parseInt(limit, 10) : 10,
+    });
+  }
+
+  @Get('inventory')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Get inventory status report (low stock, out of stock)' })
+  async getInventoryStatus() {
+    return this.reportsService.getInventoryStatus();
   }
 
   @Get('sales/daily')

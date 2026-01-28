@@ -8,22 +8,205 @@ export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Get inventory status report - low stock and out of stock
+   * Uses database aggregation for performance
+   */
+  async getInventoryStatus() {
+    // Get products with their total inventory
+    const products = await this.prisma.product.findMany({
+      where: {
+        isActive: true,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        sku: true,
+        nameAr: true,
+        nameEn: true,
+        lowStockThreshold: true,
+        category: {
+          select: { id: true, nameAr: true },
+        },
+        inventoryItems: {
+          select: {
+            quantity: true,
+            location: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+      },
+    });
+
+    const outOfStock: Array<{
+      id: string;
+      sku: string;
+      nameAr: string;
+      nameEn: string | null;
+      category: { id: string; nameAr: string } | null;
+      totalQuantity: number;
+      threshold: number;
+    }> = [];
+
+    const lowStock: Array<{
+      id: string;
+      sku: string;
+      nameAr: string;
+      nameEn: string | null;
+      category: { id: string; nameAr: string } | null;
+      totalQuantity: number;
+      threshold: number;
+    }> = [];
+
+    for (const product of products) {
+      const totalQuantity = product.inventoryItems.reduce(
+        (sum: number, item: { quantity: number }) => sum + item.quantity,
+        0,
+      );
+      const threshold = product.lowStockThreshold || 10;
+
+      const productInfo = {
+        id: product.id,
+        sku: product.sku,
+        nameAr: product.nameAr,
+        nameEn: product.nameEn,
+        category: product.category,
+        totalQuantity,
+        threshold,
+      };
+
+      if (totalQuantity === 0) {
+        outOfStock.push(productInfo);
+      } else if (totalQuantity <= threshold) {
+        lowStock.push(productInfo);
+      }
+    }
+
+    // Sort by quantity (ascending) so most critical items appear first
+    outOfStock.sort((a, b) => a.nameAr.localeCompare(b.nameAr, 'ar'));
+    lowStock.sort((a, b) => a.totalQuantity - b.totalQuantity);
+
+    return {
+      summary: {
+        totalProducts: products.length,
+        outOfStockCount: outOfStock.length,
+        lowStockCount: lowStock.length,
+        healthyCount: products.length - outOfStock.length - lowStock.length,
+      },
+      outOfStock,
+      lowStock,
+    };
+  }
+
+  /**
+   * Get top selling products by quantity or revenue
+   * Includes both DELIVERED (online) and COMPLETED (POS) orders
+   */
+  async getTopProducts(params: {
+    dateFrom?: Date;
+    dateTo?: Date;
+    sortBy?: 'quantity' | 'revenue';
+    limit?: number;
+  }) {
+    const { dateFrom, dateTo, sortBy = 'revenue', limit = 10 } = params;
+
+    // Build date filter - use createdAt for both order types
+    const dateFilter: { createdAt?: { gte?: Date; lte?: Date } } = {};
+    if (dateFrom || dateTo) {
+      dateFilter.createdAt = {};
+      if (dateFrom) dateFilter.createdAt.gte = dateFrom;
+      if (dateTo) dateFilter.createdAt.lte = dateTo;
+    }
+
+    // Get order items from both DELIVERED and COMPLETED (POS) orders
+    const orderItems = await this.prisma.orderItem.findMany({
+      where: {
+        order: {
+          ...dateFilter,
+          status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
+        },
+      },
+      select: {
+        productId: true,
+        quantity: true,
+        subtotal: true,
+        product: {
+          select: {
+            id: true,
+            sku: true,
+            nameAr: true,
+            salePrice: true,
+            category: { select: { id: true, nameAr: true } },
+          },
+        },
+      },
+    });
+
+    // Aggregate by product
+    const productMap = new Map<
+      string,
+      {
+        product: {
+          id: string;
+          sku: string;
+          nameAr: string;
+          salePrice: number;
+          category: { id: string; nameAr: string } | null;
+        };
+        totalQuantity: number;
+        totalRevenue: number;
+      }
+    >();
+
+    for (const item of orderItems) {
+      const existing = productMap.get(item.productId);
+      if (existing) {
+        existing.totalQuantity += item.quantity;
+        existing.totalRevenue += item.subtotal;
+      } else {
+        productMap.set(item.productId, {
+          product: item.product,
+          totalQuantity: item.quantity,
+          totalRevenue: item.subtotal,
+        });
+      }
+    }
+
+    // Sort and limit
+    const sorted = Array.from(productMap.values()).sort((a, b) =>
+      sortBy === 'quantity' ? b.totalQuantity - a.totalQuantity : b.totalRevenue - a.totalRevenue,
+    );
+
+    return sorted.slice(0, limit).map((item, index) => ({
+      rank: index + 1,
+      product: item.product,
+      totalQuantity: item.totalQuantity,
+      totalRevenue: item.totalRevenue,
+    }));
+  }
+
+  /**
    * Get sales summary report
+   * Includes both DELIVERED (online) and COMPLETED (POS) orders
    */
   async getSalesSummary(params: { dateFrom?: Date; dateTo?: Date; categoryId?: string }) {
     const { dateFrom, dateTo, categoryId } = params;
 
-    const orderWhere: { status: OrderStatus; deliveredAt?: { gte?: Date; lte?: Date } } = {
-      status: OrderStatus.DELIVERED,
+    // Include both completed delivery orders and POS orders
+    const orderWhere: {
+      status: { in: OrderStatus[] };
+      createdAt?: { gte?: Date; lte?: Date };
+    } = {
+      status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
     };
 
     if (dateFrom || dateTo) {
-      orderWhere.deliveredAt = {};
+      orderWhere.createdAt = {};
       if (dateFrom) {
-        orderWhere.deliveredAt.gte = dateFrom;
+        orderWhere.createdAt.gte = dateFrom;
       }
       if (dateTo) {
-        orderWhere.deliveredAt.lte = dateTo;
+        orderWhere.createdAt.lte = dateTo;
       }
     }
 
@@ -536,5 +719,74 @@ export class ReportsService {
       }))
       .filter((p) => p.total > 0)
       .sort((a, b) => b.completed - a.completed);
+  }
+
+  /**
+   * Get combined sales report with breakdown by order type
+   * Provides operational overview for store owner
+   */
+  async getSalesReport(params: { dateFrom?: Date; dateTo?: Date }) {
+    const { dateFrom, dateTo } = params;
+
+    // Build date filter
+    const dateFilter: { createdAt?: { gte?: Date; lte?: Date } } = {};
+    if (dateFrom || dateTo) {
+      dateFilter.createdAt = {};
+      if (dateFrom) dateFilter.createdAt.gte = dateFrom;
+      if (dateTo) dateFilter.createdAt.lte = dateTo;
+    }
+
+    // Get completed orders (both delivery and POS)
+    const orders = await this.prisma.order.findMany({
+      where: {
+        ...dateFilter,
+        status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        orderType: true,
+        totalAmountIqd: true,
+        createdAt: true,
+        _count: { select: { items: true } },
+      },
+    });
+
+    // Calculate totals
+    let totalRevenue = 0;
+    let deliveryRevenue = 0;
+    let posRevenue = 0;
+    let deliveryOrders = 0;
+    let posOrders = 0;
+
+    for (const order of orders) {
+      totalRevenue += order.totalAmountIqd;
+      if (order.orderType === 'POS') {
+        posRevenue += order.totalAmountIqd;
+        posOrders += 1;
+      } else {
+        deliveryRevenue += order.totalAmountIqd;
+        deliveryOrders += 1;
+      }
+    }
+
+    const totalOrders = orders.length;
+    const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+    return {
+      summary: {
+        totalOrders,
+        totalRevenue,
+        averageOrderValue,
+        deliveryOrders,
+        deliveryRevenue,
+        posOrders,
+        posRevenue,
+      },
+      dateRange: {
+        from: dateFrom?.toISOString() || null,
+        to: dateTo?.toISOString() || null,
+      },
+    };
   }
 }

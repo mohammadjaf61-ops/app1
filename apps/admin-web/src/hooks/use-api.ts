@@ -366,6 +366,54 @@ export function useSalesSummary(params?: {
   });
 }
 
+export function useSalesReport(params?: { dateFrom?: string; dateTo?: string }) {
+  const searchParams = new URLSearchParams();
+  if (params?.dateFrom) {
+    searchParams.set('dateFrom', params.dateFrom);
+  }
+  if (params?.dateTo) {
+    searchParams.set('dateTo', params.dateTo);
+  }
+
+  return useQuery({
+    queryKey: ['reports', 'sales', params],
+    queryFn: () => apiClient.get(`/reports/sales?${searchParams.toString()}`),
+  });
+}
+
+export function useTopProducts(params?: {
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: 'quantity' | 'revenue';
+  limit?: number;
+}) {
+  const searchParams = new URLSearchParams();
+  if (params?.dateFrom) {
+    searchParams.set('dateFrom', params.dateFrom);
+  }
+  if (params?.dateTo) {
+    searchParams.set('dateTo', params.dateTo);
+  }
+  if (params?.sortBy) {
+    searchParams.set('sortBy', params.sortBy);
+  }
+  if (params?.limit) {
+    searchParams.set('limit', String(params.limit));
+  }
+
+  return useQuery({
+    queryKey: ['reports', 'top-products', params],
+    queryFn: () => apiClient.get(`/reports/top-products?${searchParams.toString()}`),
+  });
+}
+
+export function useInventoryStatus() {
+  return useQuery({
+    queryKey: ['reports', 'inventory'],
+    queryFn: () => apiClient.get('/reports/inventory'),
+  });
+}
+
 export function useStockAging() {
   return useQuery({
     queryKey: queryKeys.stockAging,

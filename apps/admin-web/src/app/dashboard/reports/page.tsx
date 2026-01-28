@@ -1,40 +1,81 @@
 'use client';
 
-import { Download, TrendingUp, Package, Calendar } from 'lucide-react';
+import { Download, TrendingUp, Package, AlertTriangle, FileText } from 'lucide-react';
 import { useState } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import * as XLSX from 'xlsx';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSalesSummary, useStockAging, useCategoryPerformance } from '@/hooks/use-api';
+import { useInventoryStatus, useSalesReport, useTopProducts } from '@/hooks/use-api';
 import { formatCurrency, formatNumber } from '@/lib/formatters';
+
+// CSV export utility
+function exportToCSV(data: Record<string, unknown>[], filename: string) {
+  if (!data.length) {
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const csvRows = [
+    headers.join(','),
+    ...data.map((row) =>
+      headers
+        .map((header) => {
+          const value = row[header];
+          // Escape values with commas or quotes
+          const stringValue = String(value ?? '');
+          if (stringValue.includes(',') || stringValue.includes('"')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
+          }
+          return stringValue;
+        })
+        .join(','),
+    ),
+  ];
+
+  const csvString = csvRows.join('\n');
+  const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+}
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState('sales');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
+  // Set default dates to current month
+  const setThisMonth = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    setDateFrom(firstDay.toISOString().split('T')[0]);
+    setDateTo(now.toISOString().split('T')[0]);
+  };
+
+  const setToday = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setDateFrom(today);
+    setDateTo(today);
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">التقارير</h1>
-        <p className="text-muted-foreground">تحليلات ومؤشرات الأداء</p>
+        <p className="text-muted-foreground">تقارير تشغيلية للمبيعات والمخزون</p>
       </div>
 
       {/* Date Filters */}
@@ -61,8 +102,14 @@ export default function ReportsPage() {
                 className="w-[180px]"
               />
             </div>
+            <Button variant="outline" onClick={setToday}>
+              اليوم
+            </Button>
+            <Button variant="outline" onClick={setThisMonth}>
+              هذا الشهر
+            </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => {
                 setDateFrom('');
                 setDateTo('');
@@ -80,13 +127,13 @@ export default function ReportsPage() {
             <TrendingUp className="h-4 w-4" />
             المبيعات
           </TabsTrigger>
-          <TabsTrigger value="stock" className="gap-2">
+          <TabsTrigger value="products" className="gap-2">
+            <FileText className="h-4 w-4" />
+            أفضل المنتجات
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="gap-2">
             <Package className="h-4 w-4" />
             المخزون
-          </TabsTrigger>
-          <TabsTrigger value="categories" className="gap-2">
-            <Calendar className="h-4 w-4" />
-            الأقسام
           </TabsTrigger>
         </TabsList>
 
@@ -94,57 +141,75 @@ export default function ReportsPage() {
           <SalesReport dateFrom={dateFrom} dateTo={dateTo} />
         </TabsContent>
 
-        <TabsContent value="stock" className="mt-4">
-          <StockAgingReport />
+        <TabsContent value="products" className="mt-4">
+          <TopProductsReport dateFrom={dateFrom} dateTo={dateTo} />
         </TabsContent>
 
-        <TabsContent value="categories" className="mt-4">
-          <CategoryPerformanceReport dateFrom={dateFrom} dateTo={dateTo} />
+        <TabsContent value="inventory" className="mt-4">
+          <InventoryReport />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
+interface SalesReportData {
+  summary?: {
+    totalOrders: number;
+    totalRevenue: number;
+    averageOrderValue: number;
+    deliveryOrders: number;
+    deliveryRevenue: number;
+    posOrders: number;
+    posRevenue: number;
+  };
+}
+
 function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string }) {
-  const { data, isLoading } = useSalesSummary({
+  const { data, isLoading } = useSalesReport({
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
 
-  const salesData = data as
-    | {
-        summary?: {
-          totalOrders: number;
-          totalRevenue: number;
-          totalItems: number;
-          averageOrderValue: number;
-        };
-        topProducts?: Array<{
-          product: { nameAr: string; sku: string };
-          quantity: number;
-          revenue: number;
-        }>;
-      }
-    | undefined;
+  const salesData = data as SalesReportData | undefined;
 
-  const exportToExcel = () => {
-    if (!salesData?.topProducts) {
+  const exportSalesCSV = () => {
+    if (!salesData?.summary) {
       return;
     }
 
-    const wsData = salesData.topProducts.map((item, index) => ({
-      '#': index + 1,
-      المنتج: item.product.nameAr,
-      SKU: item.product.sku,
-      الكمية: item.quantity,
-      الإيرادات: item.revenue,
-    }));
+    const csvData = [
+      {
+        'نوع البيانات': 'إجمالي الطلبات',
+        القيمة: salesData.summary.totalOrders,
+      },
+      {
+        'نوع البيانات': 'إجمالي الإيرادات (د.ع)',
+        القيمة: salesData.summary.totalRevenue,
+      },
+      {
+        'نوع البيانات': 'متوسط قيمة الطلب (د.ع)',
+        القيمة: salesData.summary.averageOrderValue,
+      },
+      {
+        'نوع البيانات': 'طلبات التوصيل',
+        القيمة: salesData.summary.deliveryOrders,
+      },
+      {
+        'نوع البيانات': 'إيرادات التوصيل (د.ع)',
+        القيمة: salesData.summary.deliveryRevenue,
+      },
+      {
+        'نوع البيانات': 'طلبات نقطة البيع',
+        القيمة: salesData.summary.posOrders,
+      },
+      {
+        'نوع البيانات': 'إيرادات نقطة البيع (د.ع)',
+        القيمة: salesData.summary.posRevenue,
+      },
+    ];
 
-    const ws = XLSX.utils.json_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'المبيعات');
-    XLSX.writeFile(wb, `تقرير-المبيعات-${new Date().toISOString().split('T')[0]}.xlsx`);
+    exportToCSV(csvData, 'تقرير-المبيعات');
   };
 
   if (isLoading) {
@@ -157,8 +222,40 @@ function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string })
     );
   }
 
+  if (!salesData?.summary || salesData.summary.totalOrders === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center text-muted-foreground">
+            <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">لا توجد بيانات للفترة المختارة</p>
+            <p className="text-sm mt-2">جرب اختيار فترة زمنية مختلفة</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const posPercentage =
+    salesData.summary.totalRevenue > 0
+      ? ((salesData.summary.posRevenue / salesData.summary.totalRevenue) * 100).toFixed(1)
+      : '0';
+
+  const deliveryPercentage =
+    salesData.summary.totalRevenue > 0
+      ? ((salesData.summary.deliveryRevenue / salesData.summary.totalRevenue) * 100).toFixed(1)
+      : '0';
+
   return (
     <div className="space-y-6">
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={exportSalesCSV}>
+          <Download className="h-4 w-4 ml-2" />
+          تصدير CSV
+        </Button>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -168,9 +265,7 @@ function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string })
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(salesData?.summary?.totalOrders || 0)}
-            </div>
+            <div className="text-2xl font-bold">{formatNumber(salesData.summary.totalOrders)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -181,19 +276,7 @@ function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string })
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(salesData?.summary?.totalRevenue || 0)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              المنتجات المباعة
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(salesData?.summary?.totalItems || 0)}
+              {formatCurrency(salesData.summary.totalRevenue)}
             </div>
           </CardContent>
         </Card>
@@ -205,260 +288,128 @@ function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string })
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(salesData?.summary?.averageOrderValue || 0)}
+              {formatCurrency(salesData.summary.averageOrderValue)}
             </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              نقطة البيع / التوصيل
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold">
+              {formatNumber(salesData.summary.posOrders)}
+              {' / '}
+              {formatNumber(salesData.summary.deliveryOrders)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {formatCurrency(salesData.summary.posRevenue)}
+              {' / '}
+              {formatCurrency(salesData.summary.deliveryRevenue)}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Top Products */}
+      {/* Breakdown Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>المنتجات الأكثر مبيعاً</CardTitle>
-              <CardDescription>أعلى 10 منتجات من حيث الإيرادات</CardDescription>
-            </div>
-            <Button variant="outline" onClick={exportToExcel}>
-              <Download className="h-4 w-4 ml-2" />
-              تصدير Excel
-            </Button>
-          </div>
+          <CardTitle>تفصيل حسب نوع الطلب</CardTitle>
         </CardHeader>
         <CardContent>
-          {salesData?.topProducts && salesData.topProducts.length > 0 ? (
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={salesData.topProducts.slice(0, 10)}
-                  layout="vertical"
-                  margin={{ right: 120 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" tickFormatter={(v) => formatCurrency(v)} />
-                  <YAxis
-                    type="category"
-                    dataKey="product.nameAr"
-                    width={150}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
-                    labelFormatter={(label) => `المنتج: ${label}`}
-                  />
-                  <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">لا توجد بيانات كافية</div>
-          )}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">نوع الطلب</TableHead>
+                <TableHead className="text-right">عدد الطلبات</TableHead>
+                <TableHead className="text-right">الإيرادات</TableHead>
+                <TableHead className="text-right">النسبة</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium">نقطة البيع (POS)</TableCell>
+                <TableCell>{formatNumber(salesData.summary.posOrders)}</TableCell>
+                <TableCell>{formatCurrency(salesData.summary.posRevenue)}</TableCell>
+                <TableCell>{posPercentage}%</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">التوصيل</TableCell>
+                <TableCell>{formatNumber(salesData.summary.deliveryOrders)}</TableCell>
+                <TableCell>{formatCurrency(salesData.summary.deliveryRevenue)}</TableCell>
+                <TableCell>{deliveryPercentage}%</TableCell>
+              </TableRow>
+              <TableRow className="font-bold bg-muted/50">
+                <TableCell>المجموع</TableCell>
+                <TableCell>{formatNumber(salesData.summary.totalOrders)}</TableCell>
+                <TableCell>{formatCurrency(salesData.summary.totalRevenue)}</TableCell>
+                <TableCell>100%</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function StockAgingReport() {
-  const { data, isLoading } = useStockAging();
+interface TopProduct {
+  rank: number;
+  product: {
+    id: string;
+    sku: string;
+    nameAr: string;
+    category: { id: string; nameAr: string } | null;
+  };
+  totalQuantity: number;
+  totalRevenue: number;
+}
 
-  const stockData = data as
-    | {
-        summary?: {
-          expired: number;
-          critical: number;
-          warning: number;
-          good: number;
-          total: number;
-        };
-        expired?: Array<{
-          id: string;
-          product: { nameAr: string; sku: string };
-          quantity: number;
-          expiryDate: string;
-        }>;
-        critical?: Array<{
-          id: string;
-          product: { nameAr: string; sku: string };
-          quantity: number;
-          expiryDate: string;
-        }>;
-      }
-    | undefined;
+function TopProductsReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string }) {
+  const { data, isLoading } = useTopProducts({
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+    sortBy: 'revenue',
+    limit: 10,
+  });
 
-  const pieData = stockData?.summary
-    ? [
-        { name: 'منتهي', value: stockData.summary.expired, color: '#ef4444' },
-        { name: 'حرج (< 7 أيام)', value: stockData.summary.critical, color: '#f97316' },
-        { name: 'تحذير (< 30 يوم)', value: stockData.summary.warning, color: '#eab308' },
-        { name: 'جيد', value: stockData.summary.good, color: '#22c55e' },
-      ]
-    : [];
+  const products = (data as TopProduct[] | undefined) || [];
 
-  const exportToExcel = () => {
-    if (!stockData) {
+  const exportProductsCSV = () => {
+    if (!products.length) {
       return;
     }
 
-    const allItems = [
-      ...(stockData.expired || []).map((i) => ({ ...i, status: 'منتهي' })),
-      ...(stockData.critical || []).map((i) => ({ ...i, status: 'حرج' })),
-    ];
-
-    const wsData = allItems.map((item, index) => ({
-      '#': index + 1,
-      المنتج: item.product.nameAr,
-      SKU: item.product.sku,
-      الكمية: item.quantity,
-      'تاريخ الانتهاء': item.expiryDate,
-      الحالة: item.status,
+    const csvData = products.map((item) => ({
+      الترتيب: item.rank,
+      'رمز المنتج': item.product.sku,
+      'اسم المنتج': item.product.nameAr,
+      القسم: item.product.category?.nameAr || '-',
+      'الكمية المباعة': item.totalQuantity,
+      'الإيرادات (د.ع)': item.totalRevenue,
     }));
 
-    const ws = XLSX.utils.json_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'تقادم المخزون');
-    XLSX.writeFile(wb, `تقرير-تقادم-المخزون-${new Date().toISOString().split('T')[0]}.xlsx`);
+    exportToCSV(csvData, 'أفضل-المنتجات');
   };
 
   if (isLoading) {
     return <Skeleton className="h-96" />;
   }
 
-  return (
-    <div className="space-y-6">
+  if (!products.length) {
+    return (
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>تقادم المخزون</CardTitle>
-              <CardDescription>توزيع المنتجات حسب تاريخ الصلاحية</CardDescription>
-            </div>
-            <Button variant="outline" onClick={exportToExcel}>
-              <Download className="h-4 w-4 ml-2" />
-              تصدير Excel
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Summary */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-red-50 border-red-200">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-red-600">منتهي الصلاحية</p>
-                    <p className="text-2xl font-bold text-red-700">
-                      {stockData?.summary?.expired || 0}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-orange-50 border-orange-200">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-orange-600">حرج (أقل من 7 أيام)</p>
-                    <p className="text-2xl font-bold text-orange-700">
-                      {stockData?.summary?.critical || 0}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-yellow-50 border-yellow-200">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-yellow-600">تحذير (أقل من 30 يوم)</p>
-                    <p className="text-2xl font-bold text-yellow-700">
-                      {stockData?.summary?.warning || 0}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-green-50 border-green-200">
-                  <CardContent className="p-4">
-                    <p className="text-sm text-green-600">جيد</p>
-                    <p className="text-2xl font-bold text-green-700">
-                      {stockData?.summary?.good || 0}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Pie Chart */}
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number) => formatNumber(value)} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-4 mt-4 flex-wrap">
-                {pieData.map((entry) => (
-                  <div key={entry.name} className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: entry.color }}
-                    />
-                    <span className="text-sm">{entry.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <CardContent className="py-12">
+          <div className="text-center text-muted-foreground">
+            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">لا توجد بيانات للفترة المختارة</p>
+            <p className="text-sm mt-2">جرب اختيار فترة زمنية مختلفة</p>
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function CategoryPerformanceReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string }) {
-  const { data, isLoading } = useCategoryPerformance({
-    dateFrom: dateFrom || undefined,
-    dateTo: dateTo || undefined,
-  });
-
-  const categoryData = data as
-    | {
-        totalRevenue?: number;
-        categories?: Array<{
-          category: { id: string; nameAr: string };
-          totalItems: number;
-          totalRevenue: number;
-          uniqueProducts: number;
-          revenuePercentage: string;
-        }>;
-      }
-    | undefined;
-
-  const exportToExcel = () => {
-    if (!categoryData?.categories) {
-      return;
-    }
-
-    const wsData = categoryData.categories.map((item, index) => ({
-      '#': index + 1,
-      القسم: item.category.nameAr,
-      'عدد المنتجات': item.uniqueProducts,
-      'المنتجات المباعة': item.totalItems,
-      الإيرادات: item.totalRevenue,
-      'النسبة المئوية': `${item.revenuePercentage}%`,
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'أداء الأقسام');
-    XLSX.writeFile(wb, `تقرير-أداء-الأقسام-${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
-
-  if (isLoading) {
-    return <Skeleton className="h-96" />;
+    );
   }
 
   return (
@@ -466,37 +417,267 @@ function CategoryPerformanceReport({ dateFrom, dateTo }: { dateFrom: string; dat
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>أداء الأقسام</CardTitle>
-            <CardDescription>
-              إجمالي الإيرادات: {formatCurrency(categoryData?.totalRevenue || 0)}
-            </CardDescription>
+            <CardTitle>أفضل 10 منتجات</CardTitle>
+            <CardDescription>مرتبة حسب الإيرادات</CardDescription>
           </div>
-          <Button variant="outline" onClick={exportToExcel}>
+          <Button variant="outline" onClick={exportProductsCSV}>
             <Download className="h-4 w-4 ml-2" />
-            تصدير Excel
+            تصدير CSV
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {categoryData?.categories && categoryData.categories.length > 0 ? (
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryData.categories}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category.nameAr" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
-                <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
-                  labelFormatter={(label) => `القسم: ${label}`}
-                />
-                <Bar dataKey="totalRevenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-muted-foreground">لا توجد بيانات كافية</div>
-        )}
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-right w-16">#</TableHead>
+              <TableHead className="text-right">المنتج</TableHead>
+              <TableHead className="text-right">القسم</TableHead>
+              <TableHead className="text-right">الكمية</TableHead>
+              <TableHead className="text-right">الإيرادات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {products.map((item) => (
+              <TableRow key={item.product.id}>
+                <TableCell className="font-medium">{item.rank}</TableCell>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">{item.product.nameAr}</div>
+                    <div className="text-xs text-muted-foreground">{item.product.sku}</div>
+                  </div>
+                </TableCell>
+                <TableCell>{item.product.category?.nameAr || '-'}</TableCell>
+                <TableCell>{formatNumber(item.totalQuantity)}</TableCell>
+                <TableCell>{formatCurrency(item.totalRevenue)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
+  );
+}
+
+interface InventoryStatusData {
+  summary?: {
+    totalProducts: number;
+    outOfStockCount: number;
+    lowStockCount: number;
+    healthyCount: number;
+  };
+  outOfStock?: Array<{
+    id: string;
+    sku: string;
+    nameAr: string;
+    category: { id: string; nameAr: string } | null;
+    totalQuantity: number;
+    threshold: number;
+  }>;
+  lowStock?: Array<{
+    id: string;
+    sku: string;
+    nameAr: string;
+    category: { id: string; nameAr: string } | null;
+    totalQuantity: number;
+    threshold: number;
+  }>;
+}
+
+function InventoryReport() {
+  const { data, isLoading } = useInventoryStatus();
+
+  const inventoryData = data as InventoryStatusData | undefined;
+
+  const exportInventoryCSV = () => {
+    if (!inventoryData) {
+      return;
+    }
+
+    const allItems = [
+      ...(inventoryData.outOfStock || []).map((item) => ({
+        الحالة: 'غير متوفر',
+        'رمز المنتج': item.sku,
+        'اسم المنتج': item.nameAr,
+        القسم: item.category?.nameAr || '-',
+        الكمية: item.totalQuantity,
+        'حد التنبيه': item.threshold,
+      })),
+      ...(inventoryData.lowStock || []).map((item) => ({
+        الحالة: 'منخفض',
+        'رمز المنتج': item.sku,
+        'اسم المنتج': item.nameAr,
+        القسم: item.category?.nameAr || '-',
+        الكمية: item.totalQuantity,
+        'حد التنبيه': item.threshold,
+      })),
+    ];
+
+    exportToCSV(allItems, 'تقرير-المخزون');
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-96" />;
+  }
+
+  if (!inventoryData?.summary) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center text-muted-foreground">
+            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">لا توجد بيانات مخزون</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const hasIssues =
+    (inventoryData.summary.outOfStockCount || 0) + (inventoryData.summary.lowStockCount || 0) > 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={exportInventoryCSV} disabled={!hasIssues}>
+          <Download className="h-4 w-4 ml-2" />
+          تصدير CSV
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              إجمالي المنتجات
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatNumber(inventoryData.summary.totalProducts)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-red-600">غير متوفر</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-700">
+              {formatNumber(inventoryData.summary.outOfStockCount)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-yellow-600">مخزون منخفض</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-700">
+              {formatNumber(inventoryData.summary.lowStockCount)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-green-600">بحالة جيدة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-700">
+              {formatNumber(inventoryData.summary.healthyCount)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Out of Stock Table */}
+      {inventoryData.outOfStock && inventoryData.outOfStock.length > 0 && (
+        <Card className="border-red-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-700">
+              <AlertTriangle className="h-5 w-5" />
+              منتجات غير متوفرة ({inventoryData.outOfStock.length})
+            </CardTitle>
+            <CardDescription>يجب إعادة تعبئة هذه المنتجات فوراً</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">رمز المنتج</TableHead>
+                  <TableHead className="text-right">المنتج</TableHead>
+                  <TableHead className="text-right">القسم</TableHead>
+                  <TableHead className="text-right">الكمية</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inventoryData.outOfStock.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-mono text-sm">{item.sku}</TableCell>
+                    <TableCell className="font-medium">{item.nameAr}</TableCell>
+                    <TableCell>{item.category?.nameAr || '-'}</TableCell>
+                    <TableCell className="text-red-600 font-bold">0</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Low Stock Table */}
+      {inventoryData.lowStock && inventoryData.lowStock.length > 0 && (
+        <Card className="border-yellow-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-yellow-700">
+              <Package className="h-5 w-5" />
+              مخزون منخفض ({inventoryData.lowStock.length})
+            </CardTitle>
+            <CardDescription>هذه المنتجات تحتاج إلى إعادة تعبئة قريباً</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">رمز المنتج</TableHead>
+                  <TableHead className="text-right">المنتج</TableHead>
+                  <TableHead className="text-right">القسم</TableHead>
+                  <TableHead className="text-right">الكمية</TableHead>
+                  <TableHead className="text-right">حد التنبيه</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inventoryData.lowStock.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-mono text-sm">{item.sku}</TableCell>
+                    <TableCell className="font-medium">{item.nameAr}</TableCell>
+                    <TableCell>{item.category?.nameAr || '-'}</TableCell>
+                    <TableCell className="text-yellow-600 font-bold">
+                      {item.totalQuantity}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{item.threshold}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* All Good Message */}
+      {!hasIssues && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="py-12">
+            <div className="text-center text-green-700">
+              <Package className="h-12 w-12 mx-auto mb-4" />
+              <p className="text-lg font-medium">جميع المنتجات متوفرة بكميات كافية</p>
+              <p className="text-sm mt-2 text-green-600">لا توجد مشاكل في المخزون حالياً</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
