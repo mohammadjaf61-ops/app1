@@ -5,12 +5,13 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 /**
- * API Error interface
+ * API Error interface with request tracking
  */
 export interface ApiError {
   statusCode: number;
   message: string;
   errorCode: string;
+  requestId?: string; // For debugging and support
 }
 
 /**
@@ -78,6 +79,12 @@ class ApiClient {
       headers,
     });
 
+    // Extract requestId from response headers for debugging
+    const requestId =
+      response.headers.get('x-request-id') ||
+      response.headers.get('x-correlation-id') ||
+      undefined;
+
     if (!response.ok) {
       const data = await response.json().catch(() => null);
 
@@ -88,6 +95,7 @@ class ApiClient {
           statusCode: errorResult.data.statusCode,
           message: errorResult.data.message,
           errorCode: errorResult.data.errorCode || 'UNKNOWN_ERROR',
+          requestId,
         } as ApiError;
       }
 
@@ -95,6 +103,7 @@ class ApiClient {
         statusCode: response.status,
         message: data?.message || 'حدث خطأ غير متوقع',
         errorCode: data?.errorCode || 'UNKNOWN_ERROR',
+        requestId,
       } as ApiError;
     }
 
@@ -118,11 +127,14 @@ class ApiClient {
         message: issue.message,
       }));
 
-      console.error('Response validation failed:', {
-        endpoint,
-        issues,
-        data,
-      });
+      // Log validation error with requestId for debugging
+      // Note: This should only appear in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Response validation failed:', {
+          endpoint,
+          issues,
+        });
+      }
 
       throw new ValidationError(
         'استجابة الخادم لا تطابق الصيغة المتوقعة',

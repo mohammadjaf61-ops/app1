@@ -6,6 +6,7 @@ interface ApiError {
   statusCode: number;
   message: string;
   errorCode: string;
+  requestId?: string; // For debugging and support
 }
 
 class ApiClient {
@@ -52,12 +53,20 @@ class ApiClient {
       headers,
     });
 
+    // Extract requestId from response headers for debugging
+    const requestId =
+      response.headers.get('x-request-id') ||
+      response.headers.get('x-correlation-id') ||
+      undefined;
+
     if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
-        statusCode: response.status,
-        message: 'حدث خطأ غير متوقع',
-        errorCode: 'UNKNOWN_ERROR',
-      }));
+      const errorData = await response.json().catch(() => ({}));
+      const error: ApiError = {
+        statusCode: errorData.statusCode || response.status,
+        message: errorData.message || 'حدث خطأ غير متوقع',
+        errorCode: errorData.errorCode || 'UNKNOWN_ERROR',
+        requestId,
+      };
       throw error;
     }
 

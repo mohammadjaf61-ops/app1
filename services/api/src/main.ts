@@ -9,10 +9,28 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CorrelationIdInterceptor } from './common/interceptors/correlation-id.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { RequestContextMiddleware, StructuredLogger } from './common/observability';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const logger = new StructuredLogger('Bootstrap');
+
+  const app = await NestFactory.create(AppModule, {
+    // Use structured logger for NestJS internal logs
+    bufferLogs: true,
+  });
+  app.useLogger(new StructuredLogger('NestJS'));
+
   const configService = app.get(ConfigService);
+
+  // Configure logger based on environment
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  if (nodeEnv === 'production') {
+    StructuredLogger.setMinLevel('log'); // No debug in production
+  }
+
+  // Request context middleware (must be first)
+  const requestContextMiddleware = new RequestContextMiddleware();
+  app.use(requestContextMiddleware.use.bind(requestContextMiddleware));
 
   // Security
   app.use(helmet());
@@ -126,8 +144,12 @@ All errors follow a standard format:
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);
 
-  console.warn(`🚀 Application is running on: http://localhost:${port}/api`);
-  console.warn(`📚 Swagger docs available at: http://localhost:${port}/docs`);
+  logger.log('Application started', {
+    port,
+    apiUrl: `http://localhost:${port}/api`,
+    docsUrl: nodeEnv !== 'production' ? `http://localhost:${port}/docs` : undefined,
+    environment: nodeEnv,
+  });
 }
 
 bootstrap();
