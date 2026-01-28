@@ -56,21 +56,70 @@ async function bootstrap(): Promise<void> {
   if (configService.get<string>('NODE_ENV') !== 'production') {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Hypermarket API')
-      .setDescription('API documentation for the Hypermarket platform')
+      .setDescription(`
+# واجهة برمجة تطبيقات الهايبرماركت
+
+API documentation for the Hypermarket platform.
+
+## Authentication
+All protected endpoints require a Bearer token in the Authorization header.
+
+## Error Handling
+All errors follow a standard format:
+\`\`\`json
+{
+  "statusCode": 400,
+  "message": "رسالة الخطأ",
+  "errorCode": "VALIDATION_FAILED",
+  "correlationId": "abc123",
+  "timestamp": "2026-01-28T12:00:00.000Z"
+}
+\`\`\`
+
+## Common Error Codes
+| Code | Description |
+|------|-------------|
+| AUTH_UNAUTHORIZED | يجب تسجيل الدخول |
+| AUTH_FORBIDDEN | غير مصرح لك بهذا الإجراء |
+| VALIDATION_FAILED | بيانات غير صالحة |
+| RESOURCE_NOT_FOUND | المورد غير موجود |
+| INVENTORY_OUT_OF_STOCK | المنتج غير متوفر |
+| ORDER_PRICE_CHANGED | تغير سعر المنتج |
+      `)
       .setVersion('1.0')
-      .addBearerAuth()
-      .addTag('auth', 'Authentication endpoints')
-      .addTag('users', 'User management')
-      .addTag('catalog', 'Product catalog and categories')
-      .addTag('inventory', 'Inventory management')
-      .addTag('orders', 'Order management')
-      .addTag('delivery', 'Delivery management')
-      .addTag('reports', 'Reports and analytics')
-      .addTag('audit', 'Audit logs')
+      .setContact('Hypermarket Team', '', 'support@hypermarket.iq')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter JWT token',
+        },
+        'JWT-auth',
+      )
+      .addTag('auth', 'Authentication - تسجيل الدخول والخروج')
+      .addTag('users', 'User management - إدارة المستخدمين')
+      .addTag('products', 'Products - المنتجات')
+      .addTag('categories', 'Categories - التصنيفات')
+      .addTag('catalog', 'Catalog - الكتالوج العام')
+      .addTag('orders', 'Orders - الطلبات')
+      .addTag('admin', 'Admin Dashboard - لوحة التحكم')
+      .addTag('inventory', 'Inventory - المخزون')
+      .addTag('delivery', 'Delivery - التوصيل')
+      .addTag('reports', 'Reports - التقارير')
+      .addTag('audit', 'Audit - سجل التدقيق')
       .build();
 
     const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('docs', app, document);
+    SwaggerModule.setup('docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        docExpansion: 'none',
+        filter: true,
+        showRequestDuration: true,
+      },
+      customSiteTitle: 'Hypermarket API Docs',
+    });
   }
 
   // Start server
