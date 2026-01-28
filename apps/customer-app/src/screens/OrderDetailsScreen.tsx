@@ -1,7 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { RouteProp } from '@react-navigation/native';
 import React from 'react';
 import { View, Text, ScrollView, Image, RefreshControl } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { useOrder } from '@/hooks/use-api';
@@ -12,7 +12,7 @@ import {
   orderStatusLabels,
   orderStatusColors,
 } from '@/lib/formatters';
-import { RootStackParamList } from '@/navigation/RootNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type Props = {
   route: RouteProp<RootStackParamList, 'OrderDetails'>;
@@ -71,9 +71,7 @@ export function OrderDetailsScreen({ route }: Props) {
     <ScreenWrapper bgColor="#fff">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
-        }
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       >
         <View className="p-4">
           {/* Order Header */}
@@ -82,20 +80,13 @@ export function OrderDetailsScreen({ route }: Props) {
               className="px-4 py-2 rounded-full mb-3"
               style={{ backgroundColor: statusColor.bg }}
             >
-              <Text
-                style={{ color: statusColor.text }}
-                className="font-bold text-lg"
-              >
+              <Text style={{ color: statusColor.text }} className="font-bold text-lg">
                 {orderStatusLabels[order.status] || order.status}
               </Text>
             </View>
             <Text className="text-gray-500">رقم الطلب</Text>
-            <Text className="text-2xl font-bold text-gray-900">
-              #{order.orderNumber}
-            </Text>
-            <Text className="text-gray-400 text-sm mt-1">
-              {formatDateTime(order.createdAt)}
-            </Text>
+            <Text className="text-2xl font-bold text-gray-900">#{order.orderNumber}</Text>
+            <Text className="text-gray-400 text-sm mt-1">{formatDateTime(order.createdAt)}</Text>
           </View>
 
           {/* Status Timeline */}
@@ -136,9 +127,7 @@ export function OrderDetailsScreen({ route }: Props) {
 
           {/* Delivery Info */}
           <View className="bg-gray-50 rounded-xl p-4 mb-4">
-            <Text className="text-gray-900 font-bold text-right mb-3">
-              معلومات التوصيل
-            </Text>
+            <Text className="text-gray-900 font-bold text-right mb-3">معلومات التوصيل</Text>
             <View className="space-y-2">
               <View className="flex-row items-center justify-end">
                 <Text className="text-gray-600 mr-2">{order.customerName}</Text>
@@ -159,9 +148,7 @@ export function OrderDetailsScreen({ route }: Props) {
             </View>
             {order.notes && (
               <View className="mt-3 pt-3 border-t border-gray-200">
-                <Text className="text-gray-500 text-sm text-right">
-                  ملاحظات: {order.notes}
-                </Text>
+                <Text className="text-gray-500 text-sm text-right">ملاحظات: {order.notes}</Text>
               </View>
             )}
           </View>
@@ -172,10 +159,7 @@ export function OrderDetailsScreen({ route }: Props) {
               المنتجات ({order.items?.length})
             </Text>
             {order.items?.map((item) => (
-              <View
-                key={item.id}
-                className="flex-row bg-gray-50 rounded-xl p-3 mb-2"
-              >
+              <View key={item.id} className="flex-row bg-gray-50 rounded-xl p-3 mb-2">
                 <View className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
                   {item.product?.imageUrl ? (
                     <Image
@@ -197,9 +181,7 @@ export function OrderDetailsScreen({ route }: Props) {
                     {item.quantity} × {formatCurrencyShort(item.unitPrice)}
                   </Text>
                 </View>
-                <Text className="text-primary font-bold">
-                  {formatCurrencyShort(item.subtotal)}
-                </Text>
+                <Text className="text-primary font-bold">{formatCurrencyShort(item.subtotal)}</Text>
               </View>
             ))}
           </View>

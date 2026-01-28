@@ -1,12 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button, Input } from '@/components/ui';
+import type { AuthStackParamList } from '@/navigation/AuthNavigator';
 import { useAuthStore } from '@/stores/auth-store';
-import { AuthStackParamList } from '@/navigation/AuthNavigator';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
@@ -56,9 +56,7 @@ export function LoginScreen({ navigation }: Props) {
 
           {/* Form */}
           <View className="space-y-4">
-            <Text className="text-xl font-bold text-gray-900 text-right mb-6">
-              تسجيل الدخول
-            </Text>
+            <Text className="text-xl font-bold text-gray-900 text-right mb-6">تسجيل الدخول</Text>
 
             <Input
               label="رقم الهاتف"
@@ -71,17 +69,10 @@ export function LoginScreen({ navigation }: Props) {
               rightIcon={<Ionicons name="call-outline" size={20} color="#9ca3af" />}
             />
 
-            <Button
-              title="متابعة"
-              onPress={handleSubmit}
-              loading={loading}
-              fullWidth
-              size="lg"
-            />
+            <Button title="متابعة" onPress={handleSubmit} loading={loading} fullWidth size="lg" />
 
             <Text className="text-center text-gray-500 text-sm mt-4">
-              بالمتابعة، أنت توافق على{' '}
-              <Text className="text-primary">الشروط والأحكام</Text>
+              بالمتابعة، أنت توافق على <Text className="text-primary">الشروط والأحكام</Text>
             </Text>
           </View>
         </View>

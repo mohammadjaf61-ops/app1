@@ -1,13 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { View, Text } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
 
-import { HomeScreen } from '@/screens/HomeScreen';
-import { CategoriesScreen } from '@/screens/CategoriesScreen';
-import { CartScreen } from '@/screens/CartScreen';
-import { OrdersScreen } from '@/screens/OrdersScreen';
 import { AccountScreen } from '@/screens/AccountScreen';
+import { CartScreen } from '@/screens/CartScreen';
+import { CategoriesScreen } from '@/screens/CategoriesScreen';
+import { HomeScreen } from '@/screens/HomeScreen';
+import { OrdersScreen } from '@/screens/OrdersScreen';
 import { useCartStore } from '@/stores/cart-store';
 
 export type MainTabParamList = {
@@ -21,16 +21,16 @@ export type MainTabParamList = {
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function CartIconWithBadge({ color, size }: { color: string; size: number }) {
-  const itemCount = useCartStore((state) => state.items.reduce((sum, item) => sum + item.quantity, 0));
+  const itemCount = useCartStore((state) =>
+    state.items.reduce((sum, item) => sum + item.quantity, 0),
+  );
 
   return (
     <View>
       <Ionicons name="cart-outline" size={size} color={color} />
       {itemCount > 0 && (
         <View className="absolute -top-1 -right-2 bg-secondary-500 rounded-full min-w-[18px] h-[18px] items-center justify-center">
-          <Text className="text-white text-xs font-bold">
-            {itemCount > 99 ? '99+' : itemCount}
-          </Text>
+          <Text className="text-white text-xs font-bold">{itemCount > 99 ? '99+' : itemCount}</Text>
         </View>
       )}
     </View>
@@ -80,9 +80,7 @@ export function MainNavigator() {
         component={CartScreen}
         options={{
           tabBarLabel: 'السلة',
-          tabBarIcon: ({ color, size }) => (
-            <CartIconWithBadge color={color} size={size} />
-          ),
+          tabBarIcon: ({ color, size }) => <CartIconWithBadge color={color} size={size} />,
         }}
       />
       <Tab.Screen
