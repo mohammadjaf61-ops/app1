@@ -11,6 +11,7 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },
   "dependencies": {
+    "@hypermarket/contracts": "workspace:*",
     "@hypermarket/shared-types": "workspace:*"
   },
   "peerDependencies": {

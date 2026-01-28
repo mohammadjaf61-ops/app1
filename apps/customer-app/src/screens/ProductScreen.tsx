@@ -17,7 +17,7 @@ type Props = {
 export function ProductScreen({ route }: Props) {
   const { productId } = route.params;
   const { data: product, isLoading } = useProduct(productId);
-  const { addItem, getItemQuantity } = useCartStore();
+  const { addItem, getItemQuantity, updateQuantity: _updateQuantity } = useCartStore();
 
   const quantity = getItemQuantity(productId);
   const [localQuantity, setLocalQuantity] = useState(1);

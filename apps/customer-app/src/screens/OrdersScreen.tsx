@@ -29,7 +29,7 @@ export function OrdersScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { data, isLoading, refetch } = useOrders();
 
-  const orders = ((data as any)?.data || data || []) as Order[];
+  const orders = (data?.data ?? []) as Order[];
 
   const renderOrder = ({ item }: { item: Order }) => {
     const statusColor = orderStatusColors[item.status] || { bg: '#f3f4f6', text: '#374151' };

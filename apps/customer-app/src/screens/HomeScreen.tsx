@@ -24,7 +24,7 @@ export function HomeScreen() {
     refetch: refetchProducts,
   } = useProducts({ limit: 10 });
 
-  const products = (productsData as any)?.data || productsData || [];
+  const products = productsData?.data ?? [];
   const isLoading = categoriesLoading || productsLoading;
 
   const onRefresh = () => {
@@ -82,7 +82,7 @@ export function HomeScreen() {
               contentContainerStyle={{ paddingLeft: 8 }}
               className="flex-row-reverse"
             >
-              {(categories || []).slice(0, 8).map((category: any) => (
+              {(categories || []).slice(0, 8).map((category) => (
                 <TouchableOpacity
                   key={category.id}
                   className="items-center ml-4"
@@ -123,10 +123,10 @@ export function HomeScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               inverted // For RTL
-              keyExtractor={(item: any) => item.id}
+              keyExtractor={(item) => item.id}
               contentContainerStyle={{ paddingLeft: 8 }}
               ItemSeparatorComponent={() => <View className="w-3" />}
-              renderItem={({ item }: any) => (
+              renderItem={({ item }) => (
                 <ProductCard
                   product={item}
                   onPress={() => navigation.navigate('Product', { productId: item.id })}
@@ -143,7 +143,7 @@ export function HomeScreen() {
           {/* More Products */}
           <View>
             <Text className="text-lg font-bold text-gray-900 text-right mb-4">تسوق الآن</Text>
-            {products.slice(0, 5).map((item: any) => (
+            {products.slice(0, 5).map((item) => (
               <ProductCard
                 key={item.id}
                 product={item}

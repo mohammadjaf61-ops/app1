@@ -1,20 +1,21 @@
-import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { BullModule } from '@nestjs/bull';
 
 import { configuration, validationSchema } from './config/configuration';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { AuditModule } from './modules/audit/audit.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { CatalogModule } from './modules/catalog/catalog.module';
-import { DeliveryModule } from './modules/delivery/delivery.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { CacheModule } from './modules/cache';
 import { HealthModule } from './modules/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { DeliveryModule } from './modules/delivery/delivery.module';
 import { ReportsModule } from './modules/reports/reports.module';
-import { UsersModule } from './modules/users/users.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -48,6 +49,9 @@ import { PrismaModule } from './prisma/prisma.module';
 
     // Database
     PrismaModule,
+
+    // Caching (Redis)
+    CacheModule,
 
     // Feature modules
     HealthModule,

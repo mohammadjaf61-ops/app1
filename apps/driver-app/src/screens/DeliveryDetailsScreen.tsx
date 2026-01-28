@@ -69,7 +69,7 @@ export function DeliveryDetailsScreen() {
   const { data, isLoading, refetch } = useDelivery(deliveryId);
   const delivery = data as Delivery | undefined;
 
-  const { isOffline: _isOffline } = useDeliveryStore();
+  const { isOffline } = useDeliveryStore();
 
   const confirmPickup = useConfirmPickup();
   const startDelivery = useStartDelivery();
@@ -105,7 +105,7 @@ export function DeliveryDetailsScreen() {
     ]);
   };
 
-  const _handleStartDelivery = () => {
+  const handleStartDelivery = () => {
     Alert.alert('بدء التوصيل', 'هل أنت في الطريق إلى العميل الآن؟', [
       { text: 'إلغاء', style: 'cancel' },
       {

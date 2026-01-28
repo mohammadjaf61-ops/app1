@@ -25,7 +25,7 @@ export function SearchScreen() {
   }, [query]);
 
   const { data, isLoading } = useSearchProducts(debouncedQuery);
-  const products = (data as any)?.data || data || [];
+  const products = data?.data ?? [];
 
   const recentSearches = ['حليب', 'خبز', 'بيض', 'جبن', 'زيت']; // Mock recent searches
 
@@ -96,13 +96,13 @@ export function SearchScreen() {
         // Results
         <FlatList
           data={products}
-          keyExtractor={(item: any) => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 16 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <Text className="text-gray-500 text-right mb-4">{products.length} نتيجة</Text>
           }
-          renderItem={({ item }: any) => (
+          renderItem={({ item }) => (
             <ProductCard
               product={item}
               variant="horizontal"

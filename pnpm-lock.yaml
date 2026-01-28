@@ -162,6 +162,9 @@ importers:
       '@expo/vector-icons':
         specifier: ^14.0.0
         version: 14.1.0(expo-font@11.10.3(expo@50.0.21(@babel/core@7.28.6)(@react-native/babel-preset@0.73.21(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6)))(react-native@0.73.0(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(react@18.2.0))(react@18.2.0)))(react-native@0.73.0(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(react@18.2.0))(react@18.2.0)
+      '@hypermarket/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@hypermarket/mobile-core':
         specifier: workspace:*
         version: link:../../packages/mobile-core
@@ -341,6 +344,9 @@ importers:
       '@expo/vector-icons':
         specifier: ^14.0.0
         version: 14.1.0(expo-font@11.10.3(expo@50.0.21(@babel/core@7.28.6)(@react-native/babel-preset@0.73.21(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6)))(react-native@0.73.2(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(react@18.2.0))(react@18.2.0)))(react-native@0.73.2(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(react@18.2.0))(react@18.2.0)
+      '@hypermarket/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@hypermarket/mobile-core':
         specifier: workspace:*
         version: link:../../packages/mobile-core
@@ -499,6 +505,9 @@ importers:
       '@expo/vector-icons':
         specifier: ^14.0.0
         version: 14.1.0(expo-font@11.10.3(expo@50.0.21(@babel/core@7.28.6)(@react-native/babel-preset@0.73.21(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6)))(react-native@0.73.2(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(react@18.2.0))(react@18.2.0)))(react-native@0.73.2(@babel/core@7.28.6)(@babel/preset-env@7.28.6(@babel/core@7.28.6))(react@18.2.0))(react@18.2.0)
+      '@hypermarket/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@hypermarket/mobile-core':
         specifier: workspace:*
         version: link:../../packages/mobile-core
@@ -652,6 +661,22 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
+  packages/contracts:
+    dependencies:
+      zod:
+        specifier: ^3.22.0
+        version: 3.25.76
+    devDependencies:
+      '@hypermarket/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@hypermarket/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
   packages/eslint-config:
     dependencies:
       '@typescript-eslint/eslint-plugin':
@@ -702,6 +727,9 @@ importers:
 
   packages/mobile-core:
     dependencies:
+      '@hypermarket/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@hypermarket/shared-types':
         specifier: workspace:*
         version: link:../shared-types
