@@ -12,6 +12,9 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
+    "@hypermarket/mobile-core": "workspace:*",
+    "@hypermarket/mobile-ui": "workspace:*",
+    "@hypermarket/shared-types": "workspace:*",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "@tanstack/react-query": "^5.17.0",

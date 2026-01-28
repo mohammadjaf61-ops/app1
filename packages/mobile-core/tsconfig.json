@@ -1,0 +1,12 @@
+{
+  "extends": "@hypermarket/tsconfig/react-native.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "noEmit": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,16 +1,22 @@
 import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  ActivityIndicator,
-  View,
-  TouchableOpacityProps,
-} from 'react-native';
+import type { TouchableOpacityProps } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
 
-interface ButtonProps extends TouchableOpacityProps {
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'danger'
+  | 'warning'
+  | 'outline'
+  | 'ghost';
+
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
+
+export interface ButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'outline';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
@@ -18,7 +24,7 @@ interface ButtonProps extends TouchableOpacityProps {
   iconPosition?: 'left' | 'right';
 }
 
-const variantStyles = {
+const variantStyles: Record<ButtonVariant, { bg: string; text: string; border: string }> = {
   primary: {
     bg: 'bg-primary',
     text: 'text-white',
@@ -49,9 +55,14 @@ const variantStyles = {
     text: 'text-primary',
     border: 'border-2 border-primary',
   },
+  ghost: {
+    bg: 'bg-transparent',
+    text: 'text-primary',
+    border: '',
+  },
 };
 
-const sizeStyles = {
+const sizeStyles: Record<ButtonSize, { padding: string; text: string; minHeight: string }> = {
   sm: {
     padding: 'px-4 py-2',
     text: 'text-sm',
@@ -88,8 +99,14 @@ export function Button({
 }: ButtonProps) {
   const variantStyle = variantStyles[variant];
   const sizeStyle = sizeStyles[size];
-
   const isDisabled = disabled || loading;
+
+  const getIndicatorColor = () => {
+    if (variant === 'outline' || variant === 'secondary' || variant === 'ghost') {
+      return '#16a34a';
+    }
+    return 'white';
+  };
 
   return (
     <TouchableOpacity
@@ -111,15 +128,10 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator
-          color={variant === 'outline' || variant === 'secondary' ? '#0ea5e9' : 'white'}
-          size={size === 'sm' ? 'small' : 'small'}
-        />
+        <ActivityIndicator color={getIndicatorColor()} size="small" />
       ) : (
         <View className="flex-row items-center justify-center">
-          {icon && iconPosition === 'left' && (
-            <View className="ml-2">{icon}</View>
-          )}
+          {icon && iconPosition === 'left' && <View className="ml-2">{icon}</View>}
           <Text
             className={`
               ${variantStyle.text}
@@ -130,9 +142,7 @@ export function Button({
           >
             {title}
           </Text>
-          {icon && iconPosition === 'right' && (
-            <View className="mr-2">{icon}</View>
-          )}
+          {icon && iconPosition === 'right' && <View className="mr-2">{icon}</View>}
         </View>
       )}
     </TouchableOpacity>

@@ -22,12 +22,12 @@ export function formatIraqiPhone(phone: string): string {
 
   // Remove country code if present
   if (cleaned.startsWith('964')) {
-    cleaned = '0' + cleaned.slice(3);
+    cleaned = `0${cleaned.slice(3)}`;
   }
 
   // Add leading zero if missing
   if (cleaned.startsWith('7') && cleaned.length === 10) {
-    cleaned = '0' + cleaned;
+    cleaned = `0${cleaned}`;
   }
 
   return cleaned;
@@ -45,8 +45,7 @@ export function formatPhoneInternational(phone: string): string {
   }
 
   // Convert to international format
-  const international = '+964 ' + cleaned.slice(1, 4) + ' ' + cleaned.slice(4, 7) + ' ' + cleaned.slice(7);
-  return international;
+  return `+964 ${cleaned.slice(1, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
 }
 
 /**
@@ -76,14 +75,28 @@ export type PasswordStrength = 'weak' | 'medium' | 'strong';
 export function getPasswordStrength(password: string): PasswordStrength {
   let score = 0;
 
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
-  if (/\d/.test(password)) score++;
-  if (/[^a-zA-Z0-9]/.test(password)) score++;
+  if (password.length >= 8) {
+    score++;
+  }
+  if (password.length >= 12) {
+    score++;
+  }
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) {
+    score++;
+  }
+  if (/\d/.test(password)) {
+    score++;
+  }
+  if (/[^a-zA-Z0-9]/.test(password)) {
+    score++;
+  }
 
-  if (score <= 2) return 'weak';
-  if (score <= 3) return 'medium';
+  if (score <= 2) {
+    return 'weak';
+  }
+  if (score <= 3) {
+    return 'medium';
+  }
   return 'strong';
 }
 

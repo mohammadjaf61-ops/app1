@@ -1,4 +1,6 @@
-export { Button } from './Button';
-export { Input } from './Input';
+// Re-export shared components from @hypermarket/mobile-ui
+export { Button, Badge, Input } from '@hypermarket/mobile-ui';
+export type { ButtonProps, BadgeProps, InputProps } from '@hypermarket/mobile-ui';
+
+// App-specific components
 export { ProductCard, QuantityControl } from './ProductCard';
-export { Badge } from './Badge';
