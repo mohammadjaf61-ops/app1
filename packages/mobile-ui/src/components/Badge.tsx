@@ -1,13 +1,25 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
-interface BadgeProps {
+export type BadgeVariant =
+  | 'default'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'error'
+  | 'info'
+  | 'primary'
+  | 'urgent';
+
+export type BadgeSize = 'sm' | 'md' | 'lg';
+
+export interface BadgeProps {
   label: string;
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: BadgeVariant;
+  size?: BadgeSize;
 }
 
-const variantStyles = {
+const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
   default: {
     bg: 'bg-gray-100',
     text: 'text-gray-700',
@@ -24,6 +36,10 @@ const variantStyles = {
     bg: 'bg-red-100',
     text: 'text-red-700',
   },
+  error: {
+    bg: 'bg-red-100',
+    text: 'text-red-800',
+  },
   info: {
     bg: 'bg-blue-100',
     text: 'text-blue-700',
@@ -32,9 +48,13 @@ const variantStyles = {
     bg: 'bg-sky-100',
     text: 'text-sky-700',
   },
+  urgent: {
+    bg: 'bg-red-500',
+    text: 'text-white',
+  },
 };
 
-const sizeStyles = {
+const sizeStyles: Record<BadgeSize, { padding: string; text: string }> = {
   sm: {
     padding: 'px-2 py-0.5',
     text: 'text-xs',
@@ -55,9 +75,7 @@ export function Badge({ label, variant = 'default', size = 'md' }: BadgeProps) {
 
   return (
     <View className={`${variantStyle.bg} ${sizeStyle.padding} rounded-full`}>
-      <Text className={`${variantStyle.text} ${sizeStyle.text} font-medium`}>
-        {label}
-      </Text>
+      <Text className={`${variantStyle.text} ${sizeStyle.text} font-medium`}>{label}</Text>
     </View>
   );
 }
