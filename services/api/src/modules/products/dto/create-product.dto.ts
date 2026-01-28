@@ -1,3 +1,5 @@
+import { ProductUnit } from '@hypermarket/shared-types';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
@@ -7,9 +9,6 @@ import {
   IsEnum,
   Min,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-import { ProductUnit } from '@hypermarket/shared-types';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'PRD-001234' })

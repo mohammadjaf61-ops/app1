@@ -11,9 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#0ea5e9"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.hypermarket.driver"

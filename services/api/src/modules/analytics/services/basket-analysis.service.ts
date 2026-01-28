@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from '../../../prisma/prisma.service';
+
 import { AiGovernanceService } from './ai-governance.service';
 
 interface BasketPair {
@@ -126,9 +128,7 @@ export class BasketAnalysisService {
    * Get product purchase counts
    */
   private async getProductPurchaseCounts(startDate: Date): Promise<Map<string, number>> {
-    const counts = await this.prisma.$queryRaw<
-      Array<{ product_id: string; order_count: bigint }>
-    >`
+    const counts = await this.prisma.$queryRaw<Array<{ product_id: string; order_count: bigint }>>`
       SELECT
         oi.product_id,
         COUNT(DISTINCT o.id)::BIGINT as order_count
@@ -139,7 +139,12 @@ export class BasketAnalysisService {
       GROUP BY oi.product_id
     `;
 
-    return new Map(counts.map((c) => [c.product_id, Number(c.order_count)]));
+    return new Map(
+      counts.map((c: { product_id: string; order_count: bigint }) => [
+        c.product_id,
+        Number(c.order_count),
+      ]),
+    );
   }
 
   /**
@@ -193,8 +198,9 @@ export class BasketAnalysisService {
     });
 
     // Map to recommended product (the one that's not the input)
-    const result = recommendations
-      .map((r) => ({
+    type RecommendationType = (typeof recommendations)[number];
+    return recommendations
+      .map((r: RecommendationType) => ({
         productId: r.productIdA === productId ? r.productIdB : r.productIdA,
         sku: r.productIdA === productId ? r.skuB : r.skuA,
         lift: r.lift,
@@ -202,16 +208,12 @@ export class BasketAnalysisService {
         coOccurrenceCount: r.coOccurrenceCount,
       }))
       .slice(0, limit);
-
-    return result;
   }
 
   /**
    * Get top product pairs by lift
    */
-  async getTopProductPairs(
-    limit: number = 20,
-  ): Promise<
+  async getTopProductPairs(limit: number = 20): Promise<
     Array<{
       productA: { id: string; sku: string };
       productB: { id: string; sku: string };
@@ -226,7 +228,8 @@ export class BasketAnalysisService {
       take: limit,
     });
 
-    return pairs.map((p) => ({
+    type PairType = (typeof pairs)[number];
+    return pairs.map((p: PairType) => ({
       productA: { id: p.productIdA, sku: p.skuA },
       productB: { id: p.productIdB, sku: p.skuB },
       lift: p.lift,

@@ -1,5 +1,5 @@
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CompleteDeliveryDto {
   @ApiProperty({ example: 50000, description: 'Amount collected from customer in IQD' })

@@ -25,7 +25,7 @@ export const FAILED_DELIVERY_REASONS = [
   { value: 'OTHER', label: 'سبب آخر' },
 ] as const;
 
-export type FailedDeliveryReason = typeof FAILED_DELIVERY_REASONS[number]['value'];
+export type FailedDeliveryReason = (typeof FAILED_DELIVERY_REASONS)[number]['value'];
 
 // Demo delivery address
 export const DEMO_DELIVERY_ADDRESS = 'مجمع الأميرات السكني – بلوك 25';

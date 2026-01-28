@@ -1,6 +1,5 @@
+import type { UserRole } from '@hypermarket/shared-types';
 import { SetMetadata } from '@nestjs/common';
-
-import { UserRole } from '@hypermarket/shared-types';
 
 export const ROLES_KEY = 'roles';
 

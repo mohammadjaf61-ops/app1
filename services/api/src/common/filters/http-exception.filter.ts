@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import '../types/express.d';
 
 /**
  * Standard error response format per PROMPT 04
@@ -48,7 +49,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const correlationId = request['correlationId'];
+    const correlationId = request.correlationId;
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'حدث خطأ في الخادم'; // Internal server error in Arabic
@@ -56,9 +57,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const exceptionResponse = exception.getResponse() as
-        | ExceptionResponse
-        | string;
+      const exceptionResponse = exception.getResponse() as ExceptionResponse | string;
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
@@ -67,14 +66,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         if (Array.isArray(exceptionResponse.message)) {
           message = exceptionResponse.message.join(', ');
         } else {
-          message =
-            exceptionResponse.message ||
-            exceptionResponse.error ||
-            message;
+          message = exceptionResponse.message || exceptionResponse.error || message;
         }
         // Use custom error code if provided
-        errorCode =
-          exceptionResponse.errorCode || ERROR_CODES[status] || errorCode;
+        errorCode = exceptionResponse.errorCode || ERROR_CODES[status] || errorCode;
       }
     } else if (exception instanceof Error) {
       message = exception.message;

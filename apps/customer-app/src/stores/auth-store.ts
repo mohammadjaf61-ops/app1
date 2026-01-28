@@ -1,8 +1,8 @@
-import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { create } from 'zustand';
 
-import { apiClient } from '@/services/api-client';
 import { STORAGE_KEYS } from '@/lib/constants';
+import { apiClient } from '@/services/api-client';
 
 interface User {
   id: string;
@@ -49,10 +49,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   verifyOtp: async (phone: string, otp: string) => {
-    const response = await apiClient.post<{ accessToken: string; user: User }>(
-      '/auth/verify-otp',
-      { phone, otp }
-    );
+    const response = await apiClient.post<{ accessToken: string; user: User }>('/auth/verify-otp', {
+      phone,
+      otp,
+    });
     await apiClient.setToken(response.accessToken);
     set({ user: response.user, isAuthenticated: true });
   },
@@ -65,7 +65,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   updateProfile: async (data: Partial<User>) => {
     const { user } = get();
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     const updatedUser = await apiClient.patch<User>('/users/me', data);
     set({ user: updatedUser });

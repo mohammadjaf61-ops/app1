@@ -11,9 +11,7 @@ export default function NotFound() {
         <span className="text-4xl">🔍</span>
       </div>
 
-      <h2 className="mb-2 text-xl font-bold text-gray-900">
-        الصفحة غير موجودة
-      </h2>
+      <h2 className="mb-2 text-xl font-bold text-gray-900">الصفحة غير موجودة</h2>
 
       <p className="mb-6 text-center text-gray-600">
         عذرًا، لم نتمكن من العثور على الصفحة المطلوبة.

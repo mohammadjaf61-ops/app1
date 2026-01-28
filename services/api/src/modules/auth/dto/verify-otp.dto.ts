@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, Matches, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, Matches, Length } from 'class-validator';
 
 export class VerifyOtpDto {
   @ApiProperty({

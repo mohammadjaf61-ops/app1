@@ -1,12 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
-
 import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -32,23 +26,26 @@ export class OrdersService {
     page?: number;
     limit?: number;
   }) {
-    const {
-      status,
-      pickerId,
-      isPaid,
-      search,
-      dateFrom,
-      dateTo,
-      page = 1,
-      limit = 20,
-    } = params;
+    const { status, pickerId, isPaid, search, dateFrom, dateTo, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    const where: {
+      status?: OrderStatus;
+      pickerId?: string;
+      isPaid?: boolean;
+      OR?: Array<Record<string, unknown>>;
+      createdAt?: { gte?: Date; lte?: Date };
+    } = {};
 
-    if (status) where.status = status;
-    if (pickerId) where.pickerId = pickerId;
-    if (isPaid !== undefined) where.isPaid = isPaid;
+    if (status) {
+      where.status = status;
+    }
+    if (pickerId) {
+      where.pickerId = pickerId;
+    }
+    if (isPaid !== undefined) {
+      where.isPaid = isPaid;
+    }
 
     if (search) {
       where.OR = [
@@ -60,8 +57,12 @@ export class OrdersService {
 
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt['gte'] = dateFrom;
-      if (dateTo) where.createdAt['lte'] = dateTo;
+      if (dateFrom) {
+        where.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt.lte = dateTo;
+      }
     }
 
     const [orders, total] = await Promise.all([
@@ -184,9 +185,7 @@ export class OrdersService {
     const deliveryFeeSetting = await this.prisma.setting.findUnique({
       where: { key: 'delivery_fee_iqd' },
     });
-    const deliveryFee = deliveryFeeSetting
-      ? parseInt(deliveryFeeSetting.value, 10)
-      : 5000;
+    const deliveryFee = deliveryFeeSetting ? parseInt(deliveryFeeSetting.value, 10) : 5000;
 
     // Get products and calculate totals
     const productIds = dto.items.map((item) => item.productId);
@@ -198,11 +197,14 @@ export class OrdersService {
       throw new BadRequestException('بعض المنتجات غير متوفرة');
     }
 
-    const productMap = new Map(products.map((p) => [p.id, p]));
+    type ProductType = (typeof products)[number];
+    const productMap = new Map(products.map((p: ProductType) => [p.id, p]));
 
     let subtotal = 0;
     const orderItems = dto.items.map((item) => {
-      const product = productMap.get(item.productId);
+      const product = productMap.get(item.productId) as
+        | { id: string; nameAr: string; salePrice: number }
+        | undefined;
       if (!product) {
         throw new BadRequestException(`المنتج غير موجود: ${item.productId}`);
       }
@@ -316,7 +318,7 @@ export class OrdersService {
    * Mark order as paid
    */
   async markAsPaid(orderId: string, isPaid: boolean) {
-    const order = await this.findById(orderId);
+    await this.findById(orderId);
 
     const updated = await this.prisma.order.update({
       where: { id: orderId },
@@ -356,11 +358,15 @@ export class OrdersService {
    * Get order statistics
    */
   async getStatistics(dateFrom?: Date, dateTo?: Date) {
-    const where: Record<string, unknown> = {};
+    const where: { createdAt?: { gte?: Date; lte?: Date } } = {};
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt['gte'] = dateFrom;
-      if (dateTo) where.createdAt['lte'] = dateTo;
+      if (dateFrom) {
+        where.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt.lte = dateTo;
+      }
     }
 
     const [
@@ -398,10 +404,7 @@ export class OrdersService {
   /**
    * Validate status transitions
    */
-  private validateStatusTransition(
-    currentStatus: OrderStatus,
-    newStatus: OrderStatus,
-  ): void {
+  private validateStatusTransition(currentStatus: OrderStatus, newStatus: OrderStatus): void {
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
       [OrderStatus.PENDING]: [OrderStatus.PICKING, OrderStatus.CANCELLED],
       [OrderStatus.PICKING]: [OrderStatus.READY, OrderStatus.CANCELLED],

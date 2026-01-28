@@ -1,27 +1,11 @@
 'use client';
 
+import { Truck, User, MapPin, Clock } from 'lucide-react';
 import { useState } from 'react';
-import { Truck, User, MapPin, Clock, CheckCircle, XCircle } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -30,8 +14,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useDeliveries, useUsers, useAssignDelivery, useOrders } from '@/hooks/use-api';
-import { formatCurrency, formatDateTime, formatPhone, deliveryStatusLabels } from '@/lib/formatters';
+import {
+  formatCurrency,
+  formatDateTime,
+  formatPhone,
+  deliveryStatusLabels,
+} from '@/lib/formatters';
 
 interface Delivery {
   id: string;
@@ -89,13 +94,19 @@ export default function DeliveryPage() {
   const { data: readyOrdersData } = useOrders({ status: 'READY' });
   const assignDelivery = useAssignDelivery();
 
-  const deliveries = ((deliveriesData as { data?: Delivery[] })?.data || deliveriesData || []) as Delivery[];
+  const deliveries = ((deliveriesData as { data?: Delivery[] })?.data ||
+    deliveriesData ||
+    []) as Delivery[];
   const drivers = ((driversData as { data?: Driver[] })?.data || driversData || []) as Driver[];
-  const readyOrders = ((readyOrdersData as { data?: Order[] })?.data || readyOrdersData || []) as Order[];
+  const readyOrders = ((readyOrdersData as { data?: Order[] })?.data ||
+    readyOrdersData ||
+    []) as Order[];
   const activeDrivers = drivers.filter((d) => d.isActive);
 
   const handleAssign = async (driverId: string) => {
-    if (!selectedOrderId) return;
+    if (!selectedOrderId) {
+      return;
+    }
     try {
       await assignDelivery.mutateAsync({ orderId: selectedOrderId, driverId });
       setAssignDialogOpen(false);
@@ -120,9 +131,7 @@ export default function DeliveryPage() {
               <Clock className="h-5 w-5 text-yellow-600" />
               طلبات جاهزة للتوصيل
             </CardTitle>
-            <CardDescription>
-              {readyOrders.length} طلب بانتظار تعيين سائق
-            </CardDescription>
+            <CardDescription>{readyOrders.length} طلب بانتظار تعيين سائق</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -133,9 +142,7 @@ export default function DeliveryPage() {
                       <span className="font-medium">#{order.orderNumber}</span>
                       <span className="font-bold">{formatCurrency(order.total)}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {order.customerName}
-                    </p>
+                    <p className="text-sm text-muted-foreground mb-3">{order.customerName}</p>
                     <Button
                       size="sm"
                       className="w-full"
@@ -201,9 +208,7 @@ export default function DeliveryPage() {
                 <TableBody>
                   {deliveries.map((delivery) => (
                     <TableRow key={delivery.id}>
-                      <TableCell className="font-medium">
-                        #{delivery.order.orderNumber}
-                      </TableCell>
+                      <TableCell className="font-medium">#{delivery.order.orderNumber}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{delivery.order.customerName}</p>

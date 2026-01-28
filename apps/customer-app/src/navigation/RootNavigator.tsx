@@ -1,14 +1,14 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 
+import { CheckoutScreen } from '@/screens/CheckoutScreen';
+import { OrderDetailsScreen } from '@/screens/OrderDetailsScreen';
+import { ProductScreen } from '@/screens/ProductScreen';
+import { SearchScreen } from '@/screens/SearchScreen';
 import { useAuthStore } from '@/stores/auth-store';
 
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
-import { ProductScreen } from '@/screens/ProductScreen';
-import { CheckoutScreen } from '@/screens/CheckoutScreen';
-import { OrderDetailsScreen } from '@/screens/OrderDetailsScreen';
-import { SearchScreen } from '@/screens/SearchScreen';
 
 export type RootStackParamList = {
   Auth: undefined;

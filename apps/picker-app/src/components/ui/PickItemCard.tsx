@@ -1,10 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Modal, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+
+import type { UnavailableReason } from '@/lib/constants';
+import { UNAVAILABLE_REASONS } from '@/lib/constants';
+import { formatLocation } from '@/lib/formatters';
+
 import { Badge } from './Badge';
 import { Button } from './Button';
-import { formatLocation } from '@/lib/formatters';
-import { UNAVAILABLE_REASONS, UnavailableReason } from '@/lib/constants';
 
 interface PickItemCardProps {
   item: {
@@ -40,18 +43,16 @@ export function PickItemCard({
 
   const handlePick = () => {
     // Confirm before marking as picked
-    Alert.alert(
-      'تأكيد التجهيز',
-      `هل تم تجهيز "${item.product.nameAr}" (${item.quantity} قطعة)؟`,
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        { text: 'نعم، تم التجهيز', onPress: onPick },
-      ]
-    );
+    Alert.alert('تأكيد التجهيز', `هل تم تجهيز "${item.product.nameAr}" (${item.quantity} قطعة)؟`, [
+      { text: 'إلغاء', style: 'cancel' },
+      { text: 'نعم، تم التجهيز', onPress: onPick },
+    ]);
   };
 
   const handleUnavailable = () => {
-    if (!selectedReason) return;
+    if (!selectedReason) {
+      return;
+    }
     onMarkUnavailable(selectedReason);
     setShowUnavailableModal(false);
     setSelectedReason(null);
@@ -120,9 +121,7 @@ export function PickItemCard({
             <Text className="text-gray-900 font-bold text-lg text-right mb-1">
               {item.product.nameAr}
             </Text>
-            <Text className="text-gray-400 text-sm text-right">
-              SKU: {item.product.sku}
-            </Text>
+            <Text className="text-gray-400 text-sm text-right">SKU: {item.product.sku}</Text>
           </View>
         </View>
 
@@ -136,9 +135,7 @@ export function PickItemCard({
 
         {status === 'unavailable' && (
           <View className="flex-row items-center justify-center bg-red-100 py-3 rounded-xl mb-3">
-            <Text className="text-red-700 font-bold text-lg ml-2">
-              غير متوفر - {reasonLabel}
-            </Text>
+            <Text className="text-red-700 font-bold text-lg ml-2">غير متوفر - {reasonLabel}</Text>
             <Ionicons name="close-circle" size={24} color="#dc2626" />
           </View>
         )}
@@ -169,10 +166,7 @@ export function PickItemCard({
 
         {/* Undo Button */}
         {status !== 'pending' && onUndo && (
-          <TouchableOpacity
-            className="flex-row items-center justify-center py-2"
-            onPress={onUndo}
-          >
+          <TouchableOpacity className="flex-row items-center justify-center py-2" onPress={onUndo}>
             <Ionicons name="arrow-undo-outline" size={18} color="#6b7280" />
             <Text className="text-gray-500 mr-2">تراجع</Text>
           </TouchableOpacity>
@@ -188,9 +182,7 @@ export function PickItemCard({
       >
         <View className="flex-1 bg-black/50 justify-end">
           <View className="bg-white rounded-t-3xl p-6">
-            <Text className="text-xl font-bold text-gray-900 text-right mb-6">
-              سبب عدم التوفر
-            </Text>
+            <Text className="text-xl font-bold text-gray-900 text-right mb-6">سبب عدم التوفر</Text>
 
             {UNAVAILABLE_REASONS.map((reason) => (
               <TouchableOpacity
@@ -218,9 +210,7 @@ export function PickItemCard({
                     <Ionicons name="checkmark" size={16} color="white" />
                   )}
                 </View>
-                <Text className="text-gray-900 font-medium text-lg">
-                  {reason.label}
-                </Text>
+                <Text className="text-gray-900 font-medium text-lg">{reason.label}</Text>
               </TouchableOpacity>
             ))}
 

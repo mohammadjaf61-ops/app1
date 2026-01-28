@@ -1,5 +1,5 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 
 import { DeliveriesListScreen } from '@/screens/DeliveriesListScreen';
 import { DeliveryDetailsScreen } from '@/screens/DeliveryDetailsScreen';

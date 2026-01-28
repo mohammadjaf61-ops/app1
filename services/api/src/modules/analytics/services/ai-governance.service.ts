@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from '../../../prisma/prisma.service';
 
 interface AiOutputLogInput {
@@ -39,11 +40,7 @@ export class AiGovernanceService {
   /**
    * Mark an AI output as approved by human
    */
-  async approveOutput(
-    outputId: string,
-    approvedBy: string,
-    feedback?: string,
-  ): Promise<void> {
+  async approveOutput(outputId: string, approvedBy: string, feedback?: string): Promise<void> {
     await this.prisma.aiOutputLog.update({
       where: { id: outputId },
       data: {
@@ -60,11 +57,7 @@ export class AiGovernanceService {
   /**
    * Mark an AI output as rejected
    */
-  async rejectOutput(
-    outputId: string,
-    rejectedBy: string,
-    feedback: string,
-  ): Promise<void> {
+  async rejectOutput(outputId: string, rejectedBy: string, feedback: string): Promise<void> {
     await this.prisma.aiOutputLog.update({
       where: { id: outputId },
       data: {
@@ -93,13 +86,23 @@ export class AiGovernanceService {
   ) {
     const where: any = {};
 
-    if (filters.outputType) where.outputType = filters.outputType;
-    if (filters.modelName) where.modelName = filters.modelName;
-    if (filters.isApproved !== undefined) where.isApproved = filters.isApproved;
+    if (filters.outputType) {
+      where.outputType = filters.outputType;
+    }
+    if (filters.modelName) {
+      where.modelName = filters.modelName;
+    }
+    if (filters.isApproved !== undefined) {
+      where.isApproved = filters.isApproved;
+    }
     if (filters.startDate || filters.endDate) {
       where.createdAt = {};
-      if (filters.startDate) where.createdAt.gte = filters.startDate;
-      if (filters.endDate) where.createdAt.lte = filters.endDate;
+      if (filters.startDate) {
+        where.createdAt.gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        where.createdAt.lte = filters.endDate;
+      }
     }
 
     return this.prisma.aiOutputLog.findMany({
@@ -129,11 +132,20 @@ export class AiGovernanceService {
     });
 
     const total = outputs.length;
-    const approved = outputs.filter((o) => o.isApproved === true).length;
-    const rejected = outputs.filter((o) => o.isApproved === false).length;
-    const pending = outputs.filter((o) => o.isApproved === null).length;
+    const approved = outputs.filter(
+      (o: { isApproved: boolean | null }) => o.isApproved === true,
+    ).length;
+    const rejected = outputs.filter(
+      (o: { isApproved: boolean | null }) => o.isApproved === false,
+    ).length;
+    const pending = outputs.filter(
+      (o: { isApproved: boolean | null }) => o.isApproved === null,
+    ).length;
     const avgProcessingMs =
-      outputs.reduce((sum, o) => sum + (o.processingMs || 0), 0) / total || 0;
+      outputs.reduce(
+        (sum: number, o: { processingMs: number | null }) => sum + (o.processingMs || 0),
+        0,
+      ) / total || 0;
 
     return {
       modelName,
@@ -187,18 +199,23 @@ export class AiGovernanceService {
     return {
       period: '30 days',
       outputsByType: byType.reduce(
-        (acc, t) => ({ ...acc, [t.outputType]: t._count }),
+        (acc: Record<string, number>, t: { outputType: string; _count: number }) => ({
+          ...acc,
+          [t.outputType]: t._count,
+        }),
         {},
       ),
       outputsByModel: byModel.reduce(
-        (acc, m) => ({ ...acc, [m.modelName]: m._count }),
+        (acc: Record<string, number>, m: { modelName: string; _count: number }) => ({
+          ...acc,
+          [m.modelName]: m._count,
+        }),
         {},
       ),
       approvalStats: approvalStats.reduce(
-        (acc, s) => ({
+        (acc: Record<string, number>, s: { isApproved: boolean | null; _count: number }) => ({
           ...acc,
-          [s.isApproved === null ? 'pending' : s.isApproved ? 'approved' : 'rejected']:
-            s._count,
+          [s.isApproved === null ? 'pending' : s.isApproved ? 'approved' : 'rejected']: s._count,
         }),
         {},
       ),

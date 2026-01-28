@@ -1,24 +1,16 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 import { AnalyticsService } from './analytics.service';
-import { ReorderService } from './services/reorder.service';
-import { BasketAnalysisService } from './services/basket-analysis.service';
-import { AnomalyDetectionService } from './services/anomaly-detection.service';
 import { AiGovernanceService } from './services/ai-governance.service';
+import { AnomalyDetectionService } from './services/anomaly-detection.service';
+import { BasketAnalysisService } from './services/basket-analysis.service';
+import { ReorderService } from './services/reorder.service';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
@@ -47,36 +39,21 @@ export class AnalyticsController {
   @Get('daily-sales')
   @Roles('ADMIN', 'MANAGER')
   @ApiOperation({ summary: 'Get daily sales reports' })
-  async getDailySales(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-  ) {
-    return this.analytics.getDailySalesReport(
-      new Date(startDate),
-      new Date(endDate),
-    );
+  async getDailySales(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    return this.analytics.getDailySalesReport(new Date(startDate), new Date(endDate));
   }
 
   @Get('category-sales')
   @Roles('ADMIN', 'MANAGER')
   @ApiOperation({ summary: 'Get category-level sales' })
-  async getCategorySales(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-  ) {
-    return this.analytics.getCategorySales(
-      new Date(startDate),
-      new Date(endDate),
-    );
+  async getCategorySales(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    return this.analytics.getCategorySales(new Date(startDate), new Date(endDate));
   }
 
   @Get('top-products')
   @Roles('ADMIN', 'MANAGER')
   @ApiOperation({ summary: 'Get top selling products' })
-  async getTopProducts(
-    @Query('limit') limit: string = '10',
-    @Query('days') days: string = '7',
-  ) {
+  async getTopProducts(@Query('limit') limit: string = '10', @Query('days') days: string = '7') {
     return this.analytics.getTopProducts(parseInt(limit), parseInt(days));
   }
 
@@ -101,9 +78,7 @@ export class AnalyticsController {
   @Get('reorder-recommendations')
   @Roles('ADMIN', 'MANAGER')
   @ApiOperation({ summary: 'Get reorder recommendations' })
-  async getReorderRecommendations(
-    @Query('urgency') urgency?: string,
-  ) {
+  async getReorderRecommendations(@Query('urgency') urgency?: string) {
     return this.analytics.getReorderRecommendations(urgency);
   }
 
@@ -189,19 +164,13 @@ export class AnalyticsController {
     @Query('modelName') modelName?: string,
     @Query('limit') limit: string = '100',
   ) {
-    return this.governance.getAuditTrail(
-      { outputType, modelName },
-      parseInt(limit),
-    );
+    return this.governance.getAuditTrail({ outputType, modelName }, parseInt(limit));
   }
 
   @Get('ai-governance/model-metrics/:modelName')
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Get model performance metrics' })
-  async getModelMetrics(
-    @Param('modelName') modelName: string,
-    @Query('days') days: string = '30',
-  ) {
+  async getModelMetrics(@Param('modelName') modelName: string, @Query('days') days: string = '30') {
     return this.governance.getModelMetrics(modelName, parseInt(days));
   }
 
@@ -236,10 +205,7 @@ export class AnalyticsController {
   @Get('jobs/history')
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Get job execution history' })
-  async getJobHistory(
-    @Query('jobName') jobName?: string,
-    @Query('limit') limit: string = '20',
-  ) {
+  async getJobHistory(@Query('jobName') jobName?: string, @Query('limit') limit: string = '20') {
     return this.analytics.getJobExecutionHistory(jobName, parseInt(limit));
   }
 

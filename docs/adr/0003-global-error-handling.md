@@ -1,20 +1,29 @@
 # ADR-0003: Global Error Handling
 
 ## Status
+
 Accepted
 
 ## Date
+
 2026-01-28
 
 ## Context
-The Hypermarket platform lacked unified error handling across its applications. When runtime errors occurred:
 
-- **Mobile apps (React Native)**: Crashed completely, showing white screen or native crash
-- **Admin web (Next.js)**: Showed generic Next.js error page without recovery option
-- **No structured logging**: Errors were inconsistently logged, making debugging difficult
-- **Poor user experience**: Technical error messages sometimes leaked to end users
+The Hypermarket platform lacked unified error handling across its applications.
+When runtime errors occurred:
+
+- **Mobile apps (React Native)**: Crashed completely, showing white screen or
+  native crash
+- **Admin web (Next.js)**: Showed generic Next.js error page without recovery
+  option
+- **No structured logging**: Errors were inconsistently logged, making debugging
+  difficult
+- **Poor user experience**: Technical error messages sometimes leaked to end
+  users
 
 Production-grade applications need:
+
 1. Graceful error recovery without full app crash
 2. User-friendly error messages (in Arabic)
 3. Structured error logging for debugging
@@ -23,6 +32,7 @@ Production-grade applications need:
 ## Decision
 
 ### 1. React Native Error Boundaries
+
 Add `ErrorBoundary` component to `@hypermarket/mobile-ui` package:
 
 ```typescript
@@ -35,14 +45,17 @@ Add `ErrorBoundary` component to `@hypermarket/mobile-ui` package:
 </ErrorBoundary>
 ```
 
-**Placement**: Wrap the entire app at root level (inside `SafeAreaProvider`, outside `QueryClientProvider`)
+**Placement**: Wrap the entire app at root level (inside `SafeAreaProvider`,
+outside `QueryClientProvider`)
 
 **Fallback Component**: `ErrorFallback` displays:
+
 - Arabic error message (generic, user-friendly)
 - Retry button
 - Error details only in `__DEV__` mode
 
 ### 2. Next.js App Router Error Handling
+
 Leverage Next.js built-in error handling conventions:
 
 - `app/error.tsx` - Route segment errors with retry
@@ -51,6 +64,7 @@ Leverage Next.js built-in error handling conventions:
 - `app/dashboard/error.tsx` - Dashboard-specific error boundary
 
 ### 3. Structured Logging
+
 Add `createLogger` utility to both `@hypermarket/mobile-core` and admin-web:
 
 ```typescript
@@ -59,6 +73,7 @@ logger.error('Login failed', error, { userId, errorCode: 'AUTH_001' });
 ```
 
 **Log Entry Format**:
+
 ```json
 {
   "level": "error",
@@ -75,15 +90,18 @@ logger.error('Login failed', error, { userId, errorCode: 'AUTH_001' });
 ```
 
 **Behavior**:
+
 - Development: All log levels output to console
 - Production: Only `warn` and `error` levels output
 
 ### 4. Error Display Rules
+
 - **Never** show technical error messages (stack traces) to end users
 - **Always** show generic Arabic error message with retry option
 - **Dev mode only**: Show error details for debugging
 
 ## What's NOT Included (Deferred)
+
 - APM integration (Sentry, DataDog) - will be added in future PR
 - Error reporting service
 - Analytics on error frequency
@@ -116,6 +134,7 @@ apps/
 ## Consequences
 
 ### Positive
+
 - Apps no longer crash on runtime errors
 - Users see friendly Arabic error messages
 - Structured logging enables easier debugging
@@ -123,6 +142,7 @@ apps/
 - Recovery mechanism (retry button) improves UX
 
 ### Negative
+
 - ErrorBoundary only catches render errors, not:
   - Event handlers
   - Async code
@@ -130,15 +150,18 @@ apps/
 - Additional complexity in app setup
 
 ### Neutral
+
 - API errors still handled by React Query / component-level try-catch
 - This PR focuses on unexpected runtime errors, not expected business errors
 
 ## Testing
+
 1. **Mobile**: Throw error in any component → should show ErrorFallback
 2. **Web**: Navigate to non-existent route → should show 404
 3. **Web**: Throw error in dashboard → should show error page with retry
 4. **All**: Check console for structured JSON logs
 
 ## Related
+
 - PR#3: Error Boundaries & Global Error Handling
 - Future: APM Integration (Sentry)

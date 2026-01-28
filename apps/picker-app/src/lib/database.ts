@@ -66,7 +66,9 @@ export function getDatabase(): SQLite.SQLiteDatabase | null {
 
 // Save orders for offline access
 export async function saveOrdersOffline(orders: any[]) {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   const now = new Date().toISOString();
 
@@ -87,7 +89,7 @@ export async function saveOrdersOffline(orders: any[]) {
         order.priority || 0,
         JSON.stringify(order),
         now,
-      ]
+      ],
     );
 
     // Save order items
@@ -111,7 +113,7 @@ export async function saveOrdersOffline(orders: any[]) {
             item.unavailableReason || '',
             item.unavailableNotes || '',
             JSON.stringify(item),
-          ]
+          ],
         );
       }
     }
@@ -120,7 +122,9 @@ export async function saveOrdersOffline(orders: any[]) {
 
 // Get offline orders
 export async function getOfflineOrders(): Promise<any[]> {
-  if (!db) return [];
+  if (!db) {
+    return [];
+  }
 
   const orders = await db.getAllAsync<any>('SELECT * FROM orders ORDER BY created_at DESC');
 
@@ -136,14 +140,18 @@ export async function getOfflineOrders(): Promise<any[]> {
 
 // Get offline order with items
 export async function getOfflineOrder(orderId: string): Promise<any | null> {
-  if (!db) return null;
+  if (!db) {
+    return null;
+  }
 
   const order = await db.getFirstAsync<any>('SELECT * FROM orders WHERE id = ?', [orderId]);
-  if (!order) return null;
+  if (!order) {
+    return null;
+  }
 
   const items = await db.getAllAsync<any>(
     'SELECT * FROM order_items WHERE order_id = ? ORDER BY aisle, shelf',
-    [orderId]
+    [orderId],
   );
 
   const orderData = JSON.parse(order.data || '{}');
@@ -168,19 +176,21 @@ export async function getOfflineOrder(orderId: string): Promise<any | null> {
 
 // Mark item as picked offline
 export async function markItemPickedOffline(orderId: string, itemId: string) {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   const now = new Date().toISOString();
 
-  await db.runAsync(
-    'UPDATE order_items SET is_picked = 1, picked_at = ? WHERE id = ?',
-    [now, itemId]
-  );
+  await db.runAsync('UPDATE order_items SET is_picked = 1, picked_at = ? WHERE id = ?', [
+    now,
+    itemId,
+  ]);
 
   // Queue action for sync
   await db.runAsync(
     'INSERT INTO pending_actions (action_type, order_id, item_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
-    ['PICK_ITEM', orderId, itemId, '{}', now]
+    ['PICK_ITEM', orderId, itemId, '{}', now],
   );
 }
 
@@ -189,48 +199,52 @@ export async function markItemUnavailableOffline(
   orderId: string,
   itemId: string,
   reason: string,
-  notes?: string
+  notes?: string,
 ) {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   const now = new Date().toISOString();
 
   await db.runAsync(
     'UPDATE order_items SET is_unavailable = 1, unavailable_reason = ?, unavailable_notes = ? WHERE id = ?',
-    [reason, notes || '', itemId]
+    [reason, notes || '', itemId],
   );
 
   // Queue action for sync
   await db.runAsync(
     'INSERT INTO pending_actions (action_type, order_id, item_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
-    ['MARK_UNAVAILABLE', orderId, itemId, JSON.stringify({ reason, notes }), now]
+    ['MARK_UNAVAILABLE', orderId, itemId, JSON.stringify({ reason, notes }), now],
   );
 }
 
 // Get pending actions to sync
 export async function getPendingActions(): Promise<any[]> {
-  if (!db) return [];
+  if (!db) {
+    return [];
+  }
 
-  return db.getAllAsync<any>(
-    'SELECT * FROM pending_actions ORDER BY created_at ASC'
-  );
+  return db.getAllAsync<any>('SELECT * FROM pending_actions ORDER BY created_at ASC');
 }
 
 // Remove synced action
 export async function removePendingAction(actionId: number) {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   await db.runAsync('DELETE FROM pending_actions WHERE id = ?', [actionId]);
 }
 
 // Clear old offline data
 export async function clearOldOfflineData() {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   await db.runAsync('DELETE FROM orders WHERE synced_at < ?', [oneDayAgo]);
-  await db.runAsync(
-    'DELETE FROM order_items WHERE order_id NOT IN (SELECT id FROM orders)'
-  );
+  await db.runAsync('DELETE FROM order_items WHERE order_id NOT IN (SELECT id FROM orders)');
 }

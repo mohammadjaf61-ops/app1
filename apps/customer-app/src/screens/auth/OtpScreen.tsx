@@ -1,3 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -7,15 +10,12 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button } from '@/components/ui';
-import { useAuthStore } from '@/stores/auth-store';
-import { AuthStackParamList } from '@/navigation/AuthNavigator';
 import { formatPhone } from '@/lib/formatters';
+import type { AuthStackParamList } from '@/navigation/AuthNavigator';
+import { useAuthStore } from '@/stores/auth-store';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList, 'Otp'>;
@@ -112,12 +112,8 @@ export function OtpScreen({ navigation, route }: Props) {
 
           {/* Header */}
           <View className="mb-8">
-            <Text className="text-2xl font-bold text-gray-900 text-right">
-              رمز التحقق
-            </Text>
-            <Text className="text-gray-500 mt-2 text-right">
-              تم إرسال رمز التحقق إلى
-            </Text>
+            <Text className="text-2xl font-bold text-gray-900 text-right">رمز التحقق</Text>
+            <Text className="text-gray-500 mt-2 text-right">تم إرسال رمز التحقق إلى</Text>
             <Text className="text-gray-900 font-medium mt-1 text-right" dir="ltr">
               {formatPhone(phone)}
             </Text>
@@ -134,9 +130,7 @@ export function OtpScreen({ navigation, route }: Props) {
                 }`}
                 value={digit}
                 onChangeText={(value) => handleChange(value, index)}
-                onKeyPress={({ nativeEvent }) =>
-                  handleKeyPress(nativeEvent.key, index)
-                }
+                onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
                 keyboardType="number-pad"
                 maxLength={1}
                 selectTextOnFocus
@@ -144,9 +138,7 @@ export function OtpScreen({ navigation, route }: Props) {
             ))}
           </View>
 
-          {error && (
-            <Text className="text-red-500 text-center mb-4">{error}</Text>
-          )}
+          {error && <Text className="text-red-500 text-center mb-4">{error}</Text>}
 
           {/* Dev hint for mock OTP */}
           <View className="bg-yellow-50 p-3 rounded-lg mb-6">
@@ -167,14 +159,10 @@ export function OtpScreen({ navigation, route }: Props) {
           {/* Resend */}
           <View className="mt-6 items-center">
             {countdown > 0 ? (
-              <Text className="text-gray-500">
-                إعادة الإرسال بعد {countdown} ثانية
-              </Text>
+              <Text className="text-gray-500">إعادة الإرسال بعد {countdown} ثانية</Text>
             ) : (
               <TouchableOpacity onPress={handleResend}>
-                <Text className="text-primary font-medium">
-                  إعادة إرسال الرمز
-                </Text>
+                <Text className="text-primary font-medium">إعادة إرسال الرمز</Text>
               </TouchableOpacity>
             )}
           </View>

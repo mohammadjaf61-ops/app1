@@ -1,15 +1,10 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
@@ -54,8 +49,12 @@ export class CatalogService {
     const { isActive, parentId } = params;
 
     const where: Record<string, unknown> = {};
-    if (isActive !== undefined) where.isActive = isActive;
-    if (parentId !== undefined) where.parentId = parentId;
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+    if (parentId !== undefined) {
+      where.parentId = parentId;
+    }
 
     return this.prisma.category.findMany({
       where,
@@ -73,10 +72,11 @@ export class CatalogService {
     });
 
     // Build tree from flat list
-    const rootCategories = categories.filter((c) => !c.parentId);
-    return rootCategories.map((root) => ({
+    type CategoryType = (typeof categories)[number];
+    const rootCategories = categories.filter((c: CategoryType) => !c.parentId);
+    return rootCategories.map((root: CategoryType) => ({
       ...root,
-      children: categories.filter((c) => c.parentId === root.id),
+      children: categories.filter((c: CategoryType) => c.parentId === root.id),
     }));
   }
 
@@ -218,23 +218,25 @@ export class CatalogService {
     page?: number;
     limit?: number;
   }) {
-    const {
-      categoryId,
-      isActive,
-      search,
-      minPrice,
-      maxPrice,
-      page = 1,
-      limit = 20,
-    } = params;
+    const { categoryId, isActive, search, minPrice, maxPrice, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {
+    const where: {
+      deletedAt: null;
+      categoryId?: string;
+      isActive?: boolean;
+      OR?: Array<Record<string, unknown>>;
+      salePrice?: { gte?: number; lte?: number };
+    } = {
       deletedAt: null, // Only non-deleted products
     };
 
-    if (categoryId) where.categoryId = categoryId;
-    if (isActive !== undefined) where.isActive = isActive;
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
 
     if (search) {
       where.OR = [
@@ -246,8 +248,12 @@ export class CatalogService {
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.salePrice = {};
-      if (minPrice !== undefined) where.salePrice['gte'] = minPrice;
-      if (maxPrice !== undefined) where.salePrice['lte'] = maxPrice;
+      if (minPrice !== undefined) {
+        where.salePrice.gte = minPrice;
+      }
+      if (maxPrice !== undefined) {
+        where.salePrice.lte = maxPrice;
+      }
     }
 
     const [products, total] = await Promise.all([

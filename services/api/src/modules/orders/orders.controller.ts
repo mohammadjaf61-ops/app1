@@ -1,28 +1,14 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
-
 import { UserRole, OrderStatus, JwtPayload } from '@hypermarket/shared-types';
+import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { Roles } from '@/common/decorators/roles.decorator';
 import { Public } from '@/common/decorators/public.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
 
-import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { OrdersService } from './orders.service';
 
 @ApiTags('orders')
 @ApiBearerAuth()
@@ -95,40 +81,28 @@ export class OrdersController {
   @Patch(':id/status')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.PICKER)
   @ApiOperation({ summary: 'Update order status' })
-  async updateStatus(
-    @Param('id') id: string,
-    @Body() dto: UpdateOrderStatusDto,
-  ) {
+  async updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
     return this.ordersService.updateStatus(id, dto);
   }
 
   @Patch(':id/assign-picker')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Assign picker to order' })
-  async assignPicker(
-    @Param('id') id: string,
-    @Body('pickerId') pickerId: string,
-  ) {
+  async assignPicker(@Param('id') id: string, @Body('pickerId') pickerId: string) {
     return this.ordersService.assignPicker(id, pickerId);
   }
 
   @Patch(':id/mark-paid')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CASHIER)
   @ApiOperation({ summary: 'Mark order as paid/unpaid' })
-  async markAsPaid(
-    @Param('id') id: string,
-    @Body('isPaid') isPaid: boolean,
-  ) {
+  async markAsPaid(@Param('id') id: string, @Body('isPaid') isPaid: boolean) {
     return this.ordersService.markAsPaid(id, isPaid);
   }
 
   @Patch(':id/cancel')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Cancel an order' })
-  async cancel(
-    @Param('id') id: string,
-    @Body('reason') reason: string,
-  ) {
+  async cancel(@Param('id') id: string, @Body('reason') reason: string) {
     return this.ordersService.cancel(id, reason);
   }
 }

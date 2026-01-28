@@ -1,13 +1,8 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Request, Response } from 'express';
+import '../types/express.d';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -19,7 +14,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const response = ctx.getResponse<Response>();
     const { method, url, ip } = request;
     const userAgent = request.get('user-agent') || '';
-    const correlationId = request['correlationId'] || '-';
+    const correlationId = request.correlationId || '-';
     const startTime = Date.now();
 
     return next.handle().pipe(

@@ -1,6 +1,6 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-
 import type { JwtPayload } from '@hypermarket/shared-types';
+import type { ExecutionContext } from '@nestjs/common';
+import { createParamDecorator } from '@nestjs/common';
 
 /**
  * Decorator to extract the current authenticated user from the request

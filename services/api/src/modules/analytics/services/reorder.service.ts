@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from '../../../prisma/prisma.service';
+
 import { AiGovernanceService } from './ai-governance.service';
 
 interface ProductStockInfo {
@@ -133,9 +135,7 @@ export class ReorderService {
     const safetyStock = Math.ceil(avgDailySales * this.SAFETY_STOCK_DAYS);
 
     // Reorder point = (lead time * daily sales) + safety stock
-    const reorderPoint = Math.ceil(
-      avgDailySales * this.DEFAULT_LEAD_TIME_DAYS + safetyStock,
-    );
+    const reorderPoint = Math.ceil(avgDailySales * this.DEFAULT_LEAD_TIME_DAYS + safetyStock);
 
     // Economic order quantity (simplified)
     // EOQ = sqrt((2 * D * S) / H)
@@ -169,11 +169,7 @@ export class ReorderService {
   /**
    * Mark recommendation as reviewed
    */
-  async reviewRecommendation(
-    id: string,
-    reviewedBy: string,
-    approved: boolean,
-  ): Promise<void> {
+  async reviewRecommendation(id: string, reviewedBy: string, approved: boolean): Promise<void> {
     await this.prisma.reorderRecommendation.update({
       where: { id },
       data: {
@@ -236,7 +232,8 @@ export class ReorderService {
       ORDER BY COALESCE(SUM(oi.quantity), 0) DESC
     `;
 
-    return result.map((r) => {
+    type ResultType = (typeof result)[number];
+    return result.map((r: ResultType) => {
       const totalSold = Number(r.total_sold);
       const currentStock = Number(r.current_stock);
       const dailyRate = totalSold / days;

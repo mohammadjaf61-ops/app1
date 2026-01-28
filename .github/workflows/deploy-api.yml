@@ -5,10 +5,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'services/api/**'
-      - 'packages/shared-types/**'
-      - 'packages/shared-utils/**'
-      - '.github/workflows/deploy-api.yml'
+      - "services/api/**"
+      - "packages/shared-types/**"
+      - "packages/shared-utils/**"
+      - ".github/workflows/deploy-api.yml"
   workflow_dispatch:
 
 env:

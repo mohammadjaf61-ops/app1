@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -216,7 +211,11 @@ export class InventoryService {
       orderBy: { location: { aisle: 'asc' } },
     });
 
-    const totalQuantity = inventory.reduce((sum, item) => sum + item.quantity, 0);
+    type InventoryItemType = (typeof inventory)[number];
+    const totalQuantity = inventory.reduce(
+      (sum: number, item: InventoryItemType) => sum + item.quantity,
+      0,
+    );
 
     return {
       product: {
@@ -233,7 +232,7 @@ export class InventoryService {
    * Get low stock items
    */
   async getLowStockItems(threshold = 10) {
-    const items = await this.prisma.$queryRaw`
+    return this.prisma.$queryRaw`
       SELECT
         p.id,
         p.sku,
@@ -246,8 +245,6 @@ export class InventoryService {
       HAVING COALESCE(SUM(i.quantity), 0) < ${threshold}
       ORDER BY COALESCE(SUM(i.quantity), 0) ASC
     `;
-
-    return items;
   }
 
   /**
@@ -277,28 +274,27 @@ export class InventoryService {
    * Get inventory summary
    */
   async getInventorySummary() {
-    const [totalProducts, totalLocations, lowStockCount, nearExpiryCount] =
-      await Promise.all([
-        this.prisma.product.count({ where: { deletedAt: null, isActive: true } }),
-        this.prisma.inventoryLocation.count(),
-        this.prisma.$queryRaw<[{ count: bigint }]>`
+    const [totalProducts, totalLocations, lowStockCount, nearExpiryCount] = await Promise.all([
+      this.prisma.product.count({ where: { deletedAt: null, isActive: true } }),
+      this.prisma.inventoryLocation.count(),
+      this.prisma.$queryRaw<[{ count: bigint }]>`
           SELECT COUNT(DISTINCT p.id) as count
           FROM product p
           LEFT JOIN inventory_item i ON i.product_id = p.id
           WHERE p.deleted_at IS NULL AND p.is_active = true
           GROUP BY p.id
           HAVING COALESCE(SUM(i.quantity), 0) < 10
-        `.then((r) => r.length),
-        this.prisma.inventoryItem.count({
-          where: {
-            expiryDate: {
-              lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-              gte: new Date(),
-            },
-            quantity: { gt: 0 },
+        `.then((r: unknown[]) => r.length),
+      this.prisma.inventoryItem.count({
+        where: {
+          expiryDate: {
+            lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            gte: new Date(),
           },
-        }),
-      ]);
+          quantity: { gt: 0 },
+        },
+      }),
+    ]);
 
     return {
       totalProducts,

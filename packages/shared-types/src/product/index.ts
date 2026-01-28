@@ -5,6 +5,20 @@
 import type { BaseEntity } from '../common';
 
 /**
+ * Product unit of measure
+ */
+export enum ProductUnit {
+  PIECE = 'PIECE',
+  KG = 'KG',
+  GRAM = 'GRAM',
+  LITER = 'LITER',
+  ML = 'ML',
+  PACK = 'PACK',
+  BOX = 'BOX',
+  DOZEN = 'DOZEN',
+}
+
+/**
  * Category
  */
 export interface Category extends BaseEntity {

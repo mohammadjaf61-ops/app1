@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from '../../../prisma/prisma.service';
+
 import { AiGovernanceService } from './ai-governance.service';
 
 interface AnomalyResult {
@@ -97,10 +99,12 @@ export class AnomalyDetectionService {
       ORDER BY refund_date
     `;
 
-    if (refundStats.length < 7) return anomalies;
+    if (refundStats.length < 7) {
+      return anomalies;
+    }
 
-    const counts = refundStats.map((r) => Number(r.refund_count));
-    const amounts = refundStats.map((r) => Number(r.total_amount));
+    const counts = refundStats.map((r: { refund_count: bigint }) => Number(r.refund_count));
+    const amounts = refundStats.map((r: { total_amount: bigint }) => Number(r.total_amount));
 
     // Check today's values
     const todayCount = counts[counts.length - 1];
@@ -146,9 +150,7 @@ export class AnomalyDetectionService {
     const anomalies: AnomalyResult[] = [];
 
     // Get order value statistics
-    const stats = await this.prisma.$queryRaw<
-      [{ avg_value: number; stddev_value: number }]
-    >`
+    const stats = await this.prisma.$queryRaw<[{ avg_value: number; stddev_value: number }]>`
       SELECT
         AVG(total_amount_iqd)::FLOAT as avg_value,
         STDDEV(total_amount_iqd)::FLOAT as stddev_value
@@ -159,7 +161,9 @@ export class AnomalyDetectionService {
 
     const { avg_value: avgValue, stddev_value: stdDev } = stats[0];
 
-    if (!avgValue || !stdDev) return anomalies;
+    if (!avgValue || !stdDev) {
+      return anomalies;
+    }
 
     // Find orders with unusual values in last 24 hours
     const threshold = avgValue + this.Z_THRESHOLD * stdDev;
@@ -229,9 +233,10 @@ export class AnomalyDetectionService {
         severity: stock < 0 ? 'HIGH' : 'LOW',
         entityType: 'Product',
         entityId: item.product_id,
-        descriptionAr: stock < 0
-          ? `المنتج ${item.sku} لديه كمية سالبة في المخزون (${stock})`
-          : `المنتج ${item.sku} لديه كمية مرتفعة جداً (${stock})`,
+        descriptionAr:
+          stock < 0
+            ? `المنتج ${item.sku} لديه كمية سالبة في المخزون (${stock})`
+            : `المنتج ${item.sku} لديه كمية مرتفعة جداً (${stock})`,
         detectedValue: stock,
       });
     }
@@ -312,7 +317,9 @@ export class AnomalyDetectionService {
   private calculateZScore(value: number, data: number[]): number {
     const avg = this.mean(data);
     const stdDev = this.standardDeviation(data);
-    if (stdDev === 0) return 0;
+    if (stdDev === 0) {
+      return 0;
+    }
     return (value - avg) / stdDev;
   }
 
@@ -339,11 +346,7 @@ export class AnomalyDetectionService {
   /**
    * Resolve an anomaly alert
    */
-  async resolveAlert(
-    alertId: string,
-    resolvedBy: string,
-    resolutionNotes?: string,
-  ): Promise<void> {
+  async resolveAlert(alertId: string, resolvedBy: string, resolutionNotes?: string): Promise<void> {
     await this.prisma.anomalyAlert.update({
       where: { id: alertId },
       data: {

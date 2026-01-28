@@ -1,6 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { DELIVERY_FEE } from '@/lib/constants';
 
@@ -57,9 +57,7 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item, quantity = 1) => {
         set((state) => {
-          const existingIndex = state.items.findIndex(
-            (i) => i.productId === item.productId
-          );
+          const existingIndex = state.items.findIndex((i) => i.productId === item.productId);
 
           if (existingIndex >= 0) {
             const newItems = [...state.items];
@@ -87,7 +85,7 @@ export const useCartStore = create<CartState>()(
 
         set((state) => ({
           items: state.items.map((item) =>
-            item.productId === productId ? { ...item, quantity } : item
+            item.productId === productId ? { ...item, quantity } : item,
           ),
         }));
       },
@@ -117,6 +115,6 @@ export const useCartStore = create<CartState>()(
         deliveryAddress: state.deliveryAddress,
         notes: state.notes,
       }),
-    }
-  )
+    },
+  ),
 );

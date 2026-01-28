@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
@@ -7,7 +8,6 @@ import {
   IsUrl,
   Matches,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
   @ApiProperty({ example: 'منتجات الألبان' })
@@ -23,7 +23,9 @@ export class CreateCategoryDto {
   @ApiProperty({ example: 'dairy-products' })
   @IsString()
   @IsNotEmpty({ message: 'الرابط المختصر مطلوب' })
-  @Matches(/^[a-z0-9-]+$/, { message: 'الرابط المختصر يجب أن يحتوي على أحرف صغيرة وأرقام وشرطات فقط' })
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'الرابط المختصر يجب أن يحتوي على أحرف صغيرة وأرقام وشرطات فقط',
+  })
   slug: string;
 
   @ApiPropertyOptional({ example: 'منتجات الألبان الطازجة' })

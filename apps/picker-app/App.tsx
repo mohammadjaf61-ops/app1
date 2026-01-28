@@ -1,16 +1,16 @@
-import React, { useEffect, useRef, useCallback, type ErrorInfo } from 'react';
-import { I18nManager, LogBox, AppState, AppStateStatus } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { NavigationContainer } from '@react-navigation/native';
-
-import { ErrorBoundary, ErrorFallback } from '@hypermarket/mobile-ui';
 import { appLogger } from '@hypermarket/mobile-core';
+import { ErrorBoundary, ErrorFallback } from '@hypermarket/mobile-ui';
+import { NavigationContainer } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect, useRef, useCallback, type ErrorInfo } from 'react';
+import type { AppStateStatus } from 'react-native';
+import { I18nManager, LogBox, AppState } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { RootNavigator } from '@/navigation/RootNavigator';
-import { useAuthStore } from '@/stores/auth-store';
 import { initDatabase } from '@/lib/database';
 import { checkAndSync } from '@/lib/sync';
+import { RootNavigator } from '@/navigation/RootNavigator';
+import { useAuthStore } from '@/stores/auth-store';
 
 // Force RTL for Arabic
 I18nManager.allowRTL(true);
@@ -41,10 +41,7 @@ function AppContent() {
 
     // Listen for app state changes to sync when app comes to foreground
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === 'active'
-      ) {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         // App has come to the foreground - check connectivity and sync
         checkAndSync();
       }
@@ -78,11 +75,7 @@ export default function App() {
         onError={handleError}
         onReset={handleReset}
         fallback={({ error, resetError }) => (
-          <ErrorFallback
-            error={error}
-            resetError={resetError}
-            showError={__DEV__}
-          />
+          <ErrorFallback error={error} resetError={resetError} showError={__DEV__} />
         )}
       >
         <QueryClientProvider client={queryClient}>

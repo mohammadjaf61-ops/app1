@@ -45,10 +45,7 @@ module.exports = {
     '@typescript-eslint/prefer-nullish-coalescing': 'off',
     '@typescript-eslint/prefer-optional-chain': 'warn',
     '@typescript-eslint/no-floating-promises': 'off',
-    '@typescript-eslint/consistent-type-imports': [
-      'warn',
-      { prefer: 'type-imports' },
-    ],
+    '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
 
     // ============================================
     // IMPORT ORDER
@@ -56,14 +53,7 @@ module.exports = {
     'import/order': [
       'error',
       {
-        groups: [
-          'builtin',
-          'external',
-          'internal',
-          'parent',
-          'sibling',
-          'index',
-        ],
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
         'newlines-between': 'always',
         alphabetize: { order: 'asc', caseInsensitive: true },
       },
@@ -144,10 +134,7 @@ module.exports = {
     'no-await-in-loop': 'warn',
     'no-param-reassign': ['warn', { props: false }],
     'max-depth': ['warn', 4],
-    'max-lines-per-function': [
-      'warn',
-      { max: 100, skipBlankLines: true, skipComments: true },
-    ],
+    'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true }],
   },
   settings: {
     'import/resolver': {
