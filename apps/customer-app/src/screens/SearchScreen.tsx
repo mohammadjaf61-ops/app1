@@ -11,6 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import type { Product } from '@hypermarket/contracts';
+
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard } from '@/components/ui';
 import { useSearchProducts } from '@/hooks/use-api';
@@ -32,7 +34,7 @@ export function SearchScreen() {
   }, [query]);
 
   const { data, isLoading } = useSearchProducts(debouncedQuery);
-  const products = (data as any)?.data || data || [];
+  const products: Product[] = data?.data || [];
 
   const recentSearches = ['حليب', 'خبز', 'بيض', 'جبن', 'زيت']; // Mock recent searches
 
@@ -112,9 +114,9 @@ export function SearchScreen() {
         </View>
       ) : products.length > 0 ? (
         // Results
-        <FlatList
+        <FlatList<Product>
           data={products}
-          keyExtractor={(item: any) => item.id}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 16 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
@@ -122,7 +124,7 @@ export function SearchScreen() {
               {products.length} نتيجة
             </Text>
           }
-          renderItem={({ item }: any) => (
+          renderItem={({ item }) => (
             <ProductCard
               product={item}
               variant="horizontal"

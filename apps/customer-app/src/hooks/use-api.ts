@@ -1,61 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import type {
+  Product,
+  Category,
+  Order,
+  ProductListResponse,
+  OrderListResponse,
+  CreateOrderRequest,
+} from '@hypermarket/contracts';
+
 import { apiClient } from '@/services/api-client';
 import { QUERY_KEYS } from '@/lib/constants';
-
-// Types
-interface Category {
-  id: string;
-  nameAr: string;
-  descriptionAr?: string;
-  imageUrl?: string;
-  parentId?: string;
-  children?: Category[];
-}
-
-interface Product {
-  id: string;
-  sku: string;
-  nameAr: string;
-  descriptionAr?: string;
-  price: number;
-  imageUrl?: string;
-  categoryId: string;
-  category?: Category;
-  isActive: boolean;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  status: string;
-  total: number;
-  subtotal: number;
-  deliveryFee: number;
-  deliveryAddressText: string;
-  notes?: string;
-  createdAt: string;
-  items: Array<{
-    id: string;
-    productId: string;
-    product: Product;
-    quantity: number;
-    unitPrice: number;
-    subtotal: number;
-  }>;
-}
-
-interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrevious: boolean;
-  };
-}
 
 // ========== Categories ==========
 
@@ -92,7 +47,7 @@ export function useProducts(params?: {
   return useQuery({
     queryKey: QUERY_KEYS.products(params),
     queryFn: () =>
-      apiClient.get<PaginatedResponse<Product>>(
+      apiClient.get<ProductListResponse>(
         `/catalog/products?${searchParams.toString()}`
       ),
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -111,7 +66,7 @@ export function useSearchProducts(query: string) {
   return useQuery({
     queryKey: QUERY_KEYS.searchProducts(query),
     queryFn: () =>
-      apiClient.get<PaginatedResponse<Product>>(
+      apiClient.get<ProductListResponse>(
         `/catalog/products?search=${encodeURIComponent(query)}&limit=20`
       ),
     enabled: query.length >= 2,
@@ -144,7 +99,7 @@ export function useHomeRecommended() {
 export function useOrders() {
   return useQuery({
     queryKey: QUERY_KEYS.orders,
-    queryFn: () => apiClient.get<PaginatedResponse<Order>>('/orders/my'),
+    queryFn: () => apiClient.get<OrderListResponse>('/orders/my'),
   });
 }
 
@@ -156,22 +111,11 @@ export function useOrder(id: string) {
   });
 }
 
-interface CreateOrderData {
-  customerName: string;
-  customerPhone: string;
-  deliveryAddressText: string;
-  notes?: string;
-  items: Array<{
-    productId: string;
-    quantity: number;
-  }>;
-}
-
 export function useCreateOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateOrderData) =>
+    mutationFn: (data: CreateOrderRequest) =>
       apiClient.post<Order>('/orders', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.orders });

@@ -10,18 +10,14 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import type { Product, Category } from '@hypermarket/contracts';
+
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
 import { RootStackParamList } from '@/navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-interface Category {
-  id: string;
-  nameAr: string;
-  descriptionAr?: string;
-}
 
 export function CategoriesScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -33,7 +29,7 @@ export function CategoriesScreen() {
     limit: 20,
   });
 
-  const products = (productsData as any)?.data || productsData || [];
+  const products: Product[] = productsData?.data || [];
 
   return (
     <ScreenWrapper>
@@ -47,8 +43,8 @@ export function CategoriesScreen() {
       <View className="flex-1 flex-row">
         {/* Categories Sidebar */}
         <View className="w-24 bg-white border-l border-gray-100">
-          <FlatList
-            data={categories as Category[]}
+          <FlatList<Category>
+            data={categories || []}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             ListHeaderComponent={
@@ -119,15 +115,15 @@ export function CategoriesScreen() {
               <ActivityIndicator size="large" color="#16a34a" />
             </View>
           ) : (
-            <FlatList
+            <FlatList<Product>
               data={products}
-              keyExtractor={(item: any) => item.id}
+              keyExtractor={(item) => item.id}
               numColumns={2}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ padding: 8 }}
               columnWrapperStyle={{ justifyContent: 'space-between' }}
               ItemSeparatorComponent={() => <View className="h-3" />}
-              renderItem={({ item }: any) => (
+              renderItem={({ item }) => (
                 <View className="w-[48%]">
                   <ProductCard
                     product={item}

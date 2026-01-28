@@ -11,6 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import type { Product, Category } from '@hypermarket/contracts';
+
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
@@ -23,7 +25,7 @@ export function HomeScreen() {
   const { data: categories, isLoading: categoriesLoading, refetch: refetchCategories } = useCategories();
   const { data: productsData, isLoading: productsLoading, refetch: refetchProducts } = useProducts({ limit: 10 });
 
-  const products = (productsData as any)?.data || productsData || [];
+  const products: Product[] = productsData?.data || [];
   const isLoading = categoriesLoading || productsLoading;
 
   const onRefresh = () => {
@@ -89,7 +91,7 @@ export function HomeScreen() {
               contentContainerStyle={{ paddingLeft: 8 }}
               className="flex-row-reverse"
             >
-              {(categories || []).slice(0, 8).map((category: any) => (
+              {(categories || []).slice(0, 8).map((category: Category) => (
                 <TouchableOpacity
                   key={category.id}
                   className="items-center ml-4"
@@ -131,15 +133,15 @@ export function HomeScreen() {
                 منتجات مميزة
               </Text>
             </View>
-            <FlatList
+            <FlatList<Product>
               data={products}
               horizontal
               showsHorizontalScrollIndicator={false}
               inverted // For RTL
-              keyExtractor={(item: any) => item.id}
+              keyExtractor={(item) => item.id}
               contentContainerStyle={{ paddingLeft: 8 }}
               ItemSeparatorComponent={() => <View className="w-3" />}
-              renderItem={({ item }: any) => (
+              renderItem={({ item }) => (
                 <ProductCard
                   product={item}
                   onPress={() => navigation.navigate('Product', { productId: item.id })}
@@ -158,7 +160,7 @@ export function HomeScreen() {
             <Text className="text-lg font-bold text-gray-900 text-right mb-4">
               تسوق الآن
             </Text>
-            {products.slice(0, 5).map((item: any) => (
+            {products.slice(0, 5).map((item) => (
               <ProductCard
                 key={item.id}
                 product={item}
