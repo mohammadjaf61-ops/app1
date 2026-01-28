@@ -1,14 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { RouteProp } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
-import { RouteProp } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button } from '@/components/ui';
 import { useProduct } from '@/hooks/use-api';
-import { useCartStore } from '@/stores/cart-store';
 import { formatCurrencyShort } from '@/lib/formatters';
-import { RootStackParamList } from '@/navigation/RootNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
+import { useCartStore } from '@/stores/cart-store';
 
 type Props = {
   route: RouteProp<RootStackParamList, 'Product'>;
@@ -17,7 +17,7 @@ type Props = {
 export function ProductScreen({ route }: Props) {
   const { productId } = route.params;
   const { data: product, isLoading } = useProduct(productId);
-  const { addItem, getItemQuantity, updateQuantity } = useCartStore();
+  const { addItem, getItemQuantity, updateQuantity: _updateQuantity } = useCartStore();
 
   const quantity = getItemQuantity(productId);
   const [localQuantity, setLocalQuantity] = useState(1);
@@ -51,7 +51,7 @@ export function ProductScreen({ route }: Props) {
         price: productData.price,
         imageUrl: productData.imageUrl,
       },
-      localQuantity
+      localQuantity,
     );
   };
 
@@ -82,9 +82,7 @@ export function ProductScreen({ route }: Props) {
           {productData.category && (
             <View className="flex-row justify-end mb-2">
               <View className="bg-primary/10 px-3 py-1 rounded-full">
-                <Text className="text-primary text-sm">
-                  {productData.category.nameAr}
-                </Text>
+                <Text className="text-primary text-sm">{productData.category.nameAr}</Text>
               </View>
             </View>
           )}
@@ -95,9 +93,7 @@ export function ProductScreen({ route }: Props) {
           </Text>
 
           {/* SKU */}
-          <Text className="text-gray-400 text-sm text-right mb-4">
-            SKU: {productData.sku}
-          </Text>
+          <Text className="text-gray-400 text-sm text-right mb-4">SKU: {productData.sku}</Text>
 
           {/* Price */}
           <View className="flex-row items-center justify-end mb-6">
@@ -109,9 +105,7 @@ export function ProductScreen({ route }: Props) {
           {/* Description */}
           {productData.descriptionAr && (
             <View className="mb-6">
-              <Text className="text-gray-900 font-bold text-right mb-2">
-                الوصف
-              </Text>
+              <Text className="text-gray-900 font-bold text-right mb-2">الوصف</Text>
               <Text className="text-gray-600 text-right leading-6">
                 {productData.descriptionAr}
               </Text>
@@ -120,9 +114,7 @@ export function ProductScreen({ route }: Props) {
 
           {/* Quantity Selector */}
           <View className="mb-6">
-            <Text className="text-gray-900 font-bold text-right mb-3">
-              الكمية
-            </Text>
+            <Text className="text-gray-900 font-bold text-right mb-3">الكمية</Text>
             <View className="flex-row items-center justify-end">
               <View className="flex-row items-center bg-gray-100 rounded-xl">
                 <TouchableOpacity
@@ -147,9 +139,7 @@ export function ProductScreen({ route }: Props) {
           {/* Cart indicator */}
           {quantity > 0 && (
             <View className="bg-primary/10 p-3 rounded-xl mb-4">
-              <Text className="text-primary text-center">
-                {quantity} من هذا المنتج في السلة
-              </Text>
+              <Text className="text-primary text-center">{quantity} من هذا المنتج في السلة</Text>
             </View>
           )}
         </View>
@@ -161,9 +151,7 @@ export function ProductScreen({ route }: Props) {
           <Text className="text-primary text-xl font-bold">
             {formatCurrencyShort(productData.price * localQuantity)}
           </Text>
-          <Text className="text-gray-500">
-            المجموع ({localQuantity} قطعة)
-          </Text>
+          <Text className="text-gray-500">المجموع ({localQuantity} قطعة)</Text>
         </View>
         <Button
           title="إضافة إلى السلة"
