@@ -1,10 +1,7 @@
-import { apiClient } from './api-client';
-import {
-  getPendingActions,
-  removePendingAction,
-  clearOldOfflineData,
-} from './database';
 import { useDeliveryStore } from '@/stores/delivery-store';
+
+import { apiClient } from './api-client';
+import { getPendingActions, removePendingAction, clearOldOfflineData } from './database';
 
 interface PendingAction {
   id: number;
@@ -49,11 +46,7 @@ export async function syncPendingActions(): Promise<{
             break;
 
           case 'FAIL_DELIVERY':
-            await apiClient.failDelivery(
-              action.order_id,
-              payload.reason,
-              payload.notes
-            );
+            await apiClient.failDelivery(action.order_id, payload.reason, payload.notes);
             break;
 
           default:

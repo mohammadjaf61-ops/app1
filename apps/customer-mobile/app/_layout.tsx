@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { I18nManager } from 'react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Enable RTL for Arabic
 I18nManager.allowRTL(true);

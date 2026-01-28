@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { I18nManager, LogBox } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect } from 'react';
+import { I18nManager, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -13,9 +13,7 @@ I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 // Ignore specific warnings in development
-LogBox.ignoreLogs([
-  'Non-serializable values were found in the navigation state',
-]);
+LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
 const queryClient = new QueryClient({
   defaultOptions: {

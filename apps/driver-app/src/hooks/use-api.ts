@@ -1,12 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { apiClient } from '@/lib/api-client';
-import {
-  saveDeliveriesOffline,
-  getOfflineDeliveries,
-  getOfflineDelivery,
-} from '@/lib/database';
+import type { FailedDeliveryReason } from '@/lib/constants';
+import { saveDeliveriesOffline, getOfflineDeliveries, getOfflineDelivery } from '@/lib/database';
 import { useDeliveryStore } from '@/stores/delivery-store';
-import { FailedDeliveryReason } from '@/lib/constants';
 
 // Query keys
 export const queryKeys = {

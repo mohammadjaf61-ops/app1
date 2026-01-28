@@ -26,4 +26,4 @@ export const UNAVAILABLE_REASONS = [
   { value: 'EXPIRED', label: 'منتهي الصلاحية' },
 ] as const;
 
-export type UnavailableReason = typeof UNAVAILABLE_REASONS[number]['value'];
+export type UnavailableReason = (typeof UNAVAILABLE_REASONS)[number]['value'];

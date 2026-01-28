@@ -1,13 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { View, Text, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button, Input } from '@/components/ui';
 import { useRequestOtp } from '@/hooks/use-api';
-import { AuthStackParamList } from '@/navigation/AuthNavigator';
+import type { AuthStackParamList } from '@/navigation/AuthNavigator';
 
 type NavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -44,12 +44,8 @@ export function LoginScreen() {
             <View className="w-24 h-24 bg-primary/10 rounded-3xl items-center justify-center mb-6">
               <Ionicons name="cart-outline" size={48} color="#16a34a" />
             </View>
-            <Text className="text-3xl font-bold text-gray-900 mb-2">
-              تطبيق التجهيز
-            </Text>
-            <Text className="text-gray-500 text-lg text-center">
-              مخصص لموظفي تجهيز الطلبات
-            </Text>
+            <Text className="text-3xl font-bold text-gray-900 mb-2">تطبيق التجهيز</Text>
+            <Text className="text-gray-500 text-lg text-center">مخصص لموظفي تجهيز الطلبات</Text>
           </View>
 
           {/* Login Form */}
@@ -84,8 +80,7 @@ export function LoginScreen() {
               <Ionicons name="information-circle" size={20} color="#d97706" />
             </View>
             <Text className="text-amber-700 text-right">
-              هذا التطبيق مخصص لموظفي التجهيز فقط. إذا كنت عميلاً، يرجى استخدام
-              تطبيق العملاء.
+              هذا التطبيق مخصص لموظفي التجهيز فقط. إذا كنت عميلاً، يرجى استخدام تطبيق العملاء.
             </Text>
           </View>
         </View>

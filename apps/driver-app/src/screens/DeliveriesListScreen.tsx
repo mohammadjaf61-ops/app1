@@ -1,24 +1,17 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  RefreshControl,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
+import { View, Text, FlatList, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 
-import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { OfflineBanner } from '@/components/layout/OfflineBanner';
+import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { DeliveryCard, Badge } from '@/components/ui';
 import { useAssignedDeliveries, useDriverStats } from '@/hooks/use-api';
+import { formatCurrencyShort } from '@/lib/formatters';
+import type { MainStackParamList } from '@/navigation/MainNavigator';
 import { useAuthStore } from '@/stores/auth-store';
 import { useDeliveryStore } from '@/stores/delivery-store';
-import { formatCurrencyShort } from '@/lib/formatters';
-import { MainStackParamList } from '@/navigation/MainNavigator';
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
@@ -43,19 +36,16 @@ export function DeliveriesListScreen() {
   const { data: stats } = useDriverStats();
 
   const handleLogout = () => {
-    Alert.alert(
-      'تسجيل الخروج',
-      'هل أنت متأكد من تسجيل الخروج؟',
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        { text: 'خروج', style: 'destructive', onPress: logout },
-      ]
-    );
+    Alert.alert('تسجيل الخروج', 'هل أنت متأكد من تسجيل الخروج؟', [
+      { text: 'إلغاء', style: 'cancel' },
+      { text: 'خروج', style: 'destructive', onPress: logout },
+    ]);
   };
 
   // Separate deliveries by status
   const readyDeliveries = deliveries?.filter((d: Delivery) => d.status === 'READY') || [];
-  const outForDeliveryList = deliveries?.filter((d: Delivery) => d.status === 'OUT_FOR_DELIVERY') || [];
+  const outForDeliveryList =
+    deliveries?.filter((d: Delivery) => d.status === 'OUT_FOR_DELIVERY') || [];
 
   const renderDelivery = ({ item }: { item: Delivery }) => (
     <DeliveryCard
@@ -125,12 +115,8 @@ export function DeliveriesListScreen() {
       <View className="w-24 h-24 bg-gray-100 rounded-full items-center justify-center mb-6">
         <Ionicons name="car-outline" size={48} color="#9ca3af" />
       </View>
-      <Text className="text-gray-900 font-bold text-xl mb-2">
-        لا توجد توصيلات حالياً
-      </Text>
-      <Text className="text-gray-500 text-center">
-        سيتم إشعارك عند إسناد طلبات جديدة إليك
-      </Text>
+      <Text className="text-gray-900 font-bold text-xl mb-2">لا توجد توصيلات حالياً</Text>
+      <Text className="text-gray-500 text-center">سيتم إشعارك عند إسناد طلبات جديدة إليك</Text>
     </View>
   );
 

@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   View,
@@ -8,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
 
 export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -32,12 +32,8 @@ export default function LoginScreen() {
       >
         <View className="flex-1 justify-center px-6">
           <View className="mb-8">
-            <Text className="text-3xl font-bold text-center text-gray-900">
-              الهايبرماركت
-            </Text>
-            <Text className="text-gray-500 text-center mt-2">
-              مرحباً بك، سجل دخولك للمتابعة
-            </Text>
+            <Text className="text-3xl font-bold text-center text-gray-900">الهايبرماركت</Text>
+            <Text className="text-gray-500 text-center mt-2">مرحباً بك، سجل دخولك للمتابعة</Text>
           </View>
 
           <View className="space-y-4">
@@ -75,13 +71,8 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => router.push('/auth/register')}
-              disabled={isLoading}
-            >
-              <Text className="text-primary text-center mt-4">
-                ليس لديك حساب؟ سجل الآن
-              </Text>
+            <TouchableOpacity onPress={() => router.push('/auth/register')} disabled={isLoading}>
+              <Text className="text-primary text-center mt-4">ليس لديك حساب؟ سجل الآن</Text>
             </TouchableOpacity>
           </View>
         </View>

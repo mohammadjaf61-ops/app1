@@ -1,8 +1,6 @@
 import { create } from 'zustand';
-import {
-  markItemPickedOffline,
-  markItemUnavailableOffline,
-} from '@/lib/database';
+
+import { markItemPickedOffline, markItemUnavailableOffline } from '@/lib/database';
 
 interface PickedItem {
   itemId: string;
@@ -134,8 +132,12 @@ export const usePickingStore = create<PickingState>((set, get) => ({
 
   getItemStatus: (itemId) => {
     const { pickedItems, unavailableItems } = get();
-    if (itemId in pickedItems) return 'picked';
-    if (itemId in unavailableItems) return 'unavailable';
+    if (itemId in pickedItems) {
+      return 'picked';
+    }
+    if (itemId in unavailableItems) {
+      return 'unavailable';
+    }
     return 'pending';
   },
 

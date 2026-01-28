@@ -1,29 +1,22 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-  Alert,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from 'react';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 
-import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { OfflineBanner } from '@/components/layout/OfflineBanner';
+import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Badge } from '@/components/ui';
 import { useAssignedOrders, usePickerStats } from '@/hooks/use-api';
-import { useAuthStore } from '@/stores/auth-store';
-import { usePickingStore } from '@/stores/picking-store';
 import {
   formatTimeElapsed,
   getUrgencyLevel,
   orderStatusLabels,
   orderStatusColors,
 } from '@/lib/formatters';
-import { MainStackParamList } from '@/navigation/MainNavigator';
+import type { MainStackParamList } from '@/navigation/MainNavigator';
+import { useAuthStore } from '@/stores/auth-store';
+import { usePickingStore } from '@/stores/picking-store';
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
@@ -46,18 +39,14 @@ export function OrdersListScreen() {
   const { data: stats } = usePickerStats();
 
   const handleLogout = () => {
-    Alert.alert(
-      'تسجيل الخروج',
-      'هل أنت متأكد من تسجيل الخروج؟',
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        {
-          text: 'خروج',
-          style: 'destructive',
-          onPress: logout,
-        },
-      ]
-    );
+    Alert.alert('تسجيل الخروج', 'هل أنت متأكد من تسجيل الخروج؟', [
+      { text: 'إلغاء', style: 'cancel' },
+      {
+        text: 'خروج',
+        style: 'destructive',
+        onPress: logout,
+      },
+    ]);
   };
 
   const renderOrder = ({ item }: { item: Order }) => {
@@ -78,9 +67,7 @@ export function OrdersListScreen() {
         {/* Header */}
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
-            {urgency === 'urgent' && (
-              <Badge label="عاجل" variant="urgent" size="sm" />
-            )}
+            {urgency === 'urgent' && <Badge label="عاجل" variant="urgent" size="sm" />}
             {urgency === 'warning' && (
               <View className="mr-2">
                 <Badge label="أولوية" variant="warning" size="sm" />
@@ -88,9 +75,7 @@ export function OrdersListScreen() {
             )}
           </View>
           <View className="flex-row items-center">
-            <Text className="text-gray-900 font-bold text-lg">
-              #{item.orderNumber}
-            </Text>
+            <Text className="text-gray-900 font-bold text-lg">#{item.orderNumber}</Text>
             <View
               className="px-2 py-1 rounded-full mr-2"
               style={{ backgroundColor: statusColor.bg }}
@@ -106,9 +91,7 @@ export function OrdersListScreen() {
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
             <Ionicons name="time-outline" size={16} color="#9ca3af" />
-            <Text className="text-gray-500 text-sm mr-1">
-              {formatTimeElapsed(item.createdAt)}
-            </Text>
+            <Text className="text-gray-500 text-sm mr-1">{formatTimeElapsed(item.createdAt)}</Text>
           </View>
           <View className="flex-row items-center">
             <Ionicons name="person-outline" size={16} color="#9ca3af" />
@@ -147,9 +130,7 @@ export function OrdersListScreen() {
             <View className="flex-row items-center justify-end mb-2">
               <Ionicons name="cube-outline" size={20} color="#0ea5e9" />
             </View>
-            <Text className="text-2xl font-bold text-gray-900 text-right">
-              {stats.todayItems}
-            </Text>
+            <Text className="text-2xl font-bold text-gray-900 text-right">{stats.todayItems}</Text>
             <Text className="text-gray-500 text-sm text-right">منتج تم تجهيزه</Text>
           </View>
         </View>
@@ -157,11 +138,7 @@ export function OrdersListScreen() {
 
       {/* Section Title */}
       <View className="px-4 flex-row items-center justify-between">
-        <Badge
-          label={`${orders?.length || 0} طلب`}
-          variant="default"
-          size="md"
-        />
+        <Badge label={`${orders?.length || 0} طلب`} variant="default" size="md" />
         <Text className="text-gray-900 font-bold text-lg">الطلبات المسندة إليك</Text>
       </View>
     </View>
@@ -172,12 +149,8 @@ export function OrdersListScreen() {
       <View className="w-24 h-24 bg-gray-100 rounded-full items-center justify-center mb-6">
         <Ionicons name="clipboard-outline" size={48} color="#9ca3af" />
       </View>
-      <Text className="text-gray-900 font-bold text-xl mb-2">
-        لا توجد طلبات حالياً
-      </Text>
-      <Text className="text-gray-500 text-center">
-        سيتم إشعارك عند إسناد طلبات جديدة إليك
-      </Text>
+      <Text className="text-gray-900 font-bold text-xl mb-2">لا توجد طلبات حالياً</Text>
+      <Text className="text-gray-500 text-center">سيتم إشعارك عند إسناد طلبات جديدة إليك</Text>
     </View>
   );
 

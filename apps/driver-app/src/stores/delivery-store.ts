@@ -1,9 +1,7 @@
 import { create } from 'zustand';
-import {
-  queueStatusUpdate,
-  updateDeliveryStatusOffline,
-} from '@/lib/database';
-import { FailedDeliveryReason } from '@/lib/constants';
+
+import type { FailedDeliveryReason } from '@/lib/constants';
+import { queueStatusUpdate, updateDeliveryStatusOffline } from '@/lib/database';
 
 interface DeliveryState {
   // Current delivery session

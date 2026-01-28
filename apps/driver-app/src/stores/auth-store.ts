@@ -1,7 +1,8 @@
-import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { STORAGE_KEYS } from '@/lib/constants';
+import { create } from 'zustand';
+
 import { apiClient } from '@/lib/api-client';
+import { STORAGE_KEYS } from '@/lib/constants';
 
 interface User {
   id: string;

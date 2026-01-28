@@ -1,13 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import { I18nManager, LogBox, AppState, AppStateStatus } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NavigationContainer } from '@react-navigation/native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect, useRef } from 'react';
+import type { AppStateStatus } from 'react-native';
+import { I18nManager, LogBox, AppState } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { RootNavigator } from '@/navigation/RootNavigator';
-import { useAuthStore } from '@/stores/auth-store';
 import { initDatabase } from '@/lib/database';
 import { checkAndSync } from '@/lib/sync';
+import { RootNavigator } from '@/navigation/RootNavigator';
+import { useAuthStore } from '@/stores/auth-store';
 
 // Force RTL for Arabic
 I18nManager.allowRTL(true);
@@ -38,10 +39,7 @@ export default function App() {
 
     // Listen for app state changes to sync when app comes to foreground
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === 'active'
-      ) {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         // App has come to the foreground - check connectivity and sync
         checkAndSync();
       }

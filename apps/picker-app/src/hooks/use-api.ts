@@ -1,10 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { apiClient } from '@/lib/api-client';
-import {
-  saveOrdersOffline,
-  getOfflineOrders,
-  getOfflineOrder,
-} from '@/lib/database';
+import { saveOrdersOffline, getOfflineOrders, getOfflineOrder } from '@/lib/database';
 import { usePickingStore } from '@/stores/picking-store';
 
 // Query keys
@@ -91,13 +88,7 @@ export function usePickItem() {
   const { pickItem } = usePickingStore();
 
   return useMutation({
-    mutationFn: async ({
-      orderId,
-      itemId,
-    }: {
-      orderId: string;
-      itemId: string;
-    }) => {
+    mutationFn: async ({ orderId, itemId }: { orderId: string; itemId: string }) => {
       // Optimistic update in store
       pickItem(itemId);
       return apiClient.pickItem(orderId, itemId);
