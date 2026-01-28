@@ -10,10 +10,14 @@ import {
   Min,
 } from 'class-validator';
 
+/**
+ * Error codes for product validation
+ * Frontend translates these using i18n: t(`validation.${code}`)
+ */
 export class CreateProductDto {
   @ApiProperty({ example: 'PRD-001234' })
   @IsString()
-  @IsNotEmpty({ message: 'رمز المنتج مطلوب' })
+  @IsNotEmpty({ message: 'validation.skuRequired' })
   sku: string;
 
   @ApiPropertyOptional({ example: '6281001234567' })
@@ -23,7 +27,7 @@ export class CreateProductDto {
 
   @ApiProperty({ example: 'حليب طازج' })
   @IsString()
-  @IsNotEmpty({ message: 'اسم المنتج بالعربية مطلوب' })
+  @IsNotEmpty({ message: 'validation.nameRequired' })
   nameAr: string;
 
   @ApiPropertyOptional({ example: 'Fresh Milk' })
@@ -43,12 +47,12 @@ export class CreateProductDto {
 
   @ApiProperty({ example: 'category-uuid' })
   @IsString()
-  @IsNotEmpty({ message: 'التصنيف مطلوب' })
+  @IsNotEmpty({ message: 'validation.categoryRequired' })
   categoryId: string;
 
   @ApiProperty({ example: 2500, description: 'Price in IQD' })
   @IsNumber()
-  @Min(0, { message: 'السعر يجب أن يكون أكبر من أو يساوي صفر' })
+  @Min(0, { message: 'validation.pricePositive' })
   price: number;
 
   @ApiPropertyOptional({ example: 3000, description: 'Compare at price in IQD' })
@@ -59,7 +63,7 @@ export class CreateProductDto {
 
   @ApiProperty({ example: 100 })
   @IsNumber()
-  @Min(0, { message: 'الكمية يجب أن تكون أكبر من أو تساوي صفر' })
+  @Min(0, { message: 'validation.quantityPositive' })
   stockQuantity: number;
 
   @ApiPropertyOptional({ example: 10 })
@@ -70,12 +74,12 @@ export class CreateProductDto {
 
   @ApiProperty({ example: 'A1', description: 'Aisle location' })
   @IsString()
-  @IsNotEmpty({ message: 'رقم الممر مطلوب' })
+  @IsNotEmpty({ message: 'validation.aisleRequired' })
   aisle: string;
 
   @ApiProperty({ example: '3', description: 'Shelf number' })
   @IsString()
-  @IsNotEmpty({ message: 'رقم الرف مطلوب' })
+  @IsNotEmpty({ message: 'validation.shelfRequired' })
   shelf: string;
 
   @ApiPropertyOptional({ example: 'B', description: 'Bin location' })
@@ -90,7 +94,7 @@ export class CreateProductDto {
   weight?: number;
 
   @ApiProperty({ enum: ProductUnit, example: ProductUnit.LITER })
-  @IsEnum(ProductUnit, { message: 'وحدة القياس غير صالحة' })
+  @IsEnum(ProductUnit, { message: 'validation.invalidUnit' })
   unit: ProductUnit;
 
   @ApiProperty({ example: 1, description: 'Unit value (e.g., 1 for 1 liter)' })

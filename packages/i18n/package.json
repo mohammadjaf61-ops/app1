@@ -1,0 +1,35 @@
+{
+  "name": "@hypermarket/i18n",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Internationalization (i18n) support for the hypermarket platform",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/locales"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./locales/ar": "./src/locales/ar.json",
+    "./locales/en": "./src/locales/en.json"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "devDependencies": {
+    "@hypermarket/eslint-config": "workspace:*",
+    "@hypermarket/tsconfig": "workspace:*",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.0"
+  }
+}
