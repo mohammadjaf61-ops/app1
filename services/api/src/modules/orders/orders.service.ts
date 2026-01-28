@@ -462,6 +462,7 @@ export class OrdersService {
       [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED],
       [OrderStatus.DELIVERED]: [],
       [OrderStatus.CANCELLED]: [],
+      [OrderStatus.COMPLETED]: [], // POS orders go directly to COMPLETED
     };
 
     if (!validTransitions[currentStatus]?.includes(newStatus)) {
