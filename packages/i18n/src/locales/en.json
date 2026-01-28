@@ -374,7 +374,40 @@
     "quantityPositive": "Quantity must be greater than or equal to zero",
     "aisleRequired": "Aisle number is required",
     "shelfRequired": "Shelf number is required",
-    "invalidUnit": "Invalid unit of measure"
+    "invalidUnit": "Invalid unit of measure",
+    "zoneRequired": "Delivery zone is required",
+    "invalidZone": "Invalid delivery zone",
+    "invalidTimeFormat": "Invalid time format",
+    "invalidDayOfWeek": "Invalid day of week"
+  },
+  "businessRules": {
+    "storeClosed": "Store is currently closed",
+    "storeNotOpenYet": "Store has not opened yet",
+    "orderCutoffPassed": "Order cutoff time has passed for today",
+    "belowMinimumOrder": "Order is below minimum required amount",
+    "minimumOrderRequired": "Minimum order amount is {{amount}} IQD",
+    "currentOrderAmount": "Your current order is {{amount}} IQD",
+    "addMoreToOrder": "Add {{amount}} IQD to reach minimum",
+    "zoneNotServed": "Your area is not currently served",
+    "deliveryFee": "Delivery fee",
+    "freeDeliveryFrom": "Free delivery on orders over {{amount}} IQD",
+    "estimatedDelivery": "Estimated delivery: {{minutes}} minutes",
+    "storeOpensAt": "Store opens at {{time}}",
+    "storeClosesAt": "Store closes at {{time}}",
+    "orderCutoffAt": "Last order time is {{time}}",
+    "nextOpenDay": "Store opens on {{day}}",
+    "selectDeliveryZone": "Select delivery zone",
+    "deliveryZones": "Delivery zones",
+    "storeHours": "Store hours",
+    "days": {
+      "SUNDAY": "Sunday",
+      "MONDAY": "Monday",
+      "TUESDAY": "Tuesday",
+      "WEDNESDAY": "Wednesday",
+      "THURSDAY": "Thursday",
+      "FRIDAY": "Friday",
+      "SATURDAY": "Saturday"
+    }
   },
   "units": {
     "piece": "piece",

@@ -52,9 +52,17 @@ export class CreateOrderDto {
     description: 'Delivery address (free text)',
     example: 'بغداد، الكرادة، شارع الأميرات، بناية 5، طابق 3',
   })
-  @IsString({ message: 'عنوان التوصيل يجب أن يكون نصاً' })
-  @IsNotEmpty({ message: 'عنوان التوصيل مطلوب' })
+  @IsString({ message: 'validation.required' })
+  @IsNotEmpty({ message: 'validation.required' })
   deliveryAddressText: string;
+
+  @ApiProperty({
+    description: 'Delivery zone ID',
+    example: 'zone-uuid-here',
+  })
+  @IsUUID('4', { message: 'validation.invalidZone' })
+  @IsNotEmpty({ message: 'validation.zoneRequired' })
+  deliveryZoneId: string;
 
   @ApiProperty({
     description: 'Order items',

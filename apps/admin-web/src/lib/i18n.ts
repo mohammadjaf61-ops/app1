@@ -3,12 +3,7 @@
  * Arabic-first, with English fallback
  */
 
-import {
-  ar,
-  en,
-  DEFAULT_LOCALE,
-  type Locale,
-} from '@hypermarket/i18n';
+import { ar, en, DEFAULT_LOCALE, type Locale } from '@hypermarket/i18n';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -20,7 +15,9 @@ function getInitialLocale(): Locale {
       return stored;
     }
     const browserLocale = navigator.language?.split('-')[0];
-    if (browserLocale === 'en') return 'en';
+    if (browserLocale === 'en') {
+      return 'en';
+    }
   }
   return DEFAULT_LOCALE; // Arabic by default
 }

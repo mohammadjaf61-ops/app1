@@ -374,7 +374,40 @@
     "quantityPositive": "الكمية يجب أن تكون أكبر من أو تساوي صفر",
     "aisleRequired": "رقم الممر مطلوب",
     "shelfRequired": "رقم الرف مطلوب",
-    "invalidUnit": "وحدة القياس غير صالحة"
+    "invalidUnit": "وحدة القياس غير صالحة",
+    "zoneRequired": "منطقة التوصيل مطلوبة",
+    "invalidZone": "منطقة التوصيل غير صالحة",
+    "invalidTimeFormat": "صيغة الوقت غير صالحة",
+    "invalidDayOfWeek": "يوم الأسبوع غير صالح"
+  },
+  "businessRules": {
+    "storeClosed": "المتجر مغلق حالياً",
+    "storeNotOpenYet": "المتجر لم يفتح بعد",
+    "orderCutoffPassed": "انتهى وقت استقبال الطلبات لهذا اليوم",
+    "belowMinimumOrder": "الطلب أقل من الحد الأدنى المطلوب",
+    "minimumOrderRequired": "الحد الأدنى للطلب {{amount}} د.ع",
+    "currentOrderAmount": "قيمة طلبك الحالية {{amount}} د.ع",
+    "addMoreToOrder": "أضف {{amount}} د.ع للوصول للحد الأدنى",
+    "zoneNotServed": "منطقتك غير مشمولة بالتوصيل حالياً",
+    "deliveryFee": "رسوم التوصيل",
+    "freeDeliveryFrom": "توصيل مجاني للطلبات فوق {{amount}} د.ع",
+    "estimatedDelivery": "وقت التوصيل المتوقع: {{minutes}} دقيقة",
+    "storeOpensAt": "يفتح المتجر الساعة {{time}}",
+    "storeClosesAt": "يغلق المتجر الساعة {{time}}",
+    "orderCutoffAt": "آخر موعد للطلب الساعة {{time}}",
+    "nextOpenDay": "سيفتح المتجر يوم {{day}}",
+    "selectDeliveryZone": "اختر منطقة التوصيل",
+    "deliveryZones": "مناطق التوصيل",
+    "storeHours": "أوقات العمل",
+    "days": {
+      "SUNDAY": "الأحد",
+      "MONDAY": "الإثنين",
+      "TUESDAY": "الثلاثاء",
+      "WEDNESDAY": "الأربعاء",
+      "THURSDAY": "الخميس",
+      "FRIDAY": "الجمعة",
+      "SATURDAY": "السبت"
+    }
   },
   "units": {
     "piece": "قطعة",

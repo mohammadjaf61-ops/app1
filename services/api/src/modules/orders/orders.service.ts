@@ -1,8 +1,9 @@
 import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 
-import { SettingsService, SETTINGS_KEYS } from '@/modules/settings';
+import { StructuredLogger, createLogger } from '@/common/observability';
+import { BusinessRulesService } from '@/modules/business-rules';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -10,12 +11,14 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Injectable()
 export class OrdersService {
-  private readonly logger = new Logger(OrdersService.name);
+  private readonly logger: StructuredLogger;
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly settingsService: SettingsService,
-  ) {}
+    private readonly businessRules: BusinessRulesService,
+  ) {
+    this.logger = createLogger('OrdersService');
+  }
 
   /**
    * Get all orders with filters and pagination
@@ -183,19 +186,20 @@ export class OrdersService {
 
   /**
    * Create a new order
+   * Validates business rules before creation
    */
   async create(dto: CreateOrderDto) {
-    // Get delivery fee from settings (cached)
-    const deliveryFee = await this.settingsService.getNumber(SETTINGS_KEYS.DELIVERY_FEE_IQD);
-
-    // Get products and calculate totals
+    // Get products and calculate subtotal first
     const productIds = dto.items.map((item) => item.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds }, deletedAt: null, isActive: true },
     });
 
     if (products.length !== productIds.length) {
-      throw new BadRequestException('بعض المنتجات غير متوفرة');
+      throw new BadRequestException({
+        errorCode: 'errors.productNotAvailable',
+        message: 'Some products are not available',
+      });
     }
 
     type ProductType = (typeof products)[number];
@@ -207,7 +211,10 @@ export class OrdersService {
         | { id: string; nameAr: string; salePrice: number }
         | undefined;
       if (!product) {
-        throw new BadRequestException(`المنتج غير موجود: ${item.productId}`);
+        throw new BadRequestException({
+          errorCode: 'errors.productNotFound',
+          message: `Product not found: ${item.productId}`,
+        });
       }
 
       const itemTotal = product.salePrice * item.quantity;
@@ -222,7 +229,11 @@ export class OrdersService {
       };
     });
 
-    const total = subtotal + deliveryFee;
+    // Validate business rules (store hours, minimum order, zone)
+    const { deliveryFeeIqd, totalAmountIqd } = await this.businessRules.validateOrderOrThrow({
+      subtotalIqd: subtotal,
+      deliveryZoneId: dto.deliveryZoneId,
+    });
 
     // Create order
     const order = await this.prisma.order.create({
@@ -232,9 +243,10 @@ export class OrdersService {
         customerName: dto.customerName,
         customerPhone: dto.customerPhone,
         deliveryAddressText: dto.deliveryAddressText,
+        deliveryZoneId: dto.deliveryZoneId,
         subtotal,
-        deliveryFee,
-        total,
+        deliveryFee: deliveryFeeIqd,
+        total: totalAmountIqd,
         paymentMethod: PaymentMethod.COD,
         isPaid: false,
         notes: dto.notes || null,
@@ -247,7 +259,7 @@ export class OrdersService {
       },
     });
 
-    this.logger.log(`Order created: ${order.orderNumber}`);
+    this.logger.log('Order created', { orderNumber: order.orderNumber, total: totalAmountIqd });
 
     return order;
   }

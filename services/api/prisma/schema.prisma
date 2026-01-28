@@ -395,6 +395,61 @@ model Setting {
   @@map("setting")
 }
 
+/// Delivery zones with configurable fees and minimum order
+/// Each zone represents a geographic delivery area
+model DeliveryZone {
+  id        String   @id @default(uuid())
+  /// Zone name in Arabic - اسم المنطقة
+  nameAr    String   @map("name_ar")
+  /// Zone name in English (optional)
+  nameEn    String?  @map("name_en")
+  /// Delivery fee in IQD for this zone
+  feeIqd    Int      @map("fee_iqd")
+  /// Minimum order value in IQD for this zone
+  minOrderIqd Int    @map("min_order_iqd")
+  /// Estimated delivery time in minutes
+  estimatedMinutes Int? @map("estimated_minutes")
+  /// Whether this zone is currently active
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive], map: "idx_delivery_zone_active")
+  @@map("delivery_zone")
+}
+
+/// Day of week enum for store hours
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+/// Store working hours configuration
+/// Defines open/close times per day of week
+model StoreHours {
+  id        String    @id @default(uuid())
+  /// Day of week
+  dayOfWeek DayOfWeek @map("day_of_week")
+  /// Opening time (HH:MM format stored as string)
+  openAt    String    @map("open_at")
+  /// Closing time (HH:MM format stored as string)
+  closeAt   String    @map("close_at")
+  /// Whether store is closed on this day
+  isClosed  Boolean   @default(false) @map("is_closed")
+  /// Order cutoff minutes before closing (e.g., 60 = no orders 1hr before close)
+  orderCutoffMinutes Int @default(60) @map("order_cutoff_minutes")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@unique([dayOfWeek])
+  @@map("store_hours")
+}
+
 // ============================================
 // ANALYTICS & AI
 // ============================================

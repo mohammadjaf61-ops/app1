@@ -43,7 +43,12 @@ const navItems = [
   { href: '/dashboard/catalog', labelKey: 'products.title', icon: Store },
   { href: '/dashboard/delivery', labelKey: 'delivery.title', icon: Truck },
   { href: '/dashboard/users', labelKey: 'admin.users', icon: Users, roles: ['ADMIN', 'MANAGER'] },
-  { href: '/dashboard/reports', labelKey: 'reports.title', icon: BarChart3, roles: ['ADMIN', 'MANAGER'] },
+  {
+    href: '/dashboard/reports',
+    labelKey: 'reports.title',
+    icon: BarChart3,
+    roles: ['ADMIN', 'MANAGER'],
+  },
   { href: '/dashboard/settings', labelKey: 'admin.settings', icon: Settings, roles: ['ADMIN'] },
 ];
 
