@@ -22,6 +22,17 @@ export enum OrderStatus {
  */
 export enum PaymentMethod {
   COD = 'COD', // الدفع عند الاستلام - Cash on Delivery
+  CARD = 'CARD', // Card payment via gateway (future)
+}
+
+/**
+ * Payment status
+ */
+export enum PaymentStatus {
+  PENDING = 'PENDING', // قيد الانتظار
+  PAID = 'PAID', // مدفوع
+  FAILED = 'FAILED', // فشل
+  REFUNDED = 'REFUNDED', // مسترجع
 }
 
 /**

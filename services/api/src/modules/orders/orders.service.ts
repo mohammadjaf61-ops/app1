@@ -4,6 +4,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 
 import { StructuredLogger, createLogger } from '@/common/observability';
 import { BusinessRulesService } from '@/modules/business-rules';
+import { PaymentsService } from '@/modules/payments';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -16,6 +17,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly businessRules: BusinessRulesService,
+    private readonly paymentsService: PaymentsService,
   ) {
     this.logger = createLogger('OrdersService');
   }
@@ -122,6 +124,17 @@ export class OrdersService {
         deliveryAssignment: {
           include: {
             driver: { select: { id: true, fullName: true, phone: true } },
+          },
+        },
+        payment: {
+          select: {
+            id: true,
+            method: true,
+            status: true,
+            amountIqd: true,
+            paidAt: true,
+            paidBy: true,
+            failureReason: true,
           },
         },
       },
@@ -235,6 +248,9 @@ export class OrdersService {
       deliveryZoneId: dto.deliveryZoneId,
     });
 
+    // Determine payment method (default to COD, allow CARD from DTO if provided)
+    const paymentMethod = dto.paymentMethod || PaymentMethod.COD;
+
     // Create order
     const order = await this.prisma.order.create({
       data: {
@@ -247,7 +263,7 @@ export class OrdersService {
         subtotal,
         deliveryFee: deliveryFeeIqd,
         total: totalAmountIqd,
-        paymentMethod: PaymentMethod.COD,
+        paymentMethod,
         isPaid: false,
         notes: dto.notes || null,
         items: {
@@ -259,9 +275,30 @@ export class OrdersService {
       },
     });
 
-    this.logger.log('Order created', { orderNumber: order.orderNumber, total: totalAmountIqd });
+    // Create payment record for the order
+    const paymentResult = await this.paymentsService.createPayment({
+      orderId: order.id,
+      method: paymentMethod,
+      amountIqd: totalAmountIqd,
+      customerPhone: dto.customerPhone,
+    });
 
-    return order;
+    this.logger.log('Order created with payment', {
+      orderNumber: order.orderNumber,
+      total: totalAmountIqd,
+      paymentId: paymentResult.id,
+      paymentMethod,
+    });
+
+    return {
+      ...order,
+      payment: {
+        id: paymentResult.id,
+        status: paymentResult.status,
+        method: paymentResult.method,
+        redirectUrl: paymentResult.redirectUrl,
+      },
+    };
   }
 
   /**

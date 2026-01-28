@@ -380,6 +380,44 @@
     "invalidTimeFormat": "Invalid time format",
     "invalidDayOfWeek": "Invalid day of week"
   },
+  "payments": {
+    "title": "Payments",
+    "payment": "Payment",
+    "paymentMethod": "Payment Method",
+    "paymentStatus": "Payment Status",
+    "amount": "Amount",
+    "paidAt": "Paid At",
+    "paidBy": "Collected By",
+    "methods": {
+      "COD": "Cash on Delivery",
+      "CARD": "Card Payment"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "PAID": "Paid",
+      "FAILED": "Failed",
+      "REFUNDED": "Refunded"
+    },
+    "selectMethod": "Select payment method",
+    "codDescription": "Pay cash when you receive your order",
+    "cardDescription": "Pay with credit card (Coming soon)",
+    "cardNotAvailable": "Card payment is not available yet",
+    "markAsPaid": "Confirm Payment Received",
+    "markAsFailed": "Mark as Failed",
+    "paymentConfirmed": "Payment confirmed",
+    "paymentFailed": "Payment failed",
+    "failureReason": "Failure reason",
+    "noPayment": "No payment recorded",
+    "pendingPayments": "Pending Payments",
+    "paidPayments": "Completed Payments",
+    "totalPaid": "Total Paid",
+    "totalPending": "Total Pending",
+    "paymentRequired": "Payment must be collected on delivery",
+    "collectCash": "Collect {{amount}} IQD",
+    "cashCollected": "Cash collected",
+    "alreadyPaid": "Already paid",
+    "cannotMarkFailed": "Cannot mark completed payments as failed"
+  },
   "businessRules": {
     "storeClosed": "Store is currently closed",
     "storeNotOpenYet": "Store has not opened yet",

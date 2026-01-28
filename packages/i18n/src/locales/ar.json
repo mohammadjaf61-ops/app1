@@ -380,6 +380,44 @@
     "invalidTimeFormat": "صيغة الوقت غير صالحة",
     "invalidDayOfWeek": "يوم الأسبوع غير صالح"
   },
+  "payments": {
+    "title": "المدفوعات",
+    "payment": "الدفع",
+    "paymentMethod": "طريقة الدفع",
+    "paymentStatus": "حالة الدفع",
+    "amount": "المبلغ",
+    "paidAt": "تاريخ الدفع",
+    "paidBy": "تم التحصيل بواسطة",
+    "methods": {
+      "COD": "الدفع عند الاستلام",
+      "CARD": "الدفع بالبطاقة"
+    },
+    "status": {
+      "PENDING": "قيد الانتظار",
+      "PAID": "مدفوع",
+      "FAILED": "فشل",
+      "REFUNDED": "مسترجع"
+    },
+    "selectMethod": "اختر طريقة الدفع",
+    "codDescription": "ادفع نقداً عند استلام طلبك",
+    "cardDescription": "ادفع بالبطاقة الائتمانية (قريباً)",
+    "cardNotAvailable": "الدفع بالبطاقة غير متاح حالياً",
+    "markAsPaid": "تأكيد استلام الدفع",
+    "markAsFailed": "تحديد كفشل",
+    "paymentConfirmed": "تم تأكيد استلام الدفع",
+    "paymentFailed": "فشل الدفع",
+    "failureReason": "سبب الفشل",
+    "noPayment": "لا يوجد دفع مسجل",
+    "pendingPayments": "المدفوعات المعلقة",
+    "paidPayments": "المدفوعات المكتملة",
+    "totalPaid": "إجمالي المدفوع",
+    "totalPending": "إجمالي المعلق",
+    "paymentRequired": "يجب تحصيل المبلغ عند التوصيل",
+    "collectCash": "تحصيل {{amount}} د.ع",
+    "cashCollected": "تم تحصيل المبلغ",
+    "alreadyPaid": "تم الدفع مسبقاً",
+    "cannotMarkFailed": "لا يمكن تحديد المدفوعات المكتملة كفشل"
+  },
   "businessRules": {
     "storeClosed": "المتجر مغلق حالياً",
     "storeNotOpenYet": "المتجر لم يفتح بعد",

@@ -2,6 +2,44 @@
  * Financial types
  */
 
+import { PaymentMethod, PaymentStatus } from '../order';
+
+/**
+ * Payment record
+ */
+export interface Payment {
+  id: string;
+  orderId: string;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  amountIqd: number;
+  providerRef: string | null;
+  providerName: string | null;
+  paidAt: Date | null;
+  paidBy: string | null;
+  failureReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Create payment DTO
+ */
+export interface CreatePaymentDto {
+  orderId: string;
+  method: PaymentMethod;
+  amountIqd: number;
+}
+
+/**
+ * Update payment status DTO
+ */
+export interface UpdatePaymentStatusDto {
+  status: PaymentStatus;
+  paidBy?: string;
+  failureReason?: string;
+}
+
 /**
  * Refund record
  */

@@ -49,7 +49,16 @@ enum OrderStatus {
 
 /// Payment methods (COD primary for Iraq market)
 enum PaymentMethod {
-  COD // Cash on Delivery - الدفع عند الاستلام
+  COD  // Cash on Delivery - الدفع عند الاستلام
+  CARD // Card payment via payment gateway (future)
+}
+
+/// Payment status for tracking payment lifecycle
+enum PaymentStatus {
+  PENDING   // Payment initiated, awaiting completion
+  PAID      // Payment confirmed/collected
+  FAILED    // Payment failed or rejected
+  REFUNDED  // Payment refunded (partial or full)
 }
 
 /// Delivery assignment status
@@ -71,6 +80,7 @@ enum AuditAction {
   LOGOUT
   STATUS_CHANGE
   ASSIGNMENT
+  PAYMENT_STATUS_CHANGE
 }
 
 // ============================================
@@ -249,6 +259,7 @@ model Order {
   items              OrderItem[]
   deliveryAssignment DeliveryAssignment?
   refunds            Refund[]
+  payment            Payment?
 
   @@index([orderNumber])
   @@index([status], map: "idx_order_status")
@@ -339,6 +350,43 @@ model Refund {
   @@index([orderId], map: "idx_refund_order_id")
   @@index([createdAt], map: "idx_refund_created_at")
   @@map("refund")
+}
+
+/// Payment records for orders
+/// Tracks payment status and provider references
+model Payment {
+  id          String        @id @default(uuid())
+  /// Associated order
+  orderId     String        @unique @map("order_id")
+  /// Payment method (COD or CARD)
+  method      PaymentMethod
+  /// Current payment status
+  status      PaymentStatus @default(PENDING)
+  /// Payment amount in IQD
+  amountIqd   Int           @map("amount_iqd")
+  /// External provider reference (for card payments)
+  providerRef String?       @map("provider_ref")
+  /// Provider name (e.g., "zaincash", "asiahawala")
+  providerName String?      @map("provider_name")
+  /// When payment was collected/confirmed
+  paidAt      DateTime?     @map("paid_at")
+  /// Who marked as paid (for manual COD marking)
+  paidBy      String?       @map("paid_by")
+  /// Failure reason if failed
+  failureReason String?     @map("failure_reason")
+  /// Additional metadata (JSON)
+  metadata    Json?         @default("{}")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "idx_payment_order_id")
+  @@index([status], map: "idx_payment_status")
+  @@index([method], map: "idx_payment_method")
+  @@index([createdAt], map: "idx_payment_created_at")
+  @@map("payment")
 }
 
 // ============================================

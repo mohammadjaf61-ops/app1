@@ -11,7 +11,10 @@ import {
   Min,
   Matches,
   ArrayMinSize,
+  IsEnum,
 } from 'class-validator';
+
+import { PaymentMethod } from '@hypermarket/shared-types';
 
 export class OrderItemDto {
   @ApiProperty({
@@ -81,4 +84,14 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString({ message: 'الملاحظات يجب أن تكون نصاً' })
   notes?: string;
+
+  @ApiPropertyOptional({
+    description: 'Payment method (defaults to COD)',
+    enum: PaymentMethod,
+    default: PaymentMethod.COD,
+    example: 'COD',
+  })
+  @IsOptional()
+  @IsEnum(PaymentMethod, { message: 'validation.invalidPaymentMethod' })
+  paymentMethod?: PaymentMethod;
 }
