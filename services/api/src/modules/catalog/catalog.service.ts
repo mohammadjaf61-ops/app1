@@ -1,22 +1,33 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 
+import { CacheService, CACHE_KEYS, CACHE_TTL, createCacheKey } from '@/modules/cache';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+
+export interface CatalogCategoryTree {
+  id: string;
+  nameAr: string;
+  nameEn: string | null;
+  slug: string;
+  imageUrl: string | null;
+  parentId: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  children: CatalogCategoryTree[];
+}
 
 @Injectable()
 export class CatalogService {
   private readonly logger = new Logger(CatalogService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   // ==================== CATEGORIES ====================
 
@@ -44,18 +55,27 @@ export class CatalogService {
     });
 
     this.logger.log(`Category created: ${category.id}`);
+
+    // Invalidate category caches
+    await this.invalidateCategoryCaches();
+
     return category;
   }
 
   /**
    * Get all categories as a flat list
+   * Not cached due to dynamic filters (isActive, parentId)
    */
   async findAllCategories(params: { isActive?: boolean; parentId?: string }) {
     const { isActive, parentId } = params;
 
     const where: Record<string, unknown> = {};
-    if (isActive !== undefined) where.isActive = isActive;
-    if (parentId !== undefined) where.parentId = parentId;
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+    if (parentId !== undefined) {
+      where.parentId = parentId;
+    }
 
     return this.prisma.category.findMany({
       where,
@@ -65,25 +85,74 @@ export class CatalogService {
 
   /**
    * Get categories as a tree structure
+   * Cached as this is frequently accessed by mobile apps
    */
-  async getCategoryTree() {
+  async getCategoryTree(): Promise<CatalogCategoryTree[]> {
+    const cacheKey = CACHE_KEYS.CATALOG_CATEGORY_TREE;
+
+    // Try cache first
+    const cached = await this.cacheService.get<CatalogCategoryTree[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const categories = await this.prisma.category.findMany({
       where: { isActive: true },
       orderBy: [{ sortOrder: 'asc' }, { nameAr: 'asc' }],
     });
 
     // Build tree from flat list
-    const rootCategories = categories.filter((c) => !c.parentId);
-    return rootCategories.map((root) => ({
-      ...root,
-      children: categories.filter((c) => c.parentId === root.id),
-    }));
+    const categoryMap = new Map<string, CatalogCategoryTree>();
+
+    for (const cat of categories) {
+      categoryMap.set(cat.id, {
+        id: cat.id,
+        nameAr: cat.nameAr,
+        nameEn: cat.nameEn,
+        slug: cat.slug,
+        imageUrl: cat.imageUrl,
+        parentId: cat.parentId,
+        sortOrder: cat.sortOrder,
+        isActive: cat.isActive,
+        children: [],
+      });
+    }
+
+    const roots: CatalogCategoryTree[] = [];
+
+    categoryMap.forEach((cat) => {
+      if (cat.parentId) {
+        const parent = categoryMap.get(cat.parentId);
+        if (parent) {
+          parent.children.push(cat);
+        }
+      } else {
+        roots.push(cat);
+      }
+    });
+
+    await this.cacheService.set(cacheKey, roots, CACHE_TTL.CATEGORIES_TREE);
+
+    return roots;
   }
 
   /**
    * Get category by ID
    */
   async findCategoryById(id: string) {
+    const cacheKey = createCacheKey(CACHE_KEYS.CATALOG_CATEGORIES, id);
+
+    // Try cache first
+    const cached = await this.cacheService.get<{
+      id: string;
+      nameAr: string;
+      children: unknown[];
+      _count: { products: number };
+    }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const category = await this.prisma.category.findUnique({
       where: { id },
       include: {
@@ -95,6 +164,8 @@ export class CatalogService {
     if (!category) {
       throw new NotFoundException('الفئة غير موجودة');
     }
+
+    await this.cacheService.set(cacheKey, category, CACHE_TTL.CATEGORY_DETAIL);
 
     return category;
   }
@@ -135,6 +206,13 @@ export class CatalogService {
     });
 
     this.logger.log(`Category updated: ${id}`);
+
+    // Invalidate caches
+    await Promise.all([
+      this.invalidateCategoryCaches(),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_CATEGORIES, id)),
+    ]);
+
     return category;
   }
 
@@ -162,6 +240,13 @@ export class CatalogService {
     await this.prisma.category.delete({ where: { id } });
 
     this.logger.log(`Category deleted: ${id}`);
+
+    // Invalidate caches
+    await Promise.all([
+      this.invalidateCategoryCaches(),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_CATEGORIES, id)),
+    ]);
+
     return { message: 'تم حذف الفئة بنجاح' };
   }
 
@@ -208,6 +293,7 @@ export class CatalogService {
 
   /**
    * Find all products with filters and pagination
+   * Not cached due to dynamic filters and pagination
    */
   async findAllProducts(params: {
     categoryId?: string;
@@ -218,23 +304,19 @@ export class CatalogService {
     page?: number;
     limit?: number;
   }) {
-    const {
-      categoryId,
-      isActive,
-      search,
-      minPrice,
-      maxPrice,
-      page = 1,
-      limit = 20,
-    } = params;
+    const { categoryId, isActive, search, minPrice, maxPrice, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
       deletedAt: null, // Only non-deleted products
     };
 
-    if (categoryId) where.categoryId = categoryId;
-    if (isActive !== undefined) where.isActive = isActive;
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
 
     if (search) {
       where.OR = [
@@ -246,8 +328,12 @@ export class CatalogService {
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.salePrice = {};
-      if (minPrice !== undefined) where.salePrice['gte'] = minPrice;
-      if (maxPrice !== undefined) where.salePrice['lte'] = maxPrice;
+      if (minPrice !== undefined) {
+        (where.salePrice as Record<string, number>)['gte'] = minPrice;
+      }
+      if (maxPrice !== undefined) {
+        (where.salePrice as Record<string, number>)['lte'] = maxPrice;
+      }
     }
 
     const [products, total] = await Promise.all([
@@ -278,6 +364,22 @@ export class CatalogService {
    * Find product by ID
    */
   async findProductById(id: string) {
+    const cacheKey = createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, id);
+
+    // Try cache first
+    const cached = await this.cacheService.get<{
+      id: string;
+      sku: string;
+      deletedAt: Date | null;
+    }>(cacheKey);
+    if (cached) {
+      if (cached.deletedAt) {
+        await this.cacheService.del(cacheKey);
+        throw new NotFoundException('المنتج غير موجود');
+      }
+      return cached;
+    }
+
     const product = await this.prisma.product.findFirst({
       where: { id, deletedAt: null },
       include: {
@@ -292,6 +394,8 @@ export class CatalogService {
       throw new NotFoundException('المنتج غير موجود');
     }
 
+    await this.cacheService.set(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);
+
     return product;
   }
 
@@ -299,6 +403,22 @@ export class CatalogService {
    * Find product by SKU
    */
   async findProductBySku(sku: string) {
+    const cacheKey = createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, 'sku', sku);
+
+    // Try cache first
+    const cached = await this.cacheService.get<{
+      id: string;
+      sku: string;
+      deletedAt: Date | null;
+    }>(cacheKey);
+    if (cached) {
+      if (cached.deletedAt) {
+        await this.cacheService.del(cacheKey);
+        throw new NotFoundException('المنتج غير موجود');
+      }
+      return cached;
+    }
+
     const product = await this.prisma.product.findFirst({
       where: { sku, deletedAt: null },
       include: { category: true },
@@ -307,6 +427,8 @@ export class CatalogService {
     if (!product) {
       throw new NotFoundException('المنتج غير موجود');
     }
+
+    await this.cacheService.set(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);
 
     return product;
   }
@@ -362,6 +484,16 @@ export class CatalogService {
     });
 
     this.logger.log(`Product updated: ${id}`);
+
+    // Invalidate product caches
+    await Promise.all([
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, id)),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, 'sku', existing.sku)),
+      dto.sku && dto.sku !== existing.sku
+        ? this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, 'sku', dto.sku))
+        : Promise.resolve(true),
+    ]);
+
     return product;
   }
 
@@ -383,6 +515,13 @@ export class CatalogService {
     });
 
     this.logger.log(`Product soft-deleted: ${id}`);
+
+    // Invalidate product caches
+    await Promise.all([
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, id)),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, 'sku', product.sku)),
+    ]);
+
     return { message: 'تم حذف المنتج بنجاح' };
   }
 
@@ -404,8 +543,26 @@ export class CatalogService {
     });
 
     this.logger.log(`Product ${isActive ? 'activated' : 'deactivated'}: ${id}`);
+
+    // Invalidate product caches
+    await Promise.all([
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, id)),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.CATALOG_PRODUCTS, 'sku', product.sku)),
+    ]);
+
     return {
       message: isActive ? 'تم تفعيل المنتج بنجاح' : 'تم تعطيل المنتج بنجاح',
     };
+  }
+
+  /**
+   * Invalidate all category-related caches
+   */
+  private async invalidateCategoryCaches(): Promise<void> {
+    await Promise.all([
+      this.cacheService.del(CACHE_KEYS.CATALOG_CATEGORY_TREE),
+      this.cacheService.del(CACHE_KEYS.CATEGORIES_LIST),
+      this.cacheService.del(CACHE_KEYS.CATEGORIES_TREE),
+    ]);
   }
 }

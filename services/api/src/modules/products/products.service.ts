@@ -1,16 +1,53 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-
 import type { PaginationMeta } from '@hypermarket/shared-types';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { CacheService, CACHE_KEYS, CACHE_TTL, createCacheKey } from '@/modules/cache';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductQueryDto } from './dto/product-query.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+
+export interface ProductWithCategory {
+  id: string;
+  sku: string;
+  barcode: string | null;
+  nameAr: string;
+  nameEn: string | null;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  categoryId: string;
+  price: number;
+  compareAtPrice: number | null;
+  stockQuantity: number;
+  lowStockThreshold: number;
+  aisle: string | null;
+  shelf: string | null;
+  bin: string | null;
+  weight: number | null;
+  unit: string | null;
+  unitValue: number | null;
+  isActive: boolean;
+  isFeatured: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+  category: {
+    id: string;
+    nameAr: string;
+    nameEn: string | null;
+    slug: string;
+  };
+}
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ProductsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async findAll(query: ProductQueryDto) {
     const { page = 1, limit = 20, categoryId, search, inStock, isFeatured } = query;
@@ -57,11 +94,27 @@ export class ProductsService {
     return { data: products, meta };
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<ProductWithCategory> {
+    const cacheKey = createCacheKey(CACHE_KEYS.PRODUCT_BY_ID, id);
+
+    // Try cache first
+    const cached = await this.cacheService.get<ProductWithCategory>(cacheKey);
+    if (cached) {
+      // Verify not soft-deleted (cache might be stale)
+      if (cached.deletedAt) {
+        await this.cacheService.del(cacheKey);
+        throw new NotFoundException('المنتج غير موجود');
+      }
+      return cached;
+    }
+
+    // Cache miss - query database
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
-        category: true,
+        category: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
       },
     });
 
@@ -69,37 +122,63 @@ export class ProductsService {
       throw new NotFoundException('المنتج غير موجود');
     }
 
-    return product;
+    // Cache the result
+    await this.cacheService.set(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);
+
+    return product as ProductWithCategory;
   }
 
-  async findBySku(sku: string) {
+  async findBySku(sku: string): Promise<ProductWithCategory> {
+    const cacheKey = createCacheKey(CACHE_KEYS.PRODUCT_BY_SKU, sku);
+
+    // Try cache first
+    const cached = await this.cacheService.get<ProductWithCategory>(cacheKey);
+    if (cached) {
+      if (cached.deletedAt) {
+        await this.cacheService.del(cacheKey);
+        throw new NotFoundException('المنتج غير موجود');
+      }
+      return cached;
+    }
+
     const product = await this.prisma.product.findUnique({
       where: { sku },
-      include: { category: true },
+      include: {
+        category: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
+      },
     });
 
     if (!product || product.deletedAt) {
       throw new NotFoundException('المنتج غير موجود');
     }
 
-    return product;
+    await this.cacheService.set(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);
+
+    return product as ProductWithCategory;
   }
 
-  async findByBarcode(barcode: string) {
+  async findByBarcode(barcode: string): Promise<ProductWithCategory> {
+    // Barcode lookup - not cached as barcodes can be non-unique per business rules
     const product = await this.prisma.product.findFirst({
       where: { barcode, deletedAt: null },
-      include: { category: true },
+      include: {
+        category: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
+      },
     });
 
     if (!product) {
       throw new NotFoundException('المنتج غير موجود');
     }
 
-    return product;
+    return product as ProductWithCategory;
   }
 
   async create(dto: CreateProductDto) {
-    return this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         sku: dto.sku,
         barcode: dto.barcode,
@@ -121,27 +200,65 @@ export class ProductsService {
         isActive: dto.isActive ?? true,
         isFeatured: dto.isFeatured ?? false,
       },
-      include: { category: true },
+      include: {
+        category: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
+      },
     });
+
+    this.logger.log(`Product created: ${product.id} (${product.sku})`);
+
+    // No cache to invalidate on create - lists are not cached due to dynamic filters
+
+    return product;
   }
 
   async update(id: string, dto: UpdateProductDto) {
-    await this.findById(id);
+    const existing = await this.findById(id);
 
-    return this.prisma.product.update({
+    const product = await this.prisma.product.update({
       where: { id },
       data: dto,
-      include: { category: true },
+      include: {
+        category: {
+          select: { id: true, nameAr: true, nameEn: true, slug: true },
+        },
+      },
     });
+
+    this.logger.log(`Product updated: ${id}`);
+
+    // Invalidate cache entries
+    await Promise.all([
+      this.cacheService.del(createCacheKey(CACHE_KEYS.PRODUCT_BY_ID, id)),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.PRODUCT_BY_SKU, existing.sku)),
+      // If SKU changed, also invalidate the new SKU key
+      dto.sku && dto.sku !== existing.sku
+        ? this.cacheService.del(createCacheKey(CACHE_KEYS.PRODUCT_BY_SKU, dto.sku))
+        : Promise.resolve(true),
+    ]);
+
+    return product;
   }
 
   async delete(id: string) {
-    await this.findById(id);
+    const existing = await this.findById(id);
 
     // Soft delete
-    return this.prisma.product.update({
+    const product = await this.prisma.product.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    this.logger.log(`Product deleted: ${id}`);
+
+    // Invalidate cache entries
+    await Promise.all([
+      this.cacheService.del(createCacheKey(CACHE_KEYS.PRODUCT_BY_ID, id)),
+      this.cacheService.del(createCacheKey(CACHE_KEYS.PRODUCT_BY_SKU, existing.sku)),
+    ]);
+
+    return product;
   }
 }

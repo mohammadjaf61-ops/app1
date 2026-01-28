@@ -5,6 +5,7 @@ import { BullModule } from '@nestjs/bull';
 
 import { configuration, validationSchema } from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
+import { CacheModule } from './modules/cache';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -48,6 +49,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 
     // Database
     PrismaModule,
+
+    // Caching (Redis)
+    CacheModule,
 
     // Feature modules
     HealthModule,
