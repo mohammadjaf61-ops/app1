@@ -20,6 +20,9 @@ export const CACHE_KEYS = {
   CATALOG_PRODUCTS: 'catalog:products:v1',
   CATALOG_CATEGORIES: 'catalog:categories:v1',
   CATALOG_CATEGORY_TREE: 'catalog:category-tree:v1',
+
+  // Admin dashboard
+  ADMIN_KPIS: 'admin:kpis:v1',
 } as const;
 
 // TTL in seconds
@@ -32,6 +35,9 @@ export const CACHE_TTL = {
   CATEGORIES_LIST: 900,
   CATEGORIES_TREE: 900,
   CATEGORY_DETAIL: 900,
+
+  // Admin dashboard: 60 seconds - near real-time KPIs
+  ADMIN_KPIS: 60,
 } as const;
 
 // Helper to create cache key with parameters

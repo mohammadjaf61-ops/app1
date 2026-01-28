@@ -24,7 +24,7 @@ import {
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSalesSummary, useOrders, useLowStockItems } from '@/hooks/use-api';
+import { useAdminKPIs, useOrders, useLowStockItems } from '@/hooks/use-api';
 import { formatCurrency, formatNumber, orderStatusLabels } from '@/lib/formatters';
 
 // Mock data for charts (in production, this would come from API)
@@ -101,22 +101,22 @@ function StatCard({ title, value, description, icon: Icon, trend, isLoading }: S
 }
 
 export default function DashboardPage() {
-  const { data: salesData, isLoading: salesLoading } = useSalesSummary();
+  const { data: kpis, isLoading: kpisLoading } = useAdminKPIs();
   const { data: ordersData, isLoading: ordersLoading } = useOrders({ status: 'OUT_FOR_DELIVERY' });
-  const { data: lowStockData, isLoading: lowStockLoading } = useLowStockItems();
 
   const stats = useMemo(() => {
-    const summary = (salesData as { summary?: { totalOrders: number; totalRevenue: number } })
-      ?.summary;
     return {
-      todayOrders: summary?.totalOrders || 0,
-      revenue: summary?.totalRevenue || 0,
-      activeDeliveries: Array.isArray(ordersData) ? ordersData.length : 0,
-      lowStockCount: Array.isArray(lowStockData) ? lowStockData.length : 0,
+      todayOrders: kpis?.totalOrdersToday ?? 0,
+      revenue: kpis?.revenueToday ?? 0,
+      pendingOrders: kpis?.pendingOrders ?? 0,
+      activeDeliveries: Array.isArray(ordersData)
+        ? ordersData.length
+        : (ordersData as { data?: unknown[] })?.data?.length ?? 0,
+      lowStockCount: kpis?.outOfStockCount ?? 0,
     };
-  }, [salesData, ordersData, lowStockData]);
+  }, [kpis, ordersData]);
 
-  const isLoading = salesLoading || ordersLoading || lowStockLoading;
+  const isLoading = kpisLoading || ordersLoading;
 
   return (
     <div className="space-y-6">
@@ -132,30 +132,28 @@ export default function DashboardPage() {
           title="طلبات اليوم"
           value={formatNumber(stats.todayOrders)}
           icon={ShoppingCart}
-          trend={{ value: 12.5, isPositive: true }}
-          description="مقارنة بالأمس"
+          description="الطلبات المسجلة اليوم"
           isLoading={isLoading}
         />
         <StatCard
           title="إيرادات اليوم"
           value={formatCurrency(stats.revenue)}
           icon={DollarSign}
-          trend={{ value: 8.2, isPositive: true }}
-          description="مقارنة بالأمس"
+          description="إجمالي المبيعات اليوم"
           isLoading={isLoading}
         />
         <StatCard
-          title="توصيلات نشطة"
-          value={formatNumber(stats.activeDeliveries)}
+          title="طلبات معلقة"
+          value={formatNumber(stats.pendingOrders)}
           icon={Truck}
-          description="قيد التوصيل الآن"
+          description="بانتظار المعالجة"
           isLoading={isLoading}
         />
         <StatCard
-          title="مخزون منخفض"
+          title="نفاد المخزون"
           value={formatNumber(stats.lowStockCount)}
           icon={AlertTriangle}
-          description="منتجات تحتاج إعادة تزويد"
+          description="منتجات غير متوفرة"
           isLoading={isLoading}
         />
       </div>
