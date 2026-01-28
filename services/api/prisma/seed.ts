@@ -213,6 +213,313 @@ const DEFAULT_ADMIN = {
   role: UserRole.ADMIN,
 };
 
+/**
+ * System permissions - defines all available permissions
+ */
+const PERMISSIONS = [
+  // Orders
+  {
+    resource: 'orders',
+    action: 'create',
+    descriptionAr: 'إنشاء طلب',
+    descriptionEn: 'Create order',
+  },
+  {
+    resource: 'orders',
+    action: 'read',
+    descriptionAr: 'عرض الطلبات',
+    descriptionEn: 'View orders',
+  },
+  {
+    resource: 'orders',
+    action: 'update',
+    descriptionAr: 'تعديل الطلبات',
+    descriptionEn: 'Update orders',
+  },
+  {
+    resource: 'orders',
+    action: 'delete',
+    descriptionAr: 'حذف الطلبات',
+    descriptionEn: 'Delete orders',
+  },
+  {
+    resource: 'orders',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة للطلبات',
+    descriptionEn: 'Full orders management',
+  },
+
+  // Products
+  {
+    resource: 'products',
+    action: 'create',
+    descriptionAr: 'إضافة منتج',
+    descriptionEn: 'Create product',
+  },
+  {
+    resource: 'products',
+    action: 'read',
+    descriptionAr: 'عرض المنتجات',
+    descriptionEn: 'View products',
+  },
+  {
+    resource: 'products',
+    action: 'update',
+    descriptionAr: 'تعديل المنتجات',
+    descriptionEn: 'Update products',
+  },
+  {
+    resource: 'products',
+    action: 'delete',
+    descriptionAr: 'حذف المنتجات',
+    descriptionEn: 'Delete products',
+  },
+  {
+    resource: 'products',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة للمنتجات',
+    descriptionEn: 'Full products management',
+  },
+
+  // Categories
+  {
+    resource: 'categories',
+    action: 'create',
+    descriptionAr: 'إضافة قسم',
+    descriptionEn: 'Create category',
+  },
+  {
+    resource: 'categories',
+    action: 'read',
+    descriptionAr: 'عرض الأقسام',
+    descriptionEn: 'View categories',
+  },
+  {
+    resource: 'categories',
+    action: 'update',
+    descriptionAr: 'تعديل الأقسام',
+    descriptionEn: 'Update categories',
+  },
+  {
+    resource: 'categories',
+    action: 'delete',
+    descriptionAr: 'حذف الأقسام',
+    descriptionEn: 'Delete categories',
+  },
+  {
+    resource: 'categories',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة للأقسام',
+    descriptionEn: 'Full categories management',
+  },
+
+  // Inventory
+  {
+    resource: 'inventory',
+    action: 'read',
+    descriptionAr: 'عرض المخزون',
+    descriptionEn: 'View inventory',
+  },
+  {
+    resource: 'inventory',
+    action: 'update',
+    descriptionAr: 'تعديل المخزون',
+    descriptionEn: 'Update inventory',
+  },
+  {
+    resource: 'inventory',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة للمخزون',
+    descriptionEn: 'Full inventory management',
+  },
+
+  // Delivery
+  {
+    resource: 'delivery',
+    action: 'read',
+    descriptionAr: 'عرض التوصيلات',
+    descriptionEn: 'View deliveries',
+  },
+  {
+    resource: 'delivery',
+    action: 'update',
+    descriptionAr: 'تعديل التوصيلات',
+    descriptionEn: 'Update deliveries',
+  },
+  {
+    resource: 'delivery',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة للتوصيل',
+    descriptionEn: 'Full delivery management',
+  },
+
+  // Reports
+  {
+    resource: 'reports',
+    action: 'read',
+    descriptionAr: 'عرض التقارير',
+    descriptionEn: 'View reports',
+  },
+
+  // Users
+  {
+    resource: 'users',
+    action: 'create',
+    descriptionAr: 'إضافة مستخدم',
+    descriptionEn: 'Create user',
+  },
+  {
+    resource: 'users',
+    action: 'read',
+    descriptionAr: 'عرض المستخدمين',
+    descriptionEn: 'View users',
+  },
+  {
+    resource: 'users',
+    action: 'update',
+    descriptionAr: 'تعديل المستخدمين',
+    descriptionEn: 'Update users',
+  },
+  {
+    resource: 'users',
+    action: 'delete',
+    descriptionAr: 'حذف المستخدمين',
+    descriptionEn: 'Delete users',
+  },
+  {
+    resource: 'users',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة للمستخدمين',
+    descriptionEn: 'Full users management',
+  },
+
+  // POS
+  {
+    resource: 'pos',
+    action: 'create',
+    descriptionAr: 'إنشاء فاتورة POS',
+    descriptionEn: 'Create POS sale',
+  },
+  {
+    resource: 'pos',
+    action: 'read',
+    descriptionAr: 'عرض مبيعات POS',
+    descriptionEn: 'View POS sales',
+  },
+  {
+    resource: 'pos',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة لنقطة البيع',
+    descriptionEn: 'Full POS management',
+  },
+
+  // Payments
+  {
+    resource: 'payments',
+    action: 'create',
+    descriptionAr: 'تسجيل دفعة',
+    descriptionEn: 'Create payment',
+  },
+  {
+    resource: 'payments',
+    action: 'read',
+    descriptionAr: 'عرض المدفوعات',
+    descriptionEn: 'View payments',
+  },
+  {
+    resource: 'payments',
+    action: 'manage',
+    descriptionAr: 'إدارة كاملة للمدفوعات',
+    descriptionEn: 'Full payments management',
+  },
+
+  // Settings
+  {
+    resource: 'settings',
+    action: 'read',
+    descriptionAr: 'عرض الإعدادات',
+    descriptionEn: 'View settings',
+  },
+  {
+    resource: 'settings',
+    action: 'update',
+    descriptionAr: 'تعديل الإعدادات',
+    descriptionEn: 'Update settings',
+  },
+
+  // Permissions/Roles
+  {
+    resource: 'permissions',
+    action: 'read',
+    descriptionAr: 'عرض الصلاحيات',
+    descriptionEn: 'View permissions',
+  },
+  {
+    resource: 'permissions',
+    action: 'manage',
+    descriptionAr: 'إدارة الصلاحيات والأدوار',
+    descriptionEn: 'Manage permissions and roles',
+  },
+];
+
+/**
+ * Preset system roles with their permissions
+ */
+const PRESET_ROLES = [
+  {
+    nameAr: 'مدير النظام',
+    nameEn: 'ADMIN',
+    description: 'صلاحية كاملة على جميع الموارد',
+    isSystem: true,
+    permissions: ['*:manage'], // Special: all permissions
+  },
+  {
+    nameAr: 'مدير المتجر',
+    nameEn: 'MANAGER',
+    description: 'إدارة المتجر والعمليات اليومية',
+    isSystem: true,
+    permissions: [
+      'orders:manage',
+      'products:manage',
+      'categories:manage',
+      'inventory:manage',
+      'delivery:manage',
+      'reports:read',
+      'users:read',
+      'pos:manage',
+      'payments:read',
+    ],
+  },
+  {
+    nameAr: 'أمين الصندوق',
+    nameEn: 'CASHIER',
+    description: 'إدارة نقطة البيع والمبيعات المباشرة',
+    isSystem: true,
+    permissions: [
+      'pos:manage',
+      'orders:create',
+      'orders:read',
+      'products:read',
+      'categories:read',
+      'payments:create',
+    ],
+  },
+  {
+    nameAr: 'جامع الطلبات',
+    nameEn: 'PICKER',
+    description: 'تجميع الطلبات من المستودع',
+    isSystem: true,
+    permissions: ['orders:read', 'orders:update', 'products:read', 'inventory:read'],
+  },
+  {
+    nameAr: 'سائق التوصيل',
+    nameEn: 'DRIVER',
+    description: 'توصيل الطلبات للعملاء',
+    isSystem: true,
+    permissions: ['delivery:read', 'delivery:update', 'orders:read'],
+  },
+];
+
 // ============================================
 // SEED FUNCTIONS
 // ============================================
@@ -323,6 +630,101 @@ async function seedSettings(): Promise<void> {
   console.log(`✅ ${count} settings seeded`);
 }
 
+async function seedPermissions(): Promise<void> {
+  console.log('🔐 Seeding permissions...');
+
+  for (const perm of PERMISSIONS) {
+    await prisma.permission.upsert({
+      where: {
+        resource_action: {
+          resource: perm.resource,
+          action: perm.action,
+        },
+      },
+      update: {
+        descriptionAr: perm.descriptionAr,
+        descriptionEn: perm.descriptionEn,
+      },
+      create: {
+        resource: perm.resource,
+        action: perm.action,
+        descriptionAr: perm.descriptionAr,
+        descriptionEn: perm.descriptionEn,
+      },
+    });
+  }
+
+  const count = await prisma.permission.count();
+  console.log(`✅ ${count} permissions seeded`);
+}
+
+async function seedRoles(): Promise<void> {
+  console.log('👥 Seeding roles...');
+
+  // Get all permissions for lookup
+  const allPermissions = await prisma.permission.findMany();
+  const permissionMap = new Map(
+    allPermissions.map((p: { resource: string; action: string; id: string }) => [
+      `${p.resource}:${p.action}`,
+      p.id,
+    ]),
+  );
+
+  for (const roleData of PRESET_ROLES) {
+    // Create or update the role
+    const role = await prisma.role.upsert({
+      where: { nameEn: roleData.nameEn },
+      update: {
+        nameAr: roleData.nameAr,
+        description: roleData.description,
+      },
+      create: {
+        nameAr: roleData.nameAr,
+        nameEn: roleData.nameEn,
+        description: roleData.description,
+        isSystem: roleData.isSystem,
+      },
+    });
+
+    // Handle permissions
+    // First, delete existing role permissions
+    await prisma.rolePermission.deleteMany({
+      where: { roleId: role.id },
+    });
+
+    // Then add the new permissions
+    if (roleData.permissions.includes('*:manage')) {
+      // Admin gets all permissions
+      const allPermissionIds = allPermissions.map((p: { id: string }) => p.id);
+      await prisma.rolePermission.createMany({
+        data: allPermissionIds.map((permId: string) => ({
+          roleId: role.id,
+          permissionId: permId,
+        })),
+        skipDuplicates: true,
+      });
+    } else {
+      // Other roles get specific permissions
+      const permissionIds = roleData.permissions
+        .map((p: string) => permissionMap.get(p))
+        .filter((id): id is string => id !== undefined);
+
+      if (permissionIds.length > 0) {
+        await prisma.rolePermission.createMany({
+          data: permissionIds.map((permId: string) => ({
+            roleId: role.id,
+            permissionId: permId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
+  }
+
+  const count = await prisma.role.count();
+  console.log(`✅ ${count} roles seeded`);
+}
+
 // ============================================
 // MAIN SEED FUNCTION
 // ============================================
@@ -335,6 +737,8 @@ async function main(): Promise<void> {
     await seedCategories();
     await seedInventoryLocations();
     await seedSettings();
+    await seedPermissions();
+    await seedRoles();
 
     console.log('\n✅ Database seeding completed successfully!');
     console.log('\n📋 Summary:');
@@ -342,6 +746,8 @@ async function main(): Promise<void> {
     console.log(`   - Categories: ${await prisma.category.count()}`);
     console.log(`   - Inventory Locations: ${await prisma.inventoryLocation.count()}`);
     console.log(`   - Settings: ${await prisma.setting.count()}`);
+    console.log(`   - Permissions: ${await prisma.permission.count()}`);
+    console.log(`   - Roles: ${await prisma.role.count()}`);
   } catch (error) {
     console.error('❌ Seeding failed:', error);
     throw error;

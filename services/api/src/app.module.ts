@@ -21,6 +21,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PosModule } from './modules/pos';
+import { PermissionsModule } from './modules/permissions';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { PosModule } from './modules/pos';
     AnalyticsModule,
     AdminModule,
     PosModule,
+    PermissionsModule,
   ],
 })
 export class AppModule {}

@@ -48,6 +48,12 @@ export const queryKeys = {
     'driver-performance',
     params,
   ],
+
+  // Permissions & Roles
+  permissions: ['permissions'],
+  permissionsGrouped: ['permissions', 'grouped'],
+  roles: ['permissions', 'roles'],
+  role: (id: string) => ['permissions', 'roles', id],
 };
 
 // Dashboard / Admin hooks
@@ -433,5 +439,103 @@ export function useCategoryPerformance(params?: { dateFrom?: string; dateTo?: st
   return useQuery({
     queryKey: queryKeys.categoryPerformance(params),
     queryFn: () => apiClient.get(`/reports/category/performance?${searchParams.toString()}`),
+  });
+}
+
+// Permissions & Roles hooks
+export function usePermissions() {
+  return useQuery({
+    queryKey: queryKeys.permissions,
+    queryFn: () => apiClient.get('/permissions'),
+  });
+}
+
+export function usePermissionsGrouped() {
+  return useQuery({
+    queryKey: queryKeys.permissionsGrouped,
+    queryFn: () => apiClient.get('/permissions/grouped'),
+  });
+}
+
+export function useRoles() {
+  return useQuery({
+    queryKey: queryKeys.roles,
+    queryFn: () => apiClient.get('/permissions/roles'),
+  });
+}
+
+export function useRole(id: string) {
+  return useQuery({
+    queryKey: queryKeys.role(id),
+    queryFn: () => apiClient.get(`/permissions/roles/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useCreateRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      nameAr: string;
+      nameEn?: string;
+      description?: string;
+      permissionIds: string[];
+    }) => apiClient.post('/permissions/roles', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roles });
+    },
+  });
+}
+
+export function useUpdateRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { nameAr?: string; nameEn?: string; description?: string; permissionIds?: string[] };
+    }) => apiClient.put(`/permissions/roles/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roles });
+    },
+  });
+}
+
+export function useDeleteRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/permissions/roles/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.roles });
+    },
+  });
+}
+
+export function useAssignRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { userId: string; roleId: string }) =>
+      apiClient.post('/permissions/users/assign', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+export function useRemoveRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, roleId }: { userId: string; roleId: string }) =>
+      apiClient.delete(`/permissions/users/${userId}/roles/${roleId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
   });
 }

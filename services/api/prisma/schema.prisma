@@ -117,6 +117,7 @@ model User {
   cashierOrders     Order[]              @relation("OrderCashier")
   driverAssignments DeliveryAssignment[] @relation("DeliveryDriver")
   auditLogs         AuditLog[]           @relation("AuditActor")
+  customRoles       UserCustomRole[]
 
   @@index([phone])
   @@index([role])
@@ -437,6 +438,94 @@ model AuditLog {
   @@index([action], map: "idx_audit_action")
   @@index([createdAt], map: "idx_audit_created_at")
   @@map("audit_log")
+}
+
+// ============================================
+// ROLES & PERMISSIONS (RBAC)
+// ============================================
+
+/// System permissions - defines what actions can be performed on resources
+model Permission {
+  id          String   @id @default(uuid())
+  /// Resource name (e.g., "orders", "products", "inventory")
+  resource    String
+  /// Action type (e.g., "create", "read", "update", "delete", "manage")
+  action      String
+  /// Human-readable description in Arabic
+  descriptionAr String? @map("description_ar")
+  /// Human-readable description in English
+  descriptionEn String? @map("description_en")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@index([resource])
+  @@map("permission")
+}
+
+/// Custom roles with assigned permissions
+/// Preset roles (ADMIN, MANAGER, etc.) are seeded and marked as system roles
+model Role {
+  id          String   @id @default(uuid())
+  /// Role name in Arabic - اسم الدور
+  nameAr      String   @map("name_ar")
+  /// Role name in English
+  nameEn      String?  @map("name_en")
+  /// Role description
+  description String?
+  /// System roles cannot be deleted or modified
+  isSystem    Boolean  @default(false) @map("is_system")
+  /// Active roles can be assigned to users
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  permissions RolePermission[]
+  users       UserCustomRole[]
+
+  @@unique([nameEn])
+  @@index([isActive])
+  @@map("role")
+}
+
+/// Junction table for Role-Permission many-to-many relationship
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String   @map("role_id")
+  permissionId String   @map("permission_id")
+  /// Optional condition (e.g., "ownOnly" for users to only see their own records)
+  condition    String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permission")
+}
+
+/// Junction table for User-CustomRole relationship
+/// Allows users to have custom roles in addition to their base UserRole
+model UserCustomRole {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_custom_role")
 }
 
 // ============================================
