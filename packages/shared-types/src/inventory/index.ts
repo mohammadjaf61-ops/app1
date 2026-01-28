@@ -6,6 +6,68 @@ import type { BaseEntity } from '../common';
 import type { Product } from '../product';
 
 /**
+ * Inventory reservation status
+ */
+export enum ReservationStatus {
+  HELD = 'HELD', // محجوز - ينتظر التأكيد
+  COMMITTED = 'COMMITTED', // مؤكد - تم خصم المخزون
+  RELEASED = 'RELEASED', // محرر - أعيد للمخزون
+}
+
+/**
+ * Inventory error codes for API responses
+ */
+export enum InventoryErrorCode {
+  INSUFFICIENT_STOCK = 'INSUFFICIENT_STOCK', // نفاد المخزون
+  PRICE_CHANGED = 'PRICE_CHANGED', // تغير السعر
+  PRODUCT_UNAVAILABLE = 'PRODUCT_UNAVAILABLE', // المنتج غير متوفر
+  RESERVATION_EXPIRED = 'RESERVATION_EXPIRED', // انتهت صلاحية الحجز
+}
+
+/**
+ * Inventory reservation
+ */
+export interface InventoryReservation {
+  id: string;
+  productId: string;
+  orderId: string;
+  quantity: number;
+  status: ReservationStatus;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Insufficient stock error detail
+ */
+export interface InsufficientStockItem {
+  productId: string;
+  productName: string;
+  requestedQuantity: number;
+  availableQuantity: number;
+}
+
+/**
+ * Price changed error detail
+ */
+export interface PriceChangedItem {
+  productId: string;
+  productName: string;
+  expectedPrice: number;
+  currentPrice: number;
+}
+
+/**
+ * Inventory validation error response
+ */
+export interface InventoryValidationError {
+  errorCode: InventoryErrorCode;
+  message: string;
+  items?: InsufficientStockItem[] | PriceChangedItem[];
+}
+
+/**
  * Inventory location - physical storage in store
  * Format: Aisle → Shelf → Bin (e.g., A-1-A)
  */

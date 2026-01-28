@@ -81,6 +81,8 @@ export interface CreateOrderDto {
 export interface CreateOrderItemDto {
   productId: string;
   quantity: number;
+  /** Expected price (for price validation) */
+  expectedPrice?: number;
 }
 
 /**

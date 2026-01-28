@@ -20,6 +20,8 @@ export interface ApiError {
   code: string;
   message: string;
   field?: string;
+  /** Additional error details (e.g., insufficient stock items) */
+  details?: unknown;
 }
 
 /**

@@ -62,6 +62,7 @@ export function CheckoutScreen() {
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
+          expectedPrice: item.price, // Send expected price for validation
         })),
       });
 
@@ -87,8 +88,69 @@ export function CheckoutScreen() {
           },
         ]
       );
-    } catch (error: any) {
-      Alert.alert('خطأ', error.message || 'فشل في إنشاء الطلب');
+    } catch (error: unknown) {
+      handleOrderError(error);
+    }
+  };
+
+  const handleOrderError = (error: unknown) => {
+    const apiError = error as {
+      errorCode?: string;
+      message?: string;
+      details?: {
+        items?: Array<{
+          productName?: string;
+          requestedQuantity?: number;
+          availableQuantity?: number;
+          expectedPrice?: number;
+          currentPrice?: number;
+        }>;
+      };
+    };
+
+    const errorCode = apiError?.errorCode;
+    const details = apiError?.details;
+
+    switch (errorCode) {
+      case 'INSUFFICIENT_STOCK': {
+        const insufficientItems = details?.items || [];
+        const itemsList = insufficientItems
+          .map(
+            (item) =>
+              `• ${item.productName}: طلبت ${item.requestedQuantity}، المتوفر ${item.availableQuantity}`
+          )
+          .join('\n');
+        Alert.alert(
+          'نفاد المخزون',
+          `عذراً، بعض المنتجات غير متوفرة بالكمية المطلوبة:\n\n${itemsList}\n\nيرجى تعديل الكميات في السلة.`,
+          [{ text: 'حسناً', onPress: () => navigation.goBack() }]
+        );
+        break;
+      }
+      case 'PRICE_CHANGED': {
+        const changedItems = details?.items || [];
+        const itemsList = changedItems
+          .map(
+            (item) =>
+              `• ${item.productName}: السعر الجديد ${formatCurrencyShort(item.currentPrice || 0)}`
+          )
+          .join('\n');
+        Alert.alert(
+          'تغير الأسعار',
+          `تغيرت أسعار بعض المنتجات:\n\n${itemsList}\n\nيرجى مراجعة السلة والمحاولة مرة أخرى.`,
+          [{ text: 'حسناً', onPress: () => navigation.goBack() }]
+        );
+        break;
+      }
+      case 'PRODUCT_UNAVAILABLE':
+        Alert.alert(
+          'منتج غير متوفر',
+          'عذراً، بعض المنتجات لم تعد متوفرة. يرجى مراجعة السلة.',
+          [{ text: 'حسناً', onPress: () => navigation.goBack() }]
+        );
+        break;
+      default:
+        Alert.alert('خطأ', apiError?.message || 'فشل في إنشاء الطلب');
     }
   };
 

@@ -17,6 +17,7 @@ interface ErrorResponse {
   errorCode: string;
   correlationId?: string;
   timestamp: string;
+  details?: unknown;
 }
 
 interface ExceptionResponse {
@@ -24,6 +25,7 @@ interface ExceptionResponse {
   error?: string;
   errorCode?: string;
   statusCode?: number;
+  details?: unknown;
 }
 
 /**
@@ -53,12 +55,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'حدث خطأ في الخادم'; // Internal server error in Arabic
     let errorCode = 'INTERNAL_SERVER_ERROR';
+    let details: unknown = undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const exceptionResponse = exception.getResponse() as
-        | ExceptionResponse
-        | string;
+      const exceptionResponse = exception.getResponse() as ExceptionResponse | string;
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
@@ -67,14 +68,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
         if (Array.isArray(exceptionResponse.message)) {
           message = exceptionResponse.message.join(', ');
         } else {
-          message =
-            exceptionResponse.message ||
-            exceptionResponse.error ||
-            message;
+          message = exceptionResponse.message || exceptionResponse.error || message;
         }
         // Use custom error code if provided
-        errorCode =
-          exceptionResponse.errorCode || ERROR_CODES[status] || errorCode;
+        errorCode = exceptionResponse.errorCode || ERROR_CODES[status] || errorCode;
+        // Extract details for inventory errors etc.
+        details = exceptionResponse.details;
       }
     } else if (exception instanceof Error) {
       message = exception.message;
@@ -104,6 +103,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       errorCode,
       correlationId,
       timestamp: new Date().toISOString(),
+      ...(details !== undefined && { details }),
     };
 
     response.status(status).json(errorResponse);

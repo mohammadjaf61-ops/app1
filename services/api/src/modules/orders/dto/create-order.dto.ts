@@ -1,3 +1,5 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
@@ -10,8 +12,6 @@ import {
   Matches,
   ArrayMinSize,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class OrderItemDto {
   @ApiProperty({
@@ -28,6 +28,15 @@ export class OrderItemDto {
   @IsInt({ message: 'الكمية يجب أن تكون رقماً صحيحاً' })
   @Min(1, { message: 'الكمية يجب أن تكون واحد على الأقل' })
   quantity: number;
+
+  @ApiPropertyOptional({
+    description: 'Expected price (for validation)',
+    example: 25000,
+  })
+  @IsOptional()
+  @IsInt({ message: 'السعر المتوقع يجب أن يكون رقماً صحيحاً' })
+  @Min(0, { message: 'السعر يجب أن يكون صفر أو أكثر' })
+  expectedPrice?: number;
 }
 
 export class CreateOrderDto {

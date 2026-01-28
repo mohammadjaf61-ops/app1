@@ -73,6 +73,13 @@ enum AuditAction {
   ASSIGNMENT
 }
 
+/// Inventory reservation status
+enum ReservationStatus {
+  HELD      // Reserved, awaiting confirmation
+  COMMITTED // Confirmed, inventory deducted
+  RELEASED  // Released back to inventory
+}
+
 // ============================================
 // USERS & AUTHENTICATION
 // ============================================
@@ -155,9 +162,10 @@ model Product {
   deletedAt     DateTime? @map("deleted_at")
 
   // Relations
-  category       Category        @relation(fields: [categoryId], references: [id])
+  category       Category               @relation(fields: [categoryId], references: [id])
   inventoryItems InventoryItem[]
   orderItems     OrderItem[]
+  reservations   InventoryReservation[]
 
   @@index([sku])
   @@index([categoryId], map: "idx_product_category_id")
@@ -215,6 +223,35 @@ model InventoryItem {
   @@map("inventory_item")
 }
 
+/// Inventory reservations - holds stock during order creation
+/// Prevents overselling through transactional guarantees
+model InventoryReservation {
+  id        String            @id @default(uuid())
+  /// Product being reserved
+  productId String            @map("product_id")
+  /// Order that holds this reservation
+  orderId   String            @map("order_id")
+  /// Quantity reserved
+  quantity  Int
+  /// Reservation status
+  status    ReservationStatus @default(HELD)
+  /// When reservation expires (auto-release)
+  expiresAt DateTime          @map("expires_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, productId], map: "uq_reservation_order_product")
+  @@index([productId], map: "idx_reservation_product")
+  @@index([orderId], map: "idx_reservation_order")
+  @@index([status], map: "idx_reservation_status")
+  @@index([expiresAt], map: "idx_reservation_expires_at")
+  @@map("inventory_reservation")
+}
+
 // ============================================
 // ORDERS
 // ============================================
@@ -245,10 +282,11 @@ model Order {
   updatedAt           DateTime      @updatedAt @map("updated_at")
 
   // Relations
-  picker             User?               @relation("OrderPicker", fields: [pickerId], references: [id])
+  picker             User?                  @relation("OrderPicker", fields: [pickerId], references: [id])
   items              OrderItem[]
   deliveryAssignment DeliveryAssignment?
   refunds            Refund[]
+  reservations       InventoryReservation[]
 
   @@index([orderNumber])
   @@index([status], map: "idx_order_status")
