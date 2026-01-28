@@ -45,12 +45,20 @@ enum OrderStatus {
   OUT_FOR_DELIVERY   // With driver
   DELIVERED          // Successfully delivered
   CANCELLED          // Cancelled before delivery
+  COMPLETED          // POS order completed (paid and handed over)
+}
+
+/// Order type - distinguishes delivery orders from POS sales
+enum OrderType {
+  DELIVERY // Online order for delivery
+  POS      // In-store point of sale
 }
 
 /// Payment methods (COD primary for Iraq market)
 enum PaymentMethod {
   COD  // Cash on Delivery - الدفع عند الاستلام
   CARD // Card payment via payment gateway (future)
+  CASH // In-store cash payment (POS)
 }
 
 /// Payment status for tracking payment lifecycle
@@ -106,6 +114,7 @@ model User {
 
   // Relations
   pickerAssignments Order[]              @relation("OrderPicker")
+  cashierOrders     Order[]              @relation("OrderCashier")
   driverAssignments DeliveryAssignment[] @relation("DeliveryDriver")
   auditLogs         AuditLog[]           @relation("AuditActor")
 
@@ -233,22 +242,26 @@ model InventoryItem {
 /// Customer info stored directly (no customer accounts in MVP)
 model Order {
   id                  String        @id @default(uuid())
-  /// Human-readable order number (e.g., "HM-20250126-ABC12")
+  /// Human-readable order number (e.g., "HM-20250126-ABC12" or "POS-20250128-XYZ")
   orderNumber         String        @unique @map("order_number")
-  /// Customer name in Arabic - اسم الزبون
-  customerName        String        @map("customer_name")
-  /// Customer phone number for contact
-  customerPhone       String        @map("customer_phone")
-  /// Full delivery address as text - العنوان
-  deliveryAddressText String        @map("delivery_address_text")
+  /// Order type: DELIVERY or POS
+  orderType           OrderType     @default(DELIVERY) @map("order_type")
+  /// Customer name in Arabic - اسم الزبون (optional for POS walk-in)
+  customerName        String?       @map("customer_name")
+  /// Customer phone number for contact (optional for POS)
+  customerPhone       String?       @map("customer_phone")
+  /// Full delivery address as text - العنوان (null for POS orders)
+  deliveryAddressText String?       @map("delivery_address_text")
   /// Total order amount in IQD
   totalAmountIqd      Int           @map("total_amount_iqd")
   /// Payment method (COD for Iraq)
   paymentMethod       PaymentMethod @default(COD) @map("payment_method")
   /// Current order status
   status              OrderStatus   @default(PENDING)
-  /// Assigned picker (staff member)
+  /// Assigned picker (staff member) - for delivery orders
   pickerId            String?       @map("picker_id")
+  /// Cashier who processed this order (for POS orders)
+  cashierId           String?       @map("cashier_id")
   /// Order notes from customer
   notes               String?
   createdAt           DateTime      @default(now()) @map("created_at")
@@ -256,14 +269,17 @@ model Order {
 
   // Relations
   picker             User?               @relation("OrderPicker", fields: [pickerId], references: [id])
+  cashier            User?               @relation("OrderCashier", fields: [cashierId], references: [id])
   items              OrderItem[]
   deliveryAssignment DeliveryAssignment?
   refunds            Refund[]
   payment            Payment?
 
   @@index([orderNumber])
+  @@index([orderType], map: "idx_order_type")
   @@index([status], map: "idx_order_status")
   @@index([pickerId], map: "idx_order_picker_id")
+  @@index([cashierId], map: "idx_order_cashier_id")
   @@index([createdAt], map: "idx_order_created_at")
   @@index([customerPhone], map: "idx_order_customer_phone")
   @@map("order")

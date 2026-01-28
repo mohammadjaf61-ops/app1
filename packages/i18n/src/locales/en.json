@@ -390,7 +390,8 @@
     "paidBy": "Collected By",
     "methods": {
       "COD": "Cash on Delivery",
-      "CARD": "Card Payment"
+      "CARD": "Card Payment",
+      "CASH": "Cash"
     },
     "status": {
       "PENDING": "Pending",
@@ -470,5 +471,47 @@
     "hoursAgo": "{{count}} hours ago",
     "minutesAgo": "{{count}} minutes ago",
     "justNow": "Just now"
+  },
+  "pos": {
+    "title": "Point of Sale",
+    "cashier": "Cashier",
+    "barcode": "Barcode",
+    "scanBarcode": "Scan barcode or enter product code...",
+    "cart": "Cart",
+    "cartEmpty": "Cart is empty",
+    "cartEmptyMessage": "Scan a product barcode to start",
+    "items": "{{count}} item(s)",
+    "total": "Total",
+    "pay": "Pay",
+    "clearCart": "Clear Cart",
+    "newSale": "New Sale",
+    "saleComplete": "Sale Complete",
+    "invoiceNumber": "Invoice Number",
+    "receipt": "Receipt",
+    "printReceipt": "Print Receipt",
+    "pressEnterForNewSale": "Press Enter to start a new sale",
+    "productNotFound": "Product not found",
+    "productOutOfStock": "Product \"{{name}}\" is out of stock",
+    "orderFailed": "Order failed",
+    "loginFailed": "Login failed",
+    "sessionStats": "Session Stats",
+    "todaySales": "Today's Sales",
+    "ordersCount": "Orders Count",
+    "totalRevenue": "Total Revenue",
+    "recentOrders": "Recent Orders",
+    "shortcuts": {
+      "title": "Keyboard Shortcuts:",
+      "enter": "Add Product",
+      "f12": "Pay",
+      "escape": "Clear Cart",
+      "f2": "Focus Barcode"
+    },
+    "orderType": {
+      "DELIVERY": "Delivery",
+      "POS": "In-Store"
+    },
+    "status": {
+      "COMPLETED": "Completed"
+    }
   }
 }

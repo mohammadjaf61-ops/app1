@@ -390,7 +390,8 @@
     "paidBy": "تم التحصيل بواسطة",
     "methods": {
       "COD": "الدفع عند الاستلام",
-      "CARD": "الدفع بالبطاقة"
+      "CARD": "الدفع بالبطاقة",
+      "CASH": "نقداً"
     },
     "status": {
       "PENDING": "قيد الانتظار",
@@ -470,5 +471,47 @@
     "hoursAgo": "منذ {{count}} ساعة",
     "minutesAgo": "منذ {{count}} دقيقة",
     "justNow": "الآن"
+  },
+  "pos": {
+    "title": "نقطة البيع",
+    "cashier": "الكاشير",
+    "barcode": "الباركود",
+    "scanBarcode": "امسح الباركود أو أدخل رمز المنتج...",
+    "cart": "السلة",
+    "cartEmpty": "السلة فارغة",
+    "cartEmptyMessage": "امسح باركود المنتج للبدء",
+    "items": "{{count}} عنصر",
+    "total": "الإجمالي",
+    "pay": "دفع",
+    "clearCart": "مسح السلة",
+    "newSale": "بيع جديد",
+    "saleComplete": "تم إتمام البيع",
+    "invoiceNumber": "رقم الفاتورة",
+    "receipt": "الإيصال",
+    "printReceipt": "طباعة الإيصال",
+    "pressEnterForNewSale": "اضغط Enter لبدء بيع جديد",
+    "productNotFound": "المنتج غير موجود",
+    "productOutOfStock": "المنتج \"{{name}}\" غير متوفر في المخزون",
+    "orderFailed": "فشل في إتمام الطلب",
+    "loginFailed": "فشل تسجيل الدخول",
+    "sessionStats": "إحصائيات الوردية",
+    "todaySales": "مبيعات اليوم",
+    "ordersCount": "عدد الفواتير",
+    "totalRevenue": "إجمالي الإيرادات",
+    "recentOrders": "الطلبات الأخيرة",
+    "shortcuts": {
+      "title": "اختصارات لوحة المفاتيح:",
+      "enter": "إضافة المنتج",
+      "f12": "دفع",
+      "escape": "مسح السلة",
+      "f2": "التركيز على الباركود"
+    },
+    "orderType": {
+      "DELIVERY": "توصيل",
+      "POS": "بيع مباشر"
+    },
+    "status": {
+      "COMPLETED": "مكتمل"
+    }
   }
 }
