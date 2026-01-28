@@ -1,23 +1,30 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
-
 import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
+import { InjectQueue } from '@nestjs/bull';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Queue } from 'bull';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { ORDER_EVENTS_QUEUE, OrderEventJobs } from './queues/order-events.constants';
+import type {
+  OrderCancelledPayload,
+  OrderCreatedPayload,
+  OrderPickerAssignedPayload,
+  OrderStatusChangedPayload,
+} from './queues/order-events.types';
 
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @InjectQueue(ORDER_EVENTS_QUEUE)
+    private readonly orderEventsQueue: Queue,
+  ) {}
 
   /**
    * Get all orders with filters and pagination
@@ -32,23 +39,20 @@ export class OrdersService {
     page?: number;
     limit?: number;
   }) {
-    const {
-      status,
-      pickerId,
-      isPaid,
-      search,
-      dateFrom,
-      dateTo,
-      page = 1,
-      limit = 20,
-    } = params;
+    const { status, pickerId, isPaid, search, dateFrom, dateTo, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {};
 
-    if (status) where.status = status;
-    if (pickerId) where.pickerId = pickerId;
-    if (isPaid !== undefined) where.isPaid = isPaid;
+    if (status) {
+      where.status = status;
+    }
+    if (pickerId) {
+      where.pickerId = pickerId;
+    }
+    if (isPaid !== undefined) {
+      where.isPaid = isPaid;
+    }
 
     if (search) {
       where.OR = [
@@ -60,8 +64,12 @@ export class OrdersService {
 
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt['gte'] = dateFrom;
-      if (dateTo) where.createdAt['lte'] = dateTo;
+      if (dateFrom) {
+        where.createdAt['gte'] = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt['lte'] = dateTo;
+      }
     }
 
     const [orders, total] = await Promise.all([
@@ -184,9 +192,7 @@ export class OrdersService {
     const deliveryFeeSetting = await this.prisma.setting.findUnique({
       where: { key: 'delivery_fee_iqd' },
     });
-    const deliveryFee = deliveryFeeSetting
-      ? parseInt(deliveryFeeSetting.value, 10)
-      : 5000;
+    const deliveryFee = deliveryFeeSetting ? parseInt(deliveryFeeSetting.value, 10) : 5000;
 
     // Get products and calculate totals
     const productIds = dto.items.map((item) => item.productId);
@@ -246,6 +252,11 @@ export class OrdersService {
 
     this.logger.log(`Order created: ${order.orderNumber}`);
 
+    // Emit ORDER_CREATED event asynchronously (does not block response)
+    this.emitOrderCreated(order, dto.customerPhone).catch((err) => {
+      this.logger.warn(`Failed to emit ORDER_CREATED event for ${order.orderNumber}:`, err);
+    });
+
     return order;
   }
 
@@ -276,6 +287,14 @@ export class OrdersService {
     });
 
     this.logger.log(`Order ${id} status changed to ${dto.status}`);
+
+    // Emit ORDER_STATUS_CHANGED event asynchronously
+    this.emitOrderStatusChanged(updated, order.status as OrderStatus, dto.status).catch((err) => {
+      this.logger.warn(
+        `Failed to emit ORDER_STATUS_CHANGED event for ${updated.orderNumber}:`,
+        err,
+      );
+    });
 
     return updated;
   }
@@ -308,6 +327,14 @@ export class OrdersService {
     });
 
     this.logger.log(`Picker ${pickerId} assigned to order ${orderId}`);
+
+    // Emit ORDER_PICKER_ASSIGNED event asynchronously
+    this.emitOrderPickerAssigned(updated, pickerId, picker.fullName).catch((err) => {
+      this.logger.warn(
+        `Failed to emit ORDER_PICKER_ASSIGNED event for ${updated.orderNumber}:`,
+        err,
+      );
+    });
 
     return updated;
   }
@@ -349,6 +376,11 @@ export class OrdersService {
 
     this.logger.log(`Order ${id} cancelled. Reason: ${reason}`);
 
+    // Emit ORDER_CANCELLED event asynchronously
+    this.emitOrderCancelled(updated, reason).catch((err) => {
+      this.logger.warn(`Failed to emit ORDER_CANCELLED event for ${updated.orderNumber}:`, err);
+    });
+
     return updated;
   }
 
@@ -359,8 +391,12 @@ export class OrdersService {
     const where: Record<string, unknown> = {};
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt['gte'] = dateFrom;
-      if (dateTo) where.createdAt['lte'] = dateTo;
+      if (dateFrom) {
+        where.createdAt['gte'] = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt['lte'] = dateTo;
+      }
     }
 
     const [
@@ -398,10 +434,7 @@ export class OrdersService {
   /**
    * Validate status transitions
    */
-  private validateStatusTransition(
-    currentStatus: OrderStatus,
-    newStatus: OrderStatus,
-  ): void {
+  private validateStatusTransition(currentStatus: OrderStatus, newStatus: OrderStatus): void {
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
       [OrderStatus.PENDING]: [OrderStatus.PICKING, OrderStatus.CANCELLED],
       [OrderStatus.PICKING]: [OrderStatus.READY, OrderStatus.CANCELLED],
@@ -416,5 +449,103 @@ export class OrdersService {
         `لا يمكن تغيير حالة الطلب من ${currentStatus} إلى ${newStatus}`,
       );
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Event Emitters - Async jobs that don't block the main request flow
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Emit ORDER_CREATED event to queue
+   */
+  private async emitOrderCreated(
+    order: { id: string; orderNumber: string; items: unknown[] } & Record<string, unknown>,
+    customerPhone: string,
+  ): Promise<void> {
+    const payload: OrderCreatedPayload = {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      customerPhone,
+      totalAmountIqd: (order.total as number) || 0,
+      itemCount: order.items?.length || 0,
+      timestamp: new Date().toISOString(),
+    };
+
+    await this.orderEventsQueue.add(OrderEventJobs.ORDER_CREATED, payload, {
+      jobId: `order-created-${order.id}`,
+    });
+
+    this.logger.debug(`ORDER_CREATED job queued for ${order.orderNumber}`);
+  }
+
+  /**
+   * Emit ORDER_STATUS_CHANGED event to queue
+   */
+  private async emitOrderStatusChanged(
+    order: { id: string; orderNumber: string } & Record<string, unknown>,
+    previousStatus: OrderStatus,
+    newStatus: OrderStatus,
+    actorId?: string,
+  ): Promise<void> {
+    const payload: OrderStatusChangedPayload = {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      previousStatus,
+      newStatus,
+      actorId,
+      timestamp: new Date().toISOString(),
+    };
+
+    await this.orderEventsQueue.add(OrderEventJobs.ORDER_STATUS_CHANGED, payload, {
+      jobId: `order-status-${order.id}-${Date.now()}`,
+    });
+
+    this.logger.debug(`ORDER_STATUS_CHANGED job queued for ${order.orderNumber}`);
+  }
+
+  /**
+   * Emit ORDER_PICKER_ASSIGNED event to queue
+   */
+  private async emitOrderPickerAssigned(
+    order: { id: string; orderNumber: string } & Record<string, unknown>,
+    pickerId: string,
+    pickerName: string,
+  ): Promise<void> {
+    const payload: OrderPickerAssignedPayload = {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      pickerId,
+      pickerName,
+      timestamp: new Date().toISOString(),
+    };
+
+    await this.orderEventsQueue.add(OrderEventJobs.ORDER_PICKER_ASSIGNED, payload, {
+      jobId: `order-picker-${order.id}-${pickerId}`,
+    });
+
+    this.logger.debug(`ORDER_PICKER_ASSIGNED job queued for ${order.orderNumber}`);
+  }
+
+  /**
+   * Emit ORDER_CANCELLED event to queue
+   */
+  private async emitOrderCancelled(
+    order: { id: string; orderNumber: string } & Record<string, unknown>,
+    reason: string,
+    cancelledBy?: string,
+  ): Promise<void> {
+    const payload: OrderCancelledPayload = {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      reason,
+      cancelledBy,
+      timestamp: new Date().toISOString(),
+    };
+
+    await this.orderEventsQueue.add(OrderEventJobs.ORDER_CANCELLED, payload, {
+      jobId: `order-cancelled-${order.id}`,
+    });
+
+    this.logger.debug(`ORDER_CANCELLED job queued for ${order.orderNumber}`);
   }
 }
