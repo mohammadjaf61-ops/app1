@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { SettingsService, SETTINGS_KEYS } from '../../settings';
 
 import { AiGovernanceService } from './ai-governance.service';
 
@@ -23,6 +24,7 @@ export class DemandForecastService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly governance: AiGovernanceService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   /**
@@ -30,8 +32,13 @@ export class DemandForecastService {
    * Phase 1: Simple moving average and trend analysis
    * Phase 2: Would integrate Prophet or similar
    */
-  async generateForecasts(forecastDays: number = 14): Promise<number> {
+  async generateForecasts(forecastDaysOverride?: number): Promise<number> {
     const startTime = Date.now();
+
+    // Get forecast days from settings or use override
+    const forecastDays =
+      forecastDaysOverride ?? (await this.settingsService.getNumber(SETTINGS_KEYS.FORECAST_DAYS));
+
     this.logger.log(`Generating ${forecastDays}-day forecasts`);
 
     // Get active products with recent sales
@@ -90,8 +97,11 @@ export class DemandForecastService {
       return [];
     }
 
+    // Get window size from settings
+    const windowSize = await this.settingsService.getNumber(SETTINGS_KEYS.FORECAST_WINDOW_SIZE);
+
     // Calculate forecasts using moving average with trend
-    const forecasts = this.calculateMovingAverageForecast(history, forecastDays);
+    const forecasts = this.calculateMovingAverageForecast(history, forecastDays, windowSize);
 
     // Store forecasts
     for (const forecast of forecasts) {
@@ -175,8 +185,8 @@ export class DemandForecastService {
   private calculateMovingAverageForecast(
     history: SalesHistory[],
     forecastDays: number,
+    windowSize: number,
   ): ForecastResult[] {
-    const windowSize = 7; // 7-day moving average
     const quantities = history.map((h) => h.quantity);
 
     // Calculate moving average

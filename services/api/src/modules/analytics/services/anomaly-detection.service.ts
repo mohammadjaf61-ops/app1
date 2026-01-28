@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { SettingsService, SETTINGS_KEYS } from '../../settings';
 
 import { AiGovernanceService } from './ai-governance.service';
 
@@ -19,13 +20,18 @@ interface AnomalyResult {
 export class AnomalyDetectionService {
   private readonly logger = new Logger(AnomalyDetectionService.name);
 
-  // Z-score threshold for anomaly detection
-  private readonly Z_THRESHOLD = 2.5;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly governance: AiGovernanceService,
+    private readonly settingsService: SettingsService,
   ) {}
+
+  /**
+   * Get Z-score threshold from settings
+   */
+  private async getZThreshold(): Promise<number> {
+    return this.settingsService.getNumber(SETTINGS_KEYS.ANOMALY_Z_THRESHOLD);
+  }
 
   /**
    * Run all anomaly detection checks
@@ -34,14 +40,17 @@ export class AnomalyDetectionService {
     const startTime = Date.now();
     this.logger.log('Running anomaly detection');
 
+    // Get Z-threshold from settings
+    const zThreshold = await this.getZThreshold();
+
     const anomalies: AnomalyResult[] = [];
 
     // Check for refund spikes
-    const refundAnomalies = await this.detectRefundSpikes();
+    const refundAnomalies = await this.detectRefundSpikes(zThreshold);
     anomalies.push(...refundAnomalies);
 
     // Check for unusual order values
-    const orderAnomalies = await this.detectUnusualOrders();
+    const orderAnomalies = await this.detectUnusualOrders(zThreshold);
     anomalies.push(...orderAnomalies);
 
     // Check for inventory discrepancies
@@ -67,7 +76,7 @@ export class AnomalyDetectionService {
       outputType: 'ANOMALY',
       modelName: 'statistical_anomaly_detector',
       modelVersion: '1.0',
-      inputParams: { zThreshold: this.Z_THRESHOLD },
+      inputParams: { zThreshold },
       outputData: {
         totalAnomalies: anomalies.length,
         byType: this.groupByType(anomalies),
@@ -82,7 +91,7 @@ export class AnomalyDetectionService {
   /**
    * Detect refund spikes
    */
-  private async detectRefundSpikes(): Promise<AnomalyResult[]> {
+  private async detectRefundSpikes(zThreshold: number): Promise<AnomalyResult[]> {
     const anomalies: AnomalyResult[] = [];
 
     // Get daily refund stats for last 30 days
@@ -114,7 +123,7 @@ export class AnomalyDetectionService {
     const countZScore = this.calculateZScore(todayCount, counts.slice(0, -1));
     const amountZScore = this.calculateZScore(todayAmount, amounts.slice(0, -1));
 
-    if (countZScore > this.Z_THRESHOLD) {
+    if (countZScore > zThreshold) {
       const avgCount = this.mean(counts.slice(0, -1));
       anomalies.push({
         alertType: 'REFUND_SPIKE',
@@ -127,7 +136,7 @@ export class AnomalyDetectionService {
       });
     }
 
-    if (amountZScore > this.Z_THRESHOLD) {
+    if (amountZScore > zThreshold) {
       const avgAmount = this.mean(amounts.slice(0, -1));
       anomalies.push({
         alertType: 'REFUND_AMOUNT_SPIKE',
@@ -146,7 +155,7 @@ export class AnomalyDetectionService {
   /**
    * Detect unusual order values
    */
-  private async detectUnusualOrders(): Promise<AnomalyResult[]> {
+  private async detectUnusualOrders(zThreshold: number): Promise<AnomalyResult[]> {
     const anomalies: AnomalyResult[] = [];
 
     // Get order value statistics
@@ -166,7 +175,7 @@ export class AnomalyDetectionService {
     }
 
     // Find orders with unusual values in last 24 hours
-    const threshold = avgValue + this.Z_THRESHOLD * stdDev;
+    const threshold = avgValue + zThreshold * stdDev;
 
     const unusualOrders = await this.prisma.order.findMany({
       where: {

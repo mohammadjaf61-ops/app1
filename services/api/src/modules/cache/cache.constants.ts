@@ -23,6 +23,9 @@ export const CACHE_KEYS = {
 
   // Admin dashboard
   ADMIN_KPIS: 'admin:kpis:v1',
+
+  // Settings
+  SETTINGS: 'settings:v1',
 } as const;
 
 // TTL in seconds
