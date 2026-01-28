@@ -1,8 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback, type ErrorInfo } from 'react';
 import { I18nManager, LogBox, AppState, AppStateStatus } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NavigationContainer } from '@react-navigation/native';
+
+import { ErrorBoundary, ErrorFallback } from '@hypermarket/mobile-ui';
+import { appLogger } from '@hypermarket/mobile-core';
 
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { useAuthStore } from '@/stores/auth-store';
@@ -26,7 +29,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function App() {
+function AppContent() {
   const { initialize } = useAuthStore();
   const appState = useRef(AppState.currentState);
 
@@ -51,15 +54,43 @@ export default function App() {
     return () => {
       subscription.remove();
     };
+  }, [initialize]);
+
+  return <RootNavigator />;
+}
+
+export default function App() {
+  const handleError = useCallback((error: Error, errorInfo: ErrorInfo) => {
+    appLogger.error('Unhandled app error', error, {
+      scope: 'PickerApp',
+      metadata: { componentStack: errorInfo.componentStack },
+    });
+  }, []);
+
+  const handleReset = useCallback(() => {
+    // Reset query cache on error recovery
+    queryClient.clear();
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <ErrorBoundary
+        onError={handleError}
+        onReset={handleReset}
+        fallback={({ error, resetError }) => (
+          <ErrorFallback
+            error={error}
+            resetError={resetError}
+            showError={__DEV__}
+          />
+        )}
+      >
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            <AppContent />
+          </NavigationContainer>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }

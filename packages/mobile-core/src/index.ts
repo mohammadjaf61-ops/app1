@@ -6,6 +6,10 @@ export type { ScreenWrapperProps, SafeAreaEdge } from './layout/ScreenWrapper';
 export { BaseApiClient, ApiException } from './api/api-client';
 export type { ApiError, ApiClientConfig } from './api/api-client';
 
+// Logging
+export { createLogger, appLogger, apiLogger, authLogger, navigationLogger } from './utils/logger';
+export type { LogLevel, LogContext, LogEntry } from './utils/logger';
+
 // Utils/Formatters
 export {
   formatCurrency,
