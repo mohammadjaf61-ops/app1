@@ -13,9 +13,12 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
     "@hypermarket/contracts": "workspace:*",
+    "@hypermarket/i18n": "workspace:*",
     "@hypermarket/mobile-core": "workspace:*",
     "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",
+    "i18next": "^23.10.0",
+    "react-i18next": "^14.1.0",
     "@react-native-async-storage/async-storage": "1.21.0",
     "@react-native-community/netinfo": "^11.1.0",
     "@react-navigation/bottom-tabs": "^6.5.0",

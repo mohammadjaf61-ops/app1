@@ -30,23 +30,31 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useT } from '@/hooks/use-t';
 import { useAuth } from '@/lib/auth';
 import { userRoleLabels } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
+// Navigation items with translation keys
 const navItems = [
-  { href: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-  { href: '/dashboard/orders', label: 'الطلبات', icon: ShoppingCart },
-  { href: '/dashboard/inventory', label: 'المخزون', icon: Boxes },
-  { href: '/dashboard/catalog', label: 'الكتالوج', icon: Store },
-  { href: '/dashboard/delivery', label: 'التوصيل', icon: Truck },
-  { href: '/dashboard/users', label: 'المستخدمين', icon: Users, roles: ['ADMIN', 'MANAGER'] },
-  { href: '/dashboard/reports', label: 'التقارير', icon: BarChart3, roles: ['ADMIN', 'MANAGER'] },
-  { href: '/dashboard/settings', label: 'الإعدادات', icon: Settings, roles: ['ADMIN'] },
+  { href: '/dashboard', labelKey: 'admin.dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/orders', labelKey: 'navigation.orders', icon: ShoppingCart },
+  { href: '/dashboard/inventory', labelKey: 'inventory.title', icon: Boxes },
+  { href: '/dashboard/catalog', labelKey: 'products.title', icon: Store },
+  { href: '/dashboard/delivery', labelKey: 'delivery.title', icon: Truck },
+  { href: '/dashboard/users', labelKey: 'admin.users', icon: Users, roles: ['ADMIN', 'MANAGER'] },
+  {
+    href: '/dashboard/reports',
+    labelKey: 'reports.title',
+    icon: BarChart3,
+    roles: ['ADMIN', 'MANAGER'],
+  },
+  { href: '/dashboard/settings', labelKey: 'admin.settings', icon: Settings, roles: ['ADMIN'] },
 ];
 
 function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
   const { hasRole } = useAuth();
+  const { t } = useT();
 
   return (
     <nav className="flex-1 space-y-1">
@@ -73,7 +81,7 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
             )}
           >
             <Icon className="h-5 w-5" />
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         );
       })}
@@ -84,13 +92,14 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout, isLoading } = useAuth();
+  const { t } = useT();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Show loading state
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-muted-foreground">جاري التحميل...</div>
+        <div className="text-muted-foreground">{t('common.loading')}</div>
       </div>
     );
   }
@@ -109,7 +118,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="flex h-16 items-center border-b px-4">
           <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg">
             <Package className="h-7 w-7 text-primary" />
-            <span>الهايبرماركت</span>
+            <span>{t('common.appName')}</span>
           </Link>
         </div>
         <ScrollArea className="flex-1 p-4">
@@ -123,7 +132,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             onClick={logout}
           >
             <LogOut className="h-5 w-5" />
-            تسجيل الخروج
+            {t('auth.logout')}
           </Button>
         </div>
       </aside>
@@ -137,7 +146,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">القائمة</span>
+                <span className="sr-only">{t('common.actions')}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-64 p-0">
@@ -148,7 +157,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   onClick={() => setMobileOpen(false)}
                 >
                   <Package className="h-7 w-7 text-primary" />
-                  <span>الهايبرماركت</span>
+                  <span>{t('common.appName')}</span>
                 </Link>
               </div>
               <ScrollArea className="h-[calc(100vh-4rem)] p-4">
@@ -163,7 +172,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   }}
                 >
                   <LogOut className="h-5 w-5" />
-                  تسجيل الخروج
+                  {t('auth.logout')}
                 </Button>
               </ScrollArea>
             </SheetContent>
@@ -199,13 +208,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings">
                   <Settings className="ml-2 h-4 w-4" />
-                  الإعدادات
+                  {t('admin.settings')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout} className="text-destructive">
                 <LogOut className="ml-2 h-4 w-4" />
-                تسجيل الخروج
+                {t('auth.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

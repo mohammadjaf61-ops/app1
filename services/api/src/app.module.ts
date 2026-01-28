@@ -7,6 +7,8 @@ import { configuration, validationSchema } from './config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { CacheModule } from './modules/cache';
 import { SettingsModule } from './modules/settings';
+import { BusinessRulesModule } from './modules/business-rules';
+import { PaymentsModule } from './modules/payments';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -57,6 +59,12 @@ import { AdminModule } from './modules/admin/admin.module';
 
     // Settings (Global)
     SettingsModule,
+
+    // Business Rules (Global)
+    BusinessRulesModule,
+
+    // Payments (Global)
+    PaymentsModule,
 
     // Feature modules
     HealthModule,

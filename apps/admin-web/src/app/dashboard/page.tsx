@@ -111,7 +111,7 @@ export default function DashboardPage() {
       pendingOrders: kpis?.pendingOrders ?? 0,
       activeDeliveries: Array.isArray(ordersData)
         ? ordersData.length
-        : (ordersData as { data?: unknown[] })?.data?.length ?? 0,
+        : ((ordersData as { data?: unknown[] })?.data?.length ?? 0),
       lowStockCount: kpis?.outOfStockCount ?? 0,
     };
   }, [kpis, ordersData]);

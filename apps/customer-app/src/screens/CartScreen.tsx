@@ -6,6 +6,7 @@ import { View, Text, FlatList, TouchableOpacity, Image } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button, QuantityControl } from '@/components/ui';
+import { useT } from '@/hooks/use-t';
 import { formatCurrencyShort } from '@/lib/formatters';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 import type { CartItem } from '@/stores/cart-store';
@@ -15,6 +16,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function CartScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useT();
   const { items, updateQuantity, removeItem, clearCart } = useCartStore();
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = items.length > 0 ? 5000 : 0;
@@ -65,11 +67,11 @@ export function CartScreen() {
           <View className="bg-gray-100 w-24 h-24 rounded-full items-center justify-center mb-4">
             <Ionicons name="cart-outline" size={48} color="#9ca3af" />
           </View>
-          <Text className="text-xl font-bold text-gray-900 mb-2">السلة فارغة</Text>
+          <Text className="text-xl font-bold text-gray-900 mb-2">{t('cart.emptyCart')}</Text>
           <Text className="text-gray-500 text-center mb-6">
-            لم تقم بإضافة أي منتجات إلى سلة التسوق بعد
+            {t('cart.emptyCartMessage')}
           </Text>
-          <Button title="تسوق الآن" onPress={() => navigation.navigate('Main')} size="lg" />
+          <Button title={t('cart.startShopping')} onPress={() => navigation.navigate('Main')} size="lg" />
         </View>
       </ScreenWrapper>
     );
@@ -81,11 +83,13 @@ export function CartScreen() {
       <View className="bg-white px-4 pt-12 pb-4 border-b border-gray-100">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={clearCart}>
-            <Text className="text-red-500 font-medium">مسح الكل</Text>
+            <Text className="text-red-500 font-medium">{t('cart.clearCart')}</Text>
           </TouchableOpacity>
-          <Text className="text-2xl font-bold text-gray-900">السلة</Text>
+          <Text className="text-2xl font-bold text-gray-900">{t('cart.title')}</Text>
         </View>
-        <Text className="text-gray-500 text-right mt-1">{items.length} منتج</Text>
+        <Text className="text-gray-500 text-right mt-1">
+          {items.length} {t('common.items')}
+        </Text>
       </View>
 
       {/* Cart Items */}
@@ -103,21 +107,21 @@ export function CartScreen() {
         <View className="space-y-2 mb-4">
           <View className="flex-row justify-between">
             <Text className="text-gray-900">{formatCurrencyShort(subtotal)}</Text>
-            <Text className="text-gray-500">المجموع الفرعي</Text>
+            <Text className="text-gray-500">{t('common.subtotal')}</Text>
           </View>
           <View className="flex-row justify-between">
             <Text className="text-gray-900">{formatCurrencyShort(deliveryFee)}</Text>
-            <Text className="text-gray-500">رسوم التوصيل</Text>
+            <Text className="text-gray-500">{t('checkout.deliveryFee')}</Text>
           </View>
           <View className="h-px bg-gray-200 my-2" />
           <View className="flex-row justify-between">
             <Text className="text-primary text-lg font-bold">{formatCurrencyShort(total)}</Text>
-            <Text className="text-gray-900 font-bold">المجموع الكلي</Text>
+            <Text className="text-gray-900 font-bold">{t('common.total')}</Text>
           </View>
         </View>
 
         <Button
-          title="إتمام الطلب"
+          title={t('checkout.title')}
           onPress={() => navigation.navigate('Checkout')}
           fullWidth
           size="lg"
