@@ -1,12 +1,6 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
-
 import { UserRole } from '@hypermarket/shared-types';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { Roles } from '@/common/decorators/roles.decorator';
 
@@ -56,10 +50,7 @@ export class AuditController {
   @ApiOperation({ summary: 'Get audit statistics' })
   @ApiQuery({ name: 'dateFrom', required: false, type: String, description: 'ISO date string' })
   @ApiQuery({ name: 'dateTo', required: false, type: String, description: 'ISO date string' })
-  async getStatistics(
-    @Query('dateFrom') dateFrom?: string,
-    @Query('dateTo') dateTo?: string,
-  ) {
+  async getStatistics(@Query('dateFrom') dateFrom?: string, @Query('dateTo') dateTo?: string) {
     return this.auditService.getStatistics({
       dateFrom: dateFrom ? new Date(dateFrom) : undefined,
       dateTo: dateTo ? new Date(dateTo) : undefined,
@@ -69,10 +60,7 @@ export class AuditController {
   @Get('entity/:entity/:entityId')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get audit logs for specific entity' })
-  async findByEntity(
-    @Param('entity') entity: string,
-    @Param('entityId') entityId: string,
-  ) {
+  async findByEntity(@Param('entity') entity: string, @Param('entityId') entityId: string) {
     return this.auditService.findByEntity(entity, entityId);
   }
 
@@ -80,10 +68,7 @@ export class AuditController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get recent activity for a user' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  async getUserActivity(
-    @Param('userId') userId: string,
-    @Query('limit') limit?: number,
-  ) {
+  async getUserActivity(@Param('userId') userId: string, @Query('limit') limit?: number) {
     return this.auditService.getUserActivity(userId, limit);
   }
 

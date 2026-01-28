@@ -27,10 +27,7 @@ module.exports = {
     'react/no-direct-mutation-state': 'error',
     'react/no-unescaped-entities': 'warn',
     'react/self-closing-comp': 'warn',
-    'react/jsx-curly-brace-presence': [
-      'warn',
-      { props: 'never', children: 'never' },
-    ],
+    'react/jsx-curly-brace-presence': ['warn', { props: 'never', children: 'never' }],
 
     // ============================================
     // REACT HOOKS
@@ -58,10 +55,7 @@ module.exports = {
     // ============================================
     // Relaxed complexity for UI components
     'sonarjs/cognitive-complexity': ['warn', 20],
-    'max-lines-per-function': [
-      'warn',
-      { max: 200, skipBlankLines: true, skipComments: true },
-    ],
+    'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
 
     // Allow console for development (but strip in prod)
     'no-console': 'off',

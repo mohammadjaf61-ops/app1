@@ -1,20 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
-
 import { UserRole, DeliveryStatus, JwtPayload } from '@hypermarket/shared-types';
+import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -75,10 +61,7 @@ export class DeliveryController {
   @Post('assign')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Assign delivery to driver' })
-  async assign(
-    @Body('orderId') orderId: string,
-    @Body('driverId') driverId: string,
-  ) {
+  async assign(@Body('orderId') orderId: string, @Body('driverId') driverId: string) {
     return this.deliveryService.assign(orderId, driverId);
   }
 

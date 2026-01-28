@@ -5,7 +5,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
-interface CategoryTree {
+export interface CategoryTree {
   id: string;
   nameAr: string;
   nameEn: string | null;
@@ -36,7 +36,8 @@ export class CategoriesService {
     const map = new Map<string, CategoryTree>();
     const roots: CategoryTree[] = [];
 
-    categories.forEach((cat) => {
+    type CategoryRecord = (typeof categories)[number];
+    categories.forEach((cat: CategoryRecord) => {
       map.set(cat.id, {
         id: cat.id,
         nameAr: cat.nameAr,

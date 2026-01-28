@@ -38,9 +38,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             <span className="text-4xl">⚠️</span>
           </div>
 
-          <h2 className="mb-2 text-xl font-bold text-gray-900">
-            حدث خطأ في النظام
-          </h2>
+          <h2 className="mb-2 text-xl font-bold text-gray-900">حدث خطأ في النظام</h2>
 
           <p className="mb-6 text-center text-gray-600">
             نعتذر عن هذا الخطأ. يرجى تحديث الصفحة أو المحاولة لاحقًا.

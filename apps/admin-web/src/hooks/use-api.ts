@@ -37,22 +37,17 @@ export const queryKeys = {
   // Reports
   salesSummary: (params?: Record<string, unknown>) => ['reports', 'sales-summary', params],
   stockAging: ['reports', 'stock-aging'],
-  categoryPerformance: (params?: Record<string, unknown>) => ['reports', 'category-performance', params],
-  driverPerformance: (params?: Record<string, unknown>) => ['reports', 'driver-performance', params],
+  categoryPerformance: (params?: Record<string, unknown>) => [
+    'reports',
+    'category-performance',
+    params,
+  ],
+  driverPerformance: (params?: Record<string, unknown>) => [
+    'reports',
+    'driver-performance',
+    params,
+  ],
 };
-
-// Types
-interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrevious: boolean;
-  };
-}
 
 // Dashboard hooks
 export function useDashboardStats() {
@@ -65,9 +60,15 @@ export function useDashboardStats() {
 // Order hooks
 export function useOrders(filters?: { status?: string; page?: number; limit?: number }) {
   const params = new URLSearchParams();
-  if (filters?.status) params.set('status', filters.status);
-  if (filters?.page) params.set('page', String(filters.page));
-  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.status) {
+    params.set('status', filters.status);
+  }
+  if (filters?.page) {
+    params.set('page', String(filters.page));
+  }
+  if (filters?.limit) {
+    params.set('limit', String(filters.limit));
+  }
 
   return useQuery({
     queryKey: queryKeys.orders(filters),
@@ -98,9 +99,15 @@ export function useUpdateOrderStatus() {
 // Inventory hooks
 export function useInventory(filters?: { page?: number; limit?: number; lowStock?: boolean }) {
   const params = new URLSearchParams();
-  if (filters?.page) params.set('page', String(filters.page));
-  if (filters?.limit) params.set('limit', String(filters.limit));
-  if (filters?.lowStock) params.set('lowStock', 'true');
+  if (filters?.page) {
+    params.set('page', String(filters.page));
+  }
+  if (filters?.limit) {
+    params.set('limit', String(filters.limit));
+  }
+  if (filters?.lowStock) {
+    params.set('lowStock', 'true');
+  }
 
   return useQuery({
     queryKey: queryKeys.inventory(filters),
@@ -180,12 +187,25 @@ export function useUpdateCategory() {
   });
 }
 
-export function useProducts(filters?: { categoryId?: string; page?: number; limit?: number; search?: string }) {
+export function useProducts(filters?: {
+  categoryId?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}) {
   const params = new URLSearchParams();
-  if (filters?.categoryId) params.set('categoryId', filters.categoryId);
-  if (filters?.page) params.set('page', String(filters.page));
-  if (filters?.limit) params.set('limit', String(filters.limit));
-  if (filters?.search) params.set('search', filters.search);
+  if (filters?.categoryId) {
+    params.set('categoryId', filters.categoryId);
+  }
+  if (filters?.page) {
+    params.set('page', String(filters.page));
+  }
+  if (filters?.limit) {
+    params.set('limit', String(filters.limit));
+  }
+  if (filters?.search) {
+    params.set('search', filters.search);
+  }
 
   return useQuery({
     queryKey: queryKeys.products(filters),
@@ -227,9 +247,15 @@ export function useUpdateProduct() {
 // Delivery hooks
 export function useDeliveries(filters?: { status?: string; driverId?: string; page?: number }) {
   const params = new URLSearchParams();
-  if (filters?.status) params.set('status', filters.status);
-  if (filters?.driverId) params.set('driverId', filters.driverId);
-  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.status) {
+    params.set('status', filters.status);
+  }
+  if (filters?.driverId) {
+    params.set('driverId', filters.driverId);
+  }
+  if (filters?.page) {
+    params.set('page', String(filters.page));
+  }
 
   return useQuery({
     queryKey: queryKeys.deliveries(filters),
@@ -253,9 +279,15 @@ export function useAssignDelivery() {
 // User hooks
 export function useUsers(filters?: { role?: string; page?: number; limit?: number }) {
   const params = new URLSearchParams();
-  if (filters?.role) params.set('role', filters.role);
-  if (filters?.page) params.set('page', String(filters.page));
-  if (filters?.limit) params.set('limit', String(filters.limit));
+  if (filters?.role) {
+    params.set('role', filters.role);
+  }
+  if (filters?.page) {
+    params.set('page', String(filters.page));
+  }
+  if (filters?.limit) {
+    params.set('limit', String(filters.limit));
+  }
 
   return useQuery({
     queryKey: queryKeys.users(filters),
@@ -295,11 +327,21 @@ export function useUpdateUser() {
 }
 
 // Report hooks
-export function useSalesSummary(params?: { dateFrom?: string; dateTo?: string; categoryId?: string }) {
+export function useSalesSummary(params?: {
+  dateFrom?: string;
+  dateTo?: string;
+  categoryId?: string;
+}) {
   const searchParams = new URLSearchParams();
-  if (params?.dateFrom) searchParams.set('dateFrom', params.dateFrom);
-  if (params?.dateTo) searchParams.set('dateTo', params.dateTo);
-  if (params?.categoryId) searchParams.set('categoryId', params.categoryId);
+  if (params?.dateFrom) {
+    searchParams.set('dateFrom', params.dateFrom);
+  }
+  if (params?.dateTo) {
+    searchParams.set('dateTo', params.dateTo);
+  }
+  if (params?.categoryId) {
+    searchParams.set('categoryId', params.categoryId);
+  }
 
   return useQuery({
     queryKey: queryKeys.salesSummary(params),
@@ -316,8 +358,12 @@ export function useStockAging() {
 
 export function useCategoryPerformance(params?: { dateFrom?: string; dateTo?: string }) {
   const searchParams = new URLSearchParams();
-  if (params?.dateFrom) searchParams.set('dateFrom', params.dateFrom);
-  if (params?.dateTo) searchParams.set('dateTo', params.dateTo);
+  if (params?.dateFrom) {
+    searchParams.set('dateFrom', params.dateFrom);
+  }
+  if (params?.dateTo) {
+    searchParams.set('dateTo', params.dateTo);
+  }
 
   return useQuery({
     queryKey: queryKeys.categoryPerformance(params),

@@ -1,12 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  Logger,
-} from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-
 import { UserRole } from '@hypermarket/shared-types';
+import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '@/prisma/prisma.service';
 

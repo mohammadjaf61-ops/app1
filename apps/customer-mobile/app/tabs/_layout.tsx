@@ -28,18 +28,14 @@ export default function TabsLayout() {
         name="cart"
         options={{
           title: 'السلة',
-          tabBarIcon: ({ color, size }) => (
-            <ShoppingCart size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <ShoppingCart size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: 'الطلبات',
-          tabBarIcon: ({ color, size }) => (
-            <ClipboardList size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <ClipboardList size={size} color={color} />,
         }}
       />
       <Tabs.Screen

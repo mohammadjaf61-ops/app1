@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
@@ -219,9 +220,7 @@ export class AggregationService {
       `;
 
       const avgDailySales = recentSales[0]?.avg_daily || 0;
-      const daysOfStock = avgDailySales > 0
-        ? Number(prod.stock_level) / avgDailySales
-        : null;
+      const daysOfStock = avgDailySales > 0 ? Number(prod.stock_level) / avgDailySales : null;
 
       await this.prisma.productAnalytics.upsert({
         where: {

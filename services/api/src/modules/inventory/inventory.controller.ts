@@ -1,26 +1,12 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
-
 import { UserRole } from '@hypermarket/shared-types';
+import { Controller, Get, Post, Delete, Body, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { Roles } from '@/common/decorators/roles.decorator';
 
-import { InventoryService } from './inventory.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { UpdateInventoryDto, AdjustInventoryDto } from './dto/update-inventory.dto';
+import { InventoryService } from './inventory.service';
 
 @ApiTags('inventory')
 @ApiBearerAuth()

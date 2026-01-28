@@ -1,7 +1,7 @@
 # Hypermarket Platform - Local Development Environment
 # Usage: docker-compose up -d
 
-version: '3.8'
+version: "3.8"
 
 services:
   # PostgreSQL Database
@@ -16,9 +16,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - '5432:5432'
+      - "5432:5432"
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U hypermarket -d hypermarket_dev']
+      test: ["CMD-SHELL", "pg_isready -U hypermarket -d hypermarket_dev"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,9 +32,9 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - '6379:6379'
+      - "6379:6379"
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,9 +50,9 @@ services:
     volumes:
       - meilisearch_data:/meili_data
     ports:
-      - '7700:7700'
+      - "7700:7700"
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:7700/health']
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -69,10 +69,10 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - '9000:9000'  # API
-      - '9001:9001'  # Console
+      - "9000:9000" # API
+      - "9001:9001" # Console
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3

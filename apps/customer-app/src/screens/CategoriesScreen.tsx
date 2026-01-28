@@ -1,19 +1,13 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
-import { RootStackParamList } from '@/navigation/RootNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,7 +21,7 @@ export function CategoriesScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const { data: categories, isLoading: _categoriesLoading } = useCategories();
   const { data: productsData, isLoading: productsLoading } = useProducts({
     categoryId: selectedCategory || undefined,
     limit: 20,
@@ -39,9 +33,7 @@ export function CategoriesScreen() {
     <ScreenWrapper>
       {/* Header */}
       <View className="bg-white px-4 pt-12 pb-4 border-b border-gray-100">
-        <Text className="text-2xl font-bold text-gray-900 text-right">
-          الأقسام
-        </Text>
+        <Text className="text-2xl font-bold text-gray-900 text-right">الأقسام</Text>
       </View>
 
       <View className="flex-1 flex-row">
@@ -99,9 +91,7 @@ export function CategoriesScreen() {
                 </View>
                 <Text
                   className={`text-xs text-center ${
-                    selectedCategory === item.id
-                      ? 'text-primary font-bold'
-                      : 'text-gray-600'
+                    selectedCategory === item.id ? 'text-primary font-bold' : 'text-gray-600'
                   }`}
                   numberOfLines={2}
                 >
@@ -131,9 +121,7 @@ export function CategoriesScreen() {
                 <View className="w-[48%]">
                   <ProductCard
                     product={item}
-                    onPress={() =>
-                      navigation.navigate('Product', { productId: item.id })
-                    }
+                    onPress={() => navigation.navigate('Product', { productId: item.id })}
                   />
                 </View>
               )}

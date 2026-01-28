@@ -1,13 +1,7 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { UserRole, JwtPayload } from '@hypermarket/shared-types';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-
-import { UserRole, JwtPayload } from '@hypermarket/shared-types';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -23,7 +17,7 @@ const MOCK_OTP = '123456';
 /**
  * Access token response (no refresh tokens in MVP)
  */
-interface AccessTokenResponse {
+export interface AccessTokenResponse {
   accessToken: string;
   expiresIn: number;
   tokenType: 'Bearer';
@@ -128,7 +122,7 @@ export class AuthService {
       select: { id: true, role: true, isActive: true },
     });
 
-    if (!user || !user.isActive) {
+    if (!user?.isActive) {
       return null;
     }
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 import { apiClient } from './api-client';
 
@@ -52,10 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchUser]);
 
   const login = async (phone: string, otp: string) => {
-    const response = await apiClient.post<{ accessToken: string; user: User }>(
-      '/auth/verify-otp',
-      { phone, otp }
-    );
+    const response = await apiClient.post<{ accessToken: string; user: User }>('/auth/verify-otp', {
+      phone,
+      otp,
+    });
 
     apiClient.setToken(response.accessToken);
     setUser(response.user);
@@ -69,7 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const hasRole = (...roles: string[]) => {
-    if (!user) return false;
+    if (!user) {
+      return false;
+    }
     return roles.includes(user.role);
   };
 

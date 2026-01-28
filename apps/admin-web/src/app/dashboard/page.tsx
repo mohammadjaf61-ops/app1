@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import {
   ShoppingCart,
   DollarSign,
@@ -10,6 +9,7 @@ import {
   TrendingDown,
   Package,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -92,9 +92,7 @@ function StatCard({ title, value, description, icon: Icon, trend, isLoading }: S
                 {trend.value}%
               </span>
             )}
-            {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
-            )}
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
           </div>
         )}
       </CardContent>
@@ -108,7 +106,8 @@ export default function DashboardPage() {
   const { data: lowStockData, isLoading: lowStockLoading } = useLowStockItems();
 
   const stats = useMemo(() => {
-    const summary = (salesData as { summary?: { totalOrders: number; totalRevenue: number } })?.summary;
+    const summary = (salesData as { summary?: { totalOrders: number; totalRevenue: number } })
+      ?.summary;
     return {
       todayOrders: summary?.totalOrders || 0,
       revenue: summary?.totalRevenue || 0,
@@ -124,9 +123,7 @@ export default function DashboardPage() {
       {/* Page header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">لوحة التحكم</h1>
-        <p className="text-muted-foreground">
-          مرحباً بك في نظام إدارة الهايبرماركت
-        </p>
+        <p className="text-muted-foreground">مرحباً بك في نظام إدارة الهايبرماركت</p>
       </div>
 
       {/* KPI Cards */}
@@ -180,7 +177,7 @@ export default function DashboardPage() {
                   <YAxis className="text-xs" />
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
+                      if (active && payload?.length) {
                         return (
                           <div className="rounded-lg border bg-background p-2 shadow-sm">
                             <div className="grid grid-cols-2 gap-2">
@@ -218,7 +215,7 @@ export default function DashboardPage() {
                   />
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
+                      if (active && payload?.length) {
                         return (
                           <div className="rounded-lg border bg-background p-2 shadow-sm">
                             <div className="grid grid-cols-2 gap-2">
@@ -302,11 +299,7 @@ function RecentOrdersList() {
   }>;
 
   if (orders.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        لا توجد طلبات حتى الآن
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground text-center py-8">لا توجد طلبات حتى الآن</p>;
   }
 
   return (
@@ -359,11 +352,7 @@ function StockAlertsList() {
   }>;
 
   if (items.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        لا توجد تنبيهات حالياً
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground text-center py-8">لا توجد تنبيهات حالياً</p>;
   }
 
   return (

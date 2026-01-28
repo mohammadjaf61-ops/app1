@@ -31,10 +31,7 @@ module.exports = {
     'react/no-deprecated': 'warn',
     'react/no-direct-mutation-state': 'error',
     'react/self-closing-comp': 'warn',
-    'react/jsx-curly-brace-presence': [
-      'warn',
-      { props: 'never', children: 'never' },
-    ],
+    'react/jsx-curly-brace-presence': ['warn', { props: 'never', children: 'never' }],
     'react/jsx-boolean-value': ['warn', 'never'],
 
     // ============================================
@@ -52,10 +49,7 @@ module.exports = {
     // WEB PERFORMANCE
     // ============================================
     'sonarjs/cognitive-complexity': ['warn', 20],
-    'max-lines-per-function': [
-      'warn',
-      { max: 150, skipBlankLines: true, skipComments: true },
-    ],
+    'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
 
     // Allow console in development
     'no-console': ['warn', { allow: ['warn', 'error'] }],
@@ -84,10 +78,7 @@ module.exports = {
       // Components
       files: ['**/components/**/*.tsx'],
       rules: {
-        'max-lines-per-function': [
-          'warn',
-          { max: 200, skipBlankLines: true, skipComments: true },
-        ],
+        'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
       },
     },
   ],

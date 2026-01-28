@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { PrismaService } from '../../../prisma/prisma.service';
+
 import { AiGovernanceService } from './ai-governance.service';
 
 interface SalesHistory {
@@ -53,7 +55,8 @@ export class DemandForecastService {
         const forecasts = await this.forecastProduct(product.id, product.sku, forecastDays);
         forecastCount += forecasts.length;
       } catch (error) {
-        this.logger.error(`Forecast failed for ${product.sku}: ${error.message}`);
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.logger.error(`Forecast failed for ${product.sku}: ${err.message}`);
       }
     }
 
@@ -146,7 +149,12 @@ export class DemandForecastService {
 
     // Fill in missing days with zeros
     const result: SalesHistory[] = [];
-    const salesMap = new Map(sales.map((s) => [s.sale_date.toISOString().split('T')[0], Number(s.quantity)]));
+    const salesMap = new Map<string, number>(
+      sales.map((s: { sale_date: Date; quantity: bigint }) => [
+        s.sale_date.toISOString().split('T')[0],
+        Number(s.quantity),
+      ]),
+    );
 
     for (let i = days; i >= 0; i--) {
       const date = new Date();
@@ -154,7 +162,7 @@ export class DemandForecastService {
       const dateStr = date.toISOString().split('T')[0];
       result.push({
         date,
-        quantity: salesMap.get(dateStr) || 0,
+        quantity: salesMap.get(dateStr) ?? 0,
       });
     }
 
@@ -193,7 +201,7 @@ export class DemandForecastService {
       const predicted = Math.max(0, lastAvg + trend * i);
 
       // Confidence interval widens with forecast horizon
-      const uncertaintyFactor = 1 + (i * 0.1); // 10% more uncertainty per day
+      const uncertaintyFactor = 1 + i * 0.1; // 10% more uncertainty per day
       const margin = stdDev * 1.96 * uncertaintyFactor;
 
       forecasts.push({
@@ -225,7 +233,9 @@ export class DemandForecastService {
    */
   private calculateTrend(data: number[]): number {
     const n = data.length;
-    if (n < 2) return 0;
+    if (n < 2) {
+      return 0;
+    }
 
     let sumX = 0;
     let sumY = 0;
@@ -248,7 +258,9 @@ export class DemandForecastService {
    */
   private standardDeviation(data: number[]): number {
     const n = data.length;
-    if (n < 2) return 0;
+    if (n < 2) {
+      return 0;
+    }
 
     const mean = data.reduce((a, b) => a + b, 0) / n;
     const squaredDiffs = data.map((x) => Math.pow(x - mean, 2));

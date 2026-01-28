@@ -5,10 +5,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/admin-web/**'
-      - 'packages/shared-types/**'
-      - 'packages/shared-utils/**'
-      - '.github/workflows/deploy-admin-web.yml'
+      - "apps/admin-web/**"
+      - "packages/shared-types/**"
+      - "packages/shared-utils/**"
+      - ".github/workflows/deploy-admin-web.yml"
   workflow_dispatch:
 
 env:

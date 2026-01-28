@@ -1,12 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { apiClient } from '@/lib/api-client';
-import {
-  saveDeliveriesOffline,
-  getOfflineDeliveries,
-  getOfflineDelivery,
-} from '@/lib/database';
+import type { FailedDeliveryReason } from '@/lib/constants';
+import { saveDeliveriesOffline, getOfflineDeliveries, getOfflineDelivery } from '@/lib/database';
 import { useDeliveryStore } from '@/stores/delivery-store';
-import { FailedDeliveryReason } from '@/lib/constants';
 
 // Query keys
 export const queryKeys = {
@@ -17,7 +14,7 @@ export const queryKeys = {
 
 // Get assigned deliveries with offline fallback
 export function useAssignedDeliveries() {
-  const { isOffline, setOffline } = useDeliveryStore();
+  const { isOffline: _isOffline, setOffline } = useDeliveryStore();
 
   return useQuery({
     queryKey: queryKeys.assignedDeliveries,
@@ -43,7 +40,7 @@ export function useAssignedDeliveries() {
 
 // Get single delivery with offline fallback
 export function useDelivery(orderId: string) {
-  const { isOffline, setOffline } = useDeliveryStore();
+  const { isOffline: _isOffline, setOffline } = useDeliveryStore();
 
   return useQuery({
     queryKey: queryKeys.delivery(orderId),

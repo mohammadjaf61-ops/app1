@@ -20,25 +20,22 @@ class ApiClient {
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', token);
       }
-    } else {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-      }
+    } else if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
     }
   }
 
   getToken(): string | null {
-    if (this.token) return this.token;
+    if (this.token) {
+      return this.token;
+    }
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('auth_token');
     }
     return this.token;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const token = this.getToken();
 

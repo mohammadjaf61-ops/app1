@@ -1,7 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Badge } from './Badge';
+
 import {
   formatCurrencyShort,
   formatTimeElapsed,
@@ -9,6 +9,8 @@ import {
   orderStatusColors,
   paymentMethodLabels,
 } from '@/lib/formatters';
+
+import { Badge } from './Badge';
 
 interface DeliveryCardProps {
   delivery: {
@@ -49,13 +51,8 @@ export function DeliveryCard({ delivery, onPress }: DeliveryCardProps) {
           />
         </View>
         <View className="flex-row items-center">
-          <Text className="text-gray-900 font-bold text-lg">
-            #{delivery.orderNumber}
-          </Text>
-          <View
-            className="px-2 py-1 rounded-full mr-2"
-            style={{ backgroundColor: statusColor.bg }}
-          >
+          <Text className="text-gray-900 font-bold text-lg">#{delivery.orderNumber}</Text>
+          <View className="px-2 py-1 rounded-full mr-2" style={{ backgroundColor: statusColor.bg }}>
             <Text style={{ color: statusColor.text }} className="text-xs font-medium">
               {orderStatusLabels[delivery.status]}
             </Text>

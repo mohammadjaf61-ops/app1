@@ -1,8 +1,7 @@
-import { IsOptional, IsString, IsNumber, IsEnum, Min } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-
 import { DeliveryStatus } from '@hypermarket/shared-types';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsNumber, IsEnum, Min } from 'class-validator';
 
 export class DeliveryQueryDto {
   @ApiPropertyOptional({ example: 1 })

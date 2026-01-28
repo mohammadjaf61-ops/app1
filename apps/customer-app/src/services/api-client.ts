@@ -26,7 +26,9 @@ class ApiClient {
   }
 
   async getToken(): Promise<string | null> {
-    if (this.token) return this.token;
+    if (this.token) {
+      return this.token;
+    }
     try {
       this.token = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
     } catch {
@@ -35,10 +37,7 @@ class ApiClient {
     return this.token;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const token = await this.getToken();
 

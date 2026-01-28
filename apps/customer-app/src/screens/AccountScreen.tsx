@@ -1,10 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
-import { useAuthStore } from '@/stores/auth-store';
 import { formatPhone } from '@/lib/formatters';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface MenuItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -29,31 +29,19 @@ function MenuItem({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {showArrow && (
-        <Ionicons name="chevron-back" size={20} color="#9ca3af" />
-      )}
+      {showArrow && <Ionicons name="chevron-back" size={20} color="#9ca3af" />}
       <View className="flex-1 mr-3">
-        <Text
-          className={`font-medium text-right ${
-            danger ? 'text-red-500' : 'text-gray-900'
-          }`}
-        >
+        <Text className={`font-medium text-right ${danger ? 'text-red-500' : 'text-gray-900'}`}>
           {title}
         </Text>
-        {subtitle && (
-          <Text className="text-gray-500 text-sm text-right">{subtitle}</Text>
-        )}
+        {subtitle && <Text className="text-gray-500 text-sm text-right">{subtitle}</Text>}
       </View>
       <View
         className={`w-10 h-10 rounded-full items-center justify-center ${
           danger ? 'bg-red-100' : 'bg-primary/10'
         }`}
       >
-        <Ionicons
-          name={icon}
-          size={20}
-          color={danger ? '#ef4444' : '#16a34a'}
-        />
+        <Ionicons name={icon} size={20} color={danger ? '#ef4444' : '#16a34a'} />
       </View>
     </TouchableOpacity>
   );
@@ -74,7 +62,7 @@ export function AccountScreen() {
           onPress: logout,
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 
@@ -85,13 +73,9 @@ export function AccountScreen() {
         <View className="bg-primary px-4 pt-12 pb-8">
           <View className="items-center">
             <View className="bg-white w-20 h-20 rounded-full items-center justify-center mb-3">
-              <Text className="text-3xl font-bold text-primary">
-                {user?.fullName?.[0] || 'م'}
-              </Text>
+              <Text className="text-3xl font-bold text-primary">{user?.fullName?.[0] || 'م'}</Text>
             </View>
-            <Text className="text-white font-bold text-xl">
-              {user?.fullName || 'المستخدم'}
-            </Text>
+            <Text className="text-white font-bold text-xl">{user?.fullName || 'المستخدم'}</Text>
             <Text className="text-white/80 mt-1" dir="ltr">
               {user?.phone ? formatPhone(user.phone) : ''}
             </Text>
@@ -101,9 +85,7 @@ export function AccountScreen() {
         {/* Menu Sections */}
         <View className="py-4">
           {/* Account Section */}
-          <Text className="text-gray-500 text-sm px-4 mb-2 text-right">
-            الحساب
-          </Text>
+          <Text className="text-gray-500 text-sm px-4 mb-2 text-right">الحساب</Text>
           <MenuItem
             icon="person-outline"
             title="الملف الشخصي"
@@ -118,9 +100,7 @@ export function AccountScreen() {
           />
 
           {/* Orders Section */}
-          <Text className="text-gray-500 text-sm px-4 mb-2 mt-4 text-right">
-            الطلبات
-          </Text>
+          <Text className="text-gray-500 text-sm px-4 mb-2 mt-4 text-right">الطلبات</Text>
           <MenuItem
             icon="receipt-outline"
             title="طلباتي"
@@ -135,29 +115,11 @@ export function AccountScreen() {
           />
 
           {/* Support Section */}
-          <Text className="text-gray-500 text-sm px-4 mb-2 mt-4 text-right">
-            الدعم
-          </Text>
-          <MenuItem
-            icon="help-circle-outline"
-            title="المساعدة والدعم"
-            onPress={() => {}}
-          />
-          <MenuItem
-            icon="chatbubble-outline"
-            title="تواصل معنا"
-            onPress={() => {}}
-          />
-          <MenuItem
-            icon="document-text-outline"
-            title="الشروط والأحكام"
-            onPress={() => {}}
-          />
-          <MenuItem
-            icon="shield-outline"
-            title="سياسة الخصوصية"
-            onPress={() => {}}
-          />
+          <Text className="text-gray-500 text-sm px-4 mb-2 mt-4 text-right">الدعم</Text>
+          <MenuItem icon="help-circle-outline" title="المساعدة والدعم" onPress={() => {}} />
+          <MenuItem icon="chatbubble-outline" title="تواصل معنا" onPress={() => {}} />
+          <MenuItem icon="document-text-outline" title="الشروط والأحكام" onPress={() => {}} />
+          <MenuItem icon="shield-outline" title="سياسة الخصوصية" onPress={() => {}} />
 
           {/* Logout */}
           <View className="mt-4">
@@ -171,9 +133,7 @@ export function AccountScreen() {
           </View>
 
           {/* App Version */}
-          <Text className="text-gray-400 text-center text-sm mt-6 mb-4">
-            الإصدار 1.0.0
-          </Text>
+          <Text className="text-gray-400 text-center text-sm mt-6 mb-4">الإصدار 1.0.0</Text>
         </View>
       </ScrollView>
     </ScreenWrapper>

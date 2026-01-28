@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+
 import { appLogger } from '@/lib/logger';
 
 interface ErrorPageProps {
@@ -27,9 +28,7 @@ export default function DashboardError({ error, reset }: ErrorPageProps) {
         <span className="text-4xl">⚠️</span>
       </div>
 
-      <h2 className="mb-2 text-xl font-bold text-gray-900">
-        حدث خطأ في لوحة التحكم
-      </h2>
+      <h2 className="mb-2 text-xl font-bold text-gray-900">حدث خطأ في لوحة التحكم</h2>
 
       <p className="mb-6 text-center text-gray-600">
         نعتذر عن هذا الخطأ. يرجى المحاولة مرة أخرى أو العودة للصفحة الرئيسية.
@@ -38,9 +37,7 @@ export default function DashboardError({ error, reset }: ErrorPageProps) {
       {process.env.NODE_ENV === 'development' && (
         <div className="mb-6 w-full max-w-lg rounded-lg bg-gray-100 p-4">
           <p className="text-xs text-gray-500 break-all">{error.message}</p>
-          {error.digest && (
-            <p className="mt-2 text-xs text-gray-400">Digest: {error.digest}</p>
-          )}
+          {error.digest && <p className="mt-2 text-xs text-gray-400">Digest: {error.digest}</p>}
         </div>
       )}
 

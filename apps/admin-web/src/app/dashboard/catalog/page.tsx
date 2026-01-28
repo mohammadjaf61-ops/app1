@@ -1,28 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, FolderTree, Package } from 'lucide-react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Plus, Pencil, FolderTree, Package } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +18,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -39,6 +27,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   useCategories,
   useProducts,
@@ -126,7 +126,9 @@ function ProductsSection() {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
 
-  const products = ((productsData as { data?: Product[] })?.data || productsData || []) as Product[];
+  const products = ((productsData as { data?: Product[] })?.data ||
+    productsData ||
+    []) as Product[];
   const categories = (categoriesData || []) as Category[];
 
   const form = useForm({
@@ -187,9 +189,7 @@ function ProductsSection() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>إضافة منتج جديد</DialogTitle>
-                  <DialogDescription>
-                    أدخل بيانات المنتج الجديد
-                  </DialogDescription>
+                  <DialogDescription>أدخل بيانات المنتج الجديد</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -263,7 +263,7 @@ function ProductsSection() {
                   <TableHead>التصنيف</TableHead>
                   <TableHead>السعر</TableHead>
                   <TableHead>الحالة</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -405,7 +405,7 @@ function CategoriesSection() {
                   <TableHead>التصنيف الأب</TableHead>
                   <TableHead>عدد المنتجات</TableHead>
                   <TableHead>الحالة</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+
 import { API_URL, STORAGE_KEYS } from './constants';
 
 class ApiClient {
@@ -22,10 +23,7 @@ class ApiClient {
     this.accessToken = token;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     const headers: HeadersInit = {

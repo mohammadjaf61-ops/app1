@@ -57,7 +57,9 @@ export function getDatabase(): SQLite.SQLiteDatabase | null {
 
 // Save deliveries for offline access
 export async function saveDeliveriesOffline(deliveries: any[]) {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   const now = new Date().toISOString();
 
@@ -80,7 +82,7 @@ export async function saveDeliveriesOffline(deliveries: any[]) {
         delivery.createdAt,
         JSON.stringify(delivery),
         now,
-      ]
+      ],
     );
 
     // Save delivery items
@@ -90,12 +92,7 @@ export async function saveDeliveriesOffline(deliveries: any[]) {
           `INSERT OR REPLACE INTO delivery_items
            (id, order_id, product_name, quantity)
            VALUES (?, ?, ?, ?)`,
-          [
-            item.id,
-            delivery.id,
-            item.product?.nameAr || '',
-            item.quantity,
-          ]
+          [item.id, delivery.id, item.product?.nameAr || '', item.quantity],
         );
       }
     }
@@ -104,11 +101,11 @@ export async function saveDeliveriesOffline(deliveries: any[]) {
 
 // Get offline deliveries
 export async function getOfflineDeliveries(): Promise<any[]> {
-  if (!db) return [];
+  if (!db) {
+    return [];
+  }
 
-  const deliveries = await db.getAllAsync<any>(
-    'SELECT * FROM deliveries ORDER BY created_at DESC'
-  );
+  const deliveries = await db.getAllAsync<any>('SELECT * FROM deliveries ORDER BY created_at DESC');
 
   return deliveries.map((delivery) => ({
     ...JSON.parse(delivery.data || '{}'),
@@ -125,18 +122,18 @@ export async function getOfflineDeliveries(): Promise<any[]> {
 
 // Get offline delivery with items
 export async function getOfflineDelivery(orderId: string): Promise<any | null> {
-  if (!db) return null;
+  if (!db) {
+    return null;
+  }
 
-  const delivery = await db.getFirstAsync<any>(
-    'SELECT * FROM deliveries WHERE id = ?',
-    [orderId]
-  );
-  if (!delivery) return null;
+  const delivery = await db.getFirstAsync<any>('SELECT * FROM deliveries WHERE id = ?', [orderId]);
+  if (!delivery) {
+    return null;
+  }
 
-  const items = await db.getAllAsync<any>(
-    'SELECT * FROM delivery_items WHERE order_id = ?',
-    [orderId]
-  );
+  const items = await db.getAllAsync<any>('SELECT * FROM delivery_items WHERE order_id = ?', [
+    orderId,
+  ]);
 
   const deliveryData = JSON.parse(delivery.data || '{}');
   deliveryData.items = items.map((item) => ({
@@ -151,52 +148,54 @@ export async function getOfflineDelivery(orderId: string): Promise<any | null> {
 }
 
 // Queue status update for offline sync
-export async function queueStatusUpdate(
-  orderId: string,
-  actionType: string,
-  payload: any = {}
-) {
-  if (!db) return;
+export async function queueStatusUpdate(orderId: string, actionType: string, payload: any = {}) {
+  if (!db) {
+    return;
+  }
 
   const now = new Date().toISOString();
 
   await db.runAsync(
     'INSERT INTO pending_actions (action_type, order_id, payload, created_at) VALUES (?, ?, ?, ?)',
-    [actionType, orderId, JSON.stringify(payload), now]
+    [actionType, orderId, JSON.stringify(payload), now],
   );
 }
 
 // Update local delivery status
 export async function updateDeliveryStatusOffline(orderId: string, status: string) {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   await db.runAsync('UPDATE deliveries SET status = ? WHERE id = ?', [status, orderId]);
 }
 
 // Get pending actions to sync
 export async function getPendingActions(): Promise<any[]> {
-  if (!db) return [];
+  if (!db) {
+    return [];
+  }
 
-  return db.getAllAsync<any>(
-    'SELECT * FROM pending_actions ORDER BY created_at ASC'
-  );
+  return db.getAllAsync<any>('SELECT * FROM pending_actions ORDER BY created_at ASC');
 }
 
 // Remove synced action
 export async function removePendingAction(actionId: number) {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   await db.runAsync('DELETE FROM pending_actions WHERE id = ?', [actionId]);
 }
 
 // Clear old offline data
 export async function clearOldOfflineData() {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   await db.runAsync('DELETE FROM deliveries WHERE synced_at < ?', [oneDayAgo]);
-  await db.runAsync(
-    'DELETE FROM delivery_items WHERE order_id NOT IN (SELECT id FROM deliveries)'
-  );
+  await db.runAsync('DELETE FROM delivery_items WHERE order_id NOT IN (SELECT id FROM deliveries)');
 }
