@@ -15,7 +15,12 @@ import {
   useCompleteOrder,
 } from '@/hooks/use-api';
 import type { UnavailableReason } from '@/lib/constants';
-import { formatPhone, orderStatusLabels, orderStatusColors } from '@/lib/formatters';
+import {
+  formatDateTime,
+  formatPhone,
+  orderStatusLabels,
+  orderStatusColors,
+} from '@/lib/formatters';
 import type { MainStackParamList } from '@/navigation/MainNavigator';
 import { usePickingStore } from '@/stores/picking-store';
 
@@ -66,8 +71,8 @@ export function OrderDetailsScreen() {
     startPicking: startSession,
     pickedItems,
     unavailableItems,
-    isItemPicked: _isItemPicked,
-    isItemUnavailable: _isItemUnavailable,
+    isItemPicked,
+    isItemUnavailable,
     getItemStatus,
     undoPickItem,
     isOffline,

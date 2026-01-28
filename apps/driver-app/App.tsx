@@ -1,8 +1,6 @@
-import { appLogger } from '@hypermarket/mobile-core';
-import { ErrorBoundary, ErrorFallback } from '@hypermarket/mobile-ui';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React, { useEffect, useRef, useCallback, type ErrorInfo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { AppStateStatus } from 'react-native';
 import { I18nManager, LogBox, AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -29,7 +27,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function AppContent() {
+export default function App() {
   const { initialize } = useAuthStore();
   const appState = useRef(AppState.currentState);
 
@@ -51,39 +49,15 @@ function AppContent() {
     return () => {
       subscription.remove();
     };
-  }, [initialize]);
-
-  return <RootNavigator />;
-}
-
-export default function App() {
-  const handleError = useCallback((error: Error, errorInfo: ErrorInfo) => {
-    appLogger.error('Unhandled app error', error, {
-      scope: 'DriverApp',
-      metadata: { componentStack: errorInfo.componentStack },
-    });
-  }, []);
-
-  const handleReset = useCallback(() => {
-    // Reset query cache on error recovery
-    queryClient.clear();
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary
-        onError={handleError}
-        onReset={handleReset}
-        fallback={({ error, resetError }) => (
-          <ErrorFallback error={error} resetError={resetError} showError={__DEV__} />
-        )}
-      >
-        <QueryClientProvider client={queryClient}>
-          <NavigationContainer>
-            <AppContent />
-          </NavigationContainer>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }

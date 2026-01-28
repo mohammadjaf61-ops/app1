@@ -1,42 +1,19 @@
-/**
- * @hypermarket/contracts
- * Shared Zod schemas and type contracts for the hypermarket platform
- *
- * This package provides:
- * - Zod schemas for runtime validation
- * - TypeScript types inferred from schemas
- * - Shared contracts between backend and frontend
- */
-
-// Re-export zod for convenience
-export { z } from 'zod';
-export type { ZodType, ZodTypeAny, ZodSchema } from 'zod';
-
-// Common schemas
+// Common schemas and utilities
 export {
   // Schemas
-  TimestampsSchema,
-  BaseEntitySchema,
-  ApiErrorSchema,
-  ApiExceptionSchema,
+  IraqiPhoneSchema,
+  PaginationQuerySchema,
   PaginationMetaSchema,
-  PaginationParamsSchema,
-  SortDirectionSchema,
-  SortParamsSchema,
+  PaginatedResponseSchema,
+  ApiErrorResponseSchema,
   SuccessResponseSchema,
-  // Factory functions
-  createPaginatedResponseSchema,
-  createApiResponseSchema,
+  UUIDSchema,
+  DateTimeSchema,
+  IQDAmountSchema,
   // Types
-  type Timestamps,
-  type BaseEntity,
-  type ApiError,
-  type ApiException,
+  type PaginationQuery,
   type PaginationMeta,
-  type PaginationParams,
-  type SortDirection,
-  type SortParams,
-  type SuccessResponse,
+  type ApiErrorResponse,
 } from './common';
 
 // Auth schemas
@@ -44,115 +21,101 @@ export {
   // Schemas
   UserRoleSchema,
   LoginRequestSchema,
+  SendOtpRequestSchema,
+  VerifyOtpRequestSchema,
+  RegisterRequestSchema,
   UserProfileSchema,
-  TokenResponseSchema,
+  AuthTokensSchema,
   LoginResponseSchema,
-  OtpRequestSchema,
-  OtpVerifyRequestSchema,
-  OtpResponseSchema,
-  OtpVerifyResponseSchema,
+  SendOtpResponseSchema,
+  VerifyOtpResponseSchema,
   RefreshTokenRequestSchema,
-  ChangePasswordRequestSchema,
+  RefreshTokenResponseSchema,
   // Types
   type UserRole,
   type LoginRequest,
+  type SendOtpRequest,
+  type VerifyOtpRequest,
+  type RegisterRequest,
   type UserProfile,
-  type TokenResponse,
+  type AuthTokens,
   type LoginResponse,
-  type OtpRequest,
-  type OtpVerifyRequest,
-  type OtpResponse,
-  type OtpVerifyResponse,
+  type SendOtpResponse,
+  type VerifyOtpResponse,
   type RefreshTokenRequest,
-  type ChangePasswordRequest,
+  type RefreshTokenResponse,
 } from './auth';
-
-// Product schemas
-export {
-  // Schemas
-  ProductUnitSchema,
-  CategoryRefSchema,
-  ProductSchema,
-  ProductWithCategorySchema,
-  CreateProductRequestSchema,
-  UpdateProductRequestSchema,
-  ProductQuerySchema,
-  ProductListResponseSchema,
-  ProductFiltersSchema,
-  // Types
-  type ProductUnit,
-  type CategoryRef,
-  type Product,
-  type ProductWithCategory,
-  type CreateProductRequest,
-  type UpdateProductRequest,
-  type ProductQuery,
-  type ProductListResponse,
-  type ProductFilters,
-} from './product';
 
 // Category schemas
 export {
   // Schemas
   CategorySchema,
-  CategoryWithParentSchema,
-  CategoryTreeSchema,
   CategoryWithChildrenSchema,
   CreateCategoryRequestSchema,
   UpdateCategoryRequestSchema,
   CategoryListResponseSchema,
-  CategoryTreeResponseSchema,
+  PaginatedCategoryListResponseSchema,
   // Types
   type Category,
-  type CategoryWithParent,
-  type CategoryTree,
   type CategoryWithChildren,
   type CreateCategoryRequest,
   type UpdateCategoryRequest,
   type CategoryListResponse,
-  type CategoryTreeResponse,
+  type PaginatedCategoryListResponse,
 } from './category';
+
+// Product schemas
+export {
+  // Schemas
+  ProductUnitSchema,
+  ProductSchema,
+  ProductSummarySchema,
+  ProductQuerySchema,
+  CreateProductRequestSchema,
+  UpdateProductRequestSchema,
+  ProductListResponseSchema,
+  PaginatedProductListResponseSchema,
+  ProductDetailResponseSchema,
+  // Types
+  type ProductUnit,
+  type Product,
+  type ProductSummary,
+  type ProductQuery,
+  type CreateProductRequest,
+  type UpdateProductRequest,
+  type ProductListResponse,
+  type PaginatedProductListResponse,
+  type ProductDetailResponse,
+} from './product';
 
 // Order schemas
 export {
   // Schemas
   OrderStatusSchema,
   PaymentMethodSchema,
-  DeliveryStatusSchema,
-  OrderProductRefSchema,
-  OrderItemSchema,
-  UserRefSchema,
-  DeliveryAssignmentSchema,
-  OrderSchema,
-  OrderWithItemsSchema,
-  CreateOrderItemRequestSchema,
+  OrderItemRequestSchema,
   CreateOrderRequestSchema,
-  CreateOrderResponseSchema,
-  UpdateOrderStatusRequestSchema,
-  AssignPickerRequestSchema,
-  MarkOrderPaidRequestSchema,
-  CancelOrderRequestSchema,
+  OrderItemSchema,
+  OrderSchema,
+  OrderSummarySchema,
   OrderQuerySchema,
+  UpdateOrderStatusRequestSchema,
+  CreateOrderResponseSchema,
   OrderListResponseSchema,
-  OrderStatisticsResponseSchema,
+  PaginatedOrderListResponseSchema,
+  OrderDetailResponseSchema,
   // Types
   type OrderStatus,
   type PaymentMethod,
-  type DeliveryStatus,
-  type OrderProductRef,
-  type OrderItem,
-  type UserRef,
-  type DeliveryAssignment,
-  type Order,
-  type OrderWithItems,
-  type CreateOrderItemRequest,
+  type OrderItemRequest,
   type CreateOrderRequest,
-  type CreateOrderResponse,
-  type UpdateOrderStatusRequest,
-  type AssignPickerRequest,
-  type MarkOrderPaidRequest,
-  type CancelOrderRequest,
+  type OrderItem,
+  type Order,
+  type OrderSummary,
   type OrderQuery,
+  type UpdateOrderStatusRequest,
+  type CreateOrderResponse,
   type OrderListResponse,
-  type OrderStatisticsResponse,
+  type PaginatedOrderListResponse,
+  type OrderDetailResponse,
 } from './order';

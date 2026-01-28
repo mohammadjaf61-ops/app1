@@ -1,8 +1,6 @@
-import { appLogger } from '@hypermarket/mobile-core';
-import { ErrorBoundary, ErrorFallback } from '@hypermarket/mobile-ui';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React, { useEffect, useCallback, type ErrorInfo } from 'react';
+import React, { useEffect } from 'react';
 import { I18nManager, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -38,34 +36,14 @@ function AppContent() {
 }
 
 export default function App() {
-  const handleError = useCallback((error: Error, errorInfo: ErrorInfo) => {
-    appLogger.error('Unhandled app error', error, {
-      scope: 'CustomerApp',
-      metadata: { componentStack: errorInfo.componentStack },
-    });
-  }, []);
-
-  const handleReset = useCallback(() => {
-    // Reset query cache on error recovery
-    queryClient.clear();
-  }, []);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <ErrorBoundary
-          onError={handleError}
-          onReset={handleReset}
-          fallback={({ error, resetError }) => (
-            <ErrorFallback error={error} resetError={resetError} showError={__DEV__} />
-          )}
-        >
-          <QueryClientProvider client={queryClient}>
-            <NavigationContainer>
-              <AppContent />
-            </NavigationContainer>
-          </QueryClientProvider>
-        </ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <NavigationContainer>
+            <AppContent />
+          </NavigationContainer>
+        </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

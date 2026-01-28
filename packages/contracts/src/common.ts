@@ -1,118 +1,79 @@
-/**
- * Common Zod schemas used across the hypermarket platform
- */
 import { z } from 'zod';
 
 /**
- * Timestamps schema
+ * Iraqi phone number format: 07XXXXXXXXX (11 digits)
  */
-export const TimestampsSchema = z.object({
-  createdAt: z.string().datetime().or(z.date()),
-  updatedAt: z.string().datetime().or(z.date()),
-});
-
-export type Timestamps = z.infer<typeof TimestampsSchema>;
+export const IraqiPhoneSchema = z
+  .string()
+  .regex(/^07[0-9]{9}$/, 'رقم الهاتف يجب أن يكون بصيغة 07XXXXXXXXX');
 
 /**
- * Base entity schema with common fields
+ * Pagination request parameters
  */
-export const BaseEntitySchema = TimestampsSchema.extend({
-  id: z.string().uuid(),
+export const PaginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
-export type BaseEntity = z.infer<typeof BaseEntitySchema>;
+export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;
 
 /**
- * API Error schema
- */
-export const ApiErrorSchema = z.object({
-  code: z.string(),
-  message: z.string(),
-  field: z.string().optional(),
-});
-
-export type ApiError = z.infer<typeof ApiErrorSchema>;
-
-/**
- * API Exception schema (for HTTP errors)
- */
-export const ApiExceptionSchema = z.object({
-  statusCode: z.number(),
-  message: z.string(),
-  errorCode: z.string().optional(),
-});
-
-export type ApiException = z.infer<typeof ApiExceptionSchema>;
-
-/**
- * Pagination metadata schema
+ * Pagination metadata in responses
  */
 export const PaginationMetaSchema = z.object({
-  page: z.number().int().positive(),
-  limit: z.number().int().positive(),
-  total: z.number().int().nonnegative(),
-  totalPages: z.number().int().nonnegative(),
+  page: z.number().int(),
+  limit: z.number().int(),
+  total: z.number().int(),
+  totalPages: z.number().int(),
   hasNext: z.boolean(),
-  hasPrevious: z.boolean(),
+  hasPrev: z.boolean(),
 });
 
 export type PaginationMeta = z.infer<typeof PaginationMetaSchema>;
 
 /**
- * Pagination query parameters schema
+ * Paginated response wrapper
  */
-export const PaginationParamsSchema = z.object({
-  page: z.number().int().positive().optional().default(1),
-  limit: z.number().int().positive().max(100).optional().default(20),
-});
-
-export type PaginationParams = z.infer<typeof PaginationParamsSchema>;
-
-/**
- * Sort direction
- */
-export const SortDirectionSchema = z.enum(['asc', 'desc']);
-export type SortDirection = z.infer<typeof SortDirectionSchema>;
-
-/**
- * Sort parameters schema
- */
-export const SortParamsSchema = z.object({
-  sortBy: z.string().optional(),
-  sortDirection: SortDirectionSchema.optional(),
-});
-
-export type SortParams = z.infer<typeof SortParamsSchema>;
-
-/**
- * Generic paginated response wrapper
- */
-export function createPaginatedResponseSchema<T extends z.ZodTypeAny>(itemSchema: T) {
-  return z.object({
+export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
+  z.object({
     data: z.array(itemSchema),
     meta: PaginationMetaSchema,
   });
-}
 
 /**
- * Generic API response wrapper
+ * Standard API error response
  */
-export function createApiResponseSchema<T extends z.ZodTypeAny>(dataSchema: T) {
-  return z.object({
-    success: z.boolean(),
-    data: dataSchema.optional(),
-    message: z.string().optional(),
-    errors: z.array(ApiErrorSchema).optional(),
-    meta: PaginationMetaSchema.optional(),
-  });
-}
-
-/**
- * Success response schema (for operations without data)
- */
-export const SuccessResponseSchema = z.object({
-  success: z.literal(true),
-  message: z.string().optional(),
+export const ApiErrorResponseSchema = z.object({
+  statusCode: z.number().int(),
+  message: z.string(),
+  error: z.string().optional(),
+  errorCode: z.string().optional(),
+  details: z.record(z.unknown()).optional(),
 });
 
-export type SuccessResponse = z.infer<typeof SuccessResponseSchema>;
+export type ApiErrorResponse = z.infer<typeof ApiErrorResponseSchema>;
+
+/**
+ * Standard success response wrapper
+ */
+export const SuccessResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
+  z.object({
+    success: z.literal(true),
+    data: dataSchema,
+    message: z.string().optional(),
+  });
+
+/**
+ * UUID schema for IDs
+ */
+export const UUIDSchema = z.string().uuid();
+
+/**
+ * ISO datetime string schema
+ */
+export const DateTimeSchema = z.string().datetime();
+
+/**
+ * Currency amount in IQD (stored as integer - no decimals)
+ */
+export const IQDAmountSchema = z.number().int().nonnegative();

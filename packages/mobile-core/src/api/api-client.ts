@@ -1,28 +1,32 @@
+import { ApiErrorResponseSchema } from '@hypermarket/contracts';
 import * as SecureStore from 'expo-secure-store';
-import type { ZodType, ZodTypeAny } from 'zod';
-import { ApiExceptionSchema } from '@hypermarket/contracts';
+import type { ZodType, ZodError } from 'zod';
 
-/**
- * API Error interface
- */
 export interface ApiError {
   statusCode: number;
   message: string;
   errorCode?: string;
+  validationErrors?: Record<string, string[]>;
 }
 
-/**
- * API Exception class for typed error handling
- */
 export class ApiException extends Error implements ApiError {
   statusCode: number;
   errorCode?: string;
+  validationErrors?: Record<string, string[]>;
 
   constructor(error: ApiError) {
     super(error.message);
     this.name = 'ApiException';
     this.statusCode = error.statusCode;
     this.errorCode = error.errorCode;
+    this.validationErrors = error.validationErrors;
+  }
+
+  /**
+   * Check if this is a validation error from Zod
+   */
+  isValidationError(): boolean {
+    return this.errorCode === 'VALIDATION_ERROR';
   }
 
   /**
@@ -31,40 +35,28 @@ export class ApiException extends Error implements ApiError {
   isNetworkError(): boolean {
     return this.errorCode === 'NETWORK_ERROR';
   }
-
-  /**
-   * Check if this is an authentication error
-   */
-  isAuthError(): boolean {
-    return this.statusCode === 401;
-  }
-
-  /**
-   * Check if this is a validation error
-   */
-  isValidationError(): boolean {
-    return this.statusCode === 400;
-  }
-
-  /**
-   * Check if this is a not found error
-   */
-  isNotFoundError(): boolean {
-    return this.statusCode === 404;
-  }
 }
 
 /**
- * Validation error for schema parsing failures
+ * Create ApiException from Zod validation error
  */
-export class ValidationError extends Error {
-  issues: Array<{ path: string; message: string }>;
+function createValidationException(error: ZodError): ApiException {
+  const validationErrors: Record<string, string[]> = {};
 
-  constructor(message: string, issues: Array<{ path: string; message: string }>) {
-    super(message);
-    this.name = 'ValidationError';
-    this.issues = issues;
+  for (const issue of error.issues) {
+    const path = issue.path.join('.');
+    if (!validationErrors[path]) {
+      validationErrors[path] = [];
+    }
+    validationErrors[path].push(issue.message);
   }
+
+  return new ApiException({
+    statusCode: 422,
+    message: 'خطأ في التحقق من البيانات',
+    errorCode: 'VALIDATION_ERROR',
+    validationErrors,
+  });
 }
 
 export interface ApiClientConfig {
@@ -72,12 +64,6 @@ export interface ApiClientConfig {
   tokenKey: string;
 }
 
-/**
- * Base API Client with typed request support
- *
- * Provides type-safe API calls with optional Zod schema validation.
- * All responses are validated against the provided schema at runtime.
- */
 export class BaseApiClient {
   protected baseUrl: string;
   protected tokenKey: string;
@@ -120,16 +106,28 @@ export class BaseApiClient {
   }
 
   /**
-   * Make a typed request with optional schema validation
-   *
-   * @param endpoint - API endpoint
-   * @param options - Request options including optional schema
-   * @returns Parsed and validated response data
+   * Make a typed request with Zod schema validation
    */
-  protected async request<T>(
+  protected async requestWithSchema<T>(
     endpoint: string,
-    options: RequestInit = {}
+    schema: ZodType<T>,
+    options: RequestInit = {},
   ): Promise<T> {
+    const data = await this.request<unknown>(endpoint, options);
+
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      console.error('Response validation failed:', result.error.issues);
+      throw createValidationException(result.error);
+    }
+
+    return result.data;
+  }
+
+  /**
+   * Make a raw request without schema validation (legacy support)
+   */
+  protected async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     const headers: Record<string, string> = {
@@ -150,12 +148,17 @@ export class BaseApiClient {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        // Try to parse as API error
-        const errorResult = ApiExceptionSchema.safeParse(data);
+        // Try to parse as standard API error
+        const errorResult = ApiErrorResponseSchema.safeParse(data);
         if (errorResult.success) {
-          throw new ApiException(errorResult.data);
+          throw new ApiException({
+            statusCode: errorResult.data.statusCode,
+            message: errorResult.data.message,
+            errorCode: errorResult.data.errorCode,
+          });
         }
 
+        // Fallback to generic error
         throw new ApiException({
           statusCode: response.status,
           message: data?.message || 'حدث خطأ غير متوقع',
@@ -179,63 +182,55 @@ export class BaseApiClient {
     }
   }
 
+  // ============================================
+  // Typed methods with schema validation
+  // ============================================
+
   /**
-   * Make a typed request with schema validation
-   *
-   * @param endpoint - API endpoint
-   * @param schema - Zod schema for response validation
-   * @param options - Request options
-   * @returns Parsed and validated response data
+   * GET request with response schema validation
    */
-  protected async typedRequest<TSchema extends ZodTypeAny>(
-    endpoint: string,
-    schema: TSchema,
-    options: RequestInit = {}
-  ): Promise<TSchema['_output']> {
-    const data = await this.request<unknown>(endpoint, options);
-
-    const result = schema.safeParse(data);
-    if (!result.success) {
-      const issues = result.error.issues.map((issue) => ({
-        path: issue.path.join('.'),
-        message: issue.message,
-      }));
-
-      console.error('Response validation failed:', {
-        endpoint,
-        issues,
-        data,
-      });
-
-      throw new ValidationError(
-        'استجابة الخادم لا تطابق الصيغة المتوقعة',
-        issues
-      );
-    }
-
-    return result.data;
+  getTyped<T>(endpoint: string, schema: ZodType<T>): Promise<T> {
+    return this.requestWithSchema(endpoint, schema, { method: 'GET' });
   }
 
   /**
-   * GET request
+   * POST request with response schema validation
    */
+  postTyped<T>(endpoint: string, schema: ZodType<T>, data?: unknown): Promise<T> {
+    return this.requestWithSchema(endpoint, schema, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  /**
+   * PUT request with response schema validation
+   */
+  putTyped<T>(endpoint: string, schema: ZodType<T>, data?: unknown): Promise<T> {
+    return this.requestWithSchema(endpoint, schema, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  /**
+   * PATCH request with response schema validation
+   */
+  patchTyped<T>(endpoint: string, schema: ZodType<T>, data?: unknown): Promise<T> {
+    return this.requestWithSchema(endpoint, schema, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  // ============================================
+  // Legacy untyped methods (for backward compatibility)
+  // ============================================
+
   get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  /**
-   * GET request with schema validation
-   */
-  getTyped<TSchema extends ZodTypeAny>(
-    endpoint: string,
-    schema: TSchema
-  ): Promise<TSchema['_output']> {
-    return this.typedRequest(endpoint, schema, { method: 'GET' });
-  }
-
-  /**
-   * POST request
-   */
   post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
@@ -243,23 +238,6 @@ export class BaseApiClient {
     });
   }
 
-  /**
-   * POST request with schema validation
-   */
-  postTyped<TSchema extends ZodTypeAny>(
-    endpoint: string,
-    schema: TSchema,
-    data?: unknown
-  ): Promise<TSchema['_output']> {
-    return this.typedRequest(endpoint, schema, {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  /**
-   * PUT request
-   */
   put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
@@ -267,23 +245,6 @@ export class BaseApiClient {
     });
   }
 
-  /**
-   * PUT request with schema validation
-   */
-  putTyped<TSchema extends ZodTypeAny>(
-    endpoint: string,
-    schema: TSchema,
-    data?: unknown
-  ): Promise<TSchema['_output']> {
-    return this.typedRequest(endpoint, schema, {
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  /**
-   * PATCH request
-   */
   patch<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
@@ -291,39 +252,7 @@ export class BaseApiClient {
     });
   }
 
-  /**
-   * PATCH request with schema validation
-   */
-  patchTyped<TSchema extends ZodTypeAny>(
-    endpoint: string,
-    schema: TSchema,
-    data?: unknown
-  ): Promise<TSchema['_output']> {
-    return this.typedRequest(endpoint, schema, {
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  /**
-   * DELETE request
-   */
   delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
-
-  /**
-   * DELETE request with schema validation
-   */
-  deleteTyped<TSchema extends ZodTypeAny>(
-    endpoint: string,
-    schema: TSchema
-  ): Promise<TSchema['_output']> {
-    return this.typedRequest(endpoint, schema, { method: 'DELETE' });
-  }
 }
-
-/**
- * Re-export schema types for convenience
- */
-export type { ZodType, ZodTypeAny };

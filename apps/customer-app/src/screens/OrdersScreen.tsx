@@ -4,8 +4,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 
-import type { Order } from '@hypermarket/contracts';
-
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { useOrders } from '@/hooks/use-api';
 import {
@@ -18,11 +16,20 @@ import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+interface Order {
+  id: string;
+  orderNumber: string;
+  status: string;
+  total: number;
+  createdAt: string;
+  items: Array<{ quantity: number }>;
+}
+
 export function OrdersScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { data, isLoading, refetch } = useOrders();
 
-  const orders: Order[] = data?.data || [];
+  const orders = (data?.data ?? []) as Order[];
 
   const renderOrder = ({ item }: { item: Order }) => {
     const statusColor = orderStatusColors[item.status] || { bg: '#f3f4f6', text: '#374151' };

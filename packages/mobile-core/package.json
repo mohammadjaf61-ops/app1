@@ -12,12 +12,9 @@
   },
   "dependencies": {
     "@hypermarket/contracts": "workspace:*",
-    "@hypermarket/shared-types": "workspace:*",
-    "zod": "^3.23.8"
+    "@hypermarket/shared-types": "workspace:*"
   },
   "peerDependencies": {
-    "@react-native-async-storage/async-storage": ">=1.18.0",
-    "@react-native-community/netinfo": ">=9.0.0",
     "expo-secure-store": ">=12.0.0",
     "react": ">=18.0.0",
     "react-native": ">=0.72.0",

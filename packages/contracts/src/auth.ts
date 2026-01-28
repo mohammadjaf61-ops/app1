@@ -1,113 +1,113 @@
-/**
- * Authentication Zod schemas
- */
 import { z } from 'zod';
-import { BaseEntitySchema } from './common';
+
+import { IraqiPhoneSchema, UUIDSchema, DateTimeSchema } from './common';
 
 /**
  * User roles enum
  */
-export const UserRoleSchema = z.enum([
-  'ADMIN',
-  'MANAGER',
-  'PICKER',
-  'DRIVER',
-  'CASHIER',
-]);
-
+export const UserRoleSchema = z.enum(['ADMIN', 'CUSTOMER', 'PICKER', 'DRIVER']);
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
 /**
- * Iraqi phone number pattern (07XXXXXXXXX)
- */
-const iraqiPhoneRegex = /^07[0-9]{9}$/;
-
-/**
- * Login request schema
+ * Login request (for staff: admin, picker, driver)
  */
 export const LoginRequestSchema = z.object({
-  phone: z.string().regex(iraqiPhoneRegex, 'رقم الهاتف يجب أن يكون بصيغة 07XXXXXXXXX'),
-  password: z.string().min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
+  phone: IraqiPhoneSchema,
+  password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
 });
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
 /**
- * User profile schema
+ * Send OTP request (for customers)
  */
-export const UserProfileSchema = BaseEntitySchema.extend({
+export const SendOtpRequestSchema = z.object({
+  phone: IraqiPhoneSchema,
+});
+
+export type SendOtpRequest = z.infer<typeof SendOtpRequestSchema>;
+
+/**
+ * Verify OTP request
+ */
+export const VerifyOtpRequestSchema = z.object({
+  phone: IraqiPhoneSchema,
+  otp: z.string().length(6, 'رمز التحقق يجب أن يكون 6 أرقام'),
+});
+
+export type VerifyOtpRequest = z.infer<typeof VerifyOtpRequestSchema>;
+
+/**
+ * Register request (for customers)
+ */
+export const RegisterRequestSchema = z.object({
+  phoneNumber: IraqiPhoneSchema,
+  firstName: z.string().min(2, 'الاسم الأول مطلوب'),
+  lastName: z.string().min(2, 'اسم العائلة مطلوب'),
+  password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
+  email: z.string().email().optional(),
+});
+
+export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
+
+/**
+ * User profile in responses
+ */
+export const UserProfileSchema = z.object({
+  id: UUIDSchema,
   phone: z.string(),
-  name: z.string(),
+  fullName: z.string().nullable(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  email: z.string().email().nullable(),
   role: UserRoleSchema,
   isActive: z.boolean(),
+  createdAt: DateTimeSchema,
+  updatedAt: DateTimeSchema,
 });
 
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
 /**
- * Token response schema
+ * Auth tokens response
  */
-export const TokenResponseSchema = z.object({
+export const AuthTokensSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
-  expiresIn: z.number(),
-  tokenType: z.literal('Bearer'),
+  expiresIn: z.number().int(),
 });
 
-export type TokenResponse = z.infer<typeof TokenResponseSchema>;
+export type AuthTokens = z.infer<typeof AuthTokensSchema>;
 
 /**
- * Login response schema
+ * Login response
  */
 export const LoginResponseSchema = z.object({
   user: UserProfileSchema,
-  tokens: TokenResponseSchema,
+  tokens: AuthTokensSchema,
 });
 
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 
 /**
- * OTP request schema
+ * OTP send response
  */
-export const OtpRequestSchema = z.object({
-  phone: z.string().regex(iraqiPhoneRegex, 'رقم الهاتف يجب أن يكون بصيغة 07XXXXXXXXX'),
-});
-
-export type OtpRequest = z.infer<typeof OtpRequestSchema>;
-
-/**
- * OTP verify request schema
- */
-export const OtpVerifyRequestSchema = z.object({
-  phone: z.string().regex(iraqiPhoneRegex, 'رقم الهاتف يجب أن يكون بصيغة 07XXXXXXXXX'),
-  code: z.string().length(6, 'رمز التحقق يجب أن يكون 6 أرقام'),
-});
-
-export type OtpVerifyRequest = z.infer<typeof OtpVerifyRequestSchema>;
-
-/**
- * OTP response schema
- */
-export const OtpResponseSchema = z.object({
+export const SendOtpResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
-  expiresIn: z.number().optional(),
+  expiresIn: z.number().int().optional(),
 });
 
-export type OtpResponse = z.infer<typeof OtpResponseSchema>;
+export type SendOtpResponse = z.infer<typeof SendOtpResponseSchema>;
 
 /**
- * OTP verify response schema
+ * OTP verify response (same as login for customers)
  */
-export const OtpVerifyResponseSchema = z.object({
-  user: UserProfileSchema,
-  tokens: TokenResponseSchema,
-});
-
-export type OtpVerifyResponse = z.infer<typeof OtpVerifyResponseSchema>;
+export const VerifyOtpResponseSchema = LoginResponseSchema;
+export type VerifyOtpResponse = z.infer<typeof VerifyOtpResponseSchema>;
 
 /**
- * Refresh token request schema
+ * Refresh token request
  */
 export const RefreshTokenRequestSchema = z.object({
   refreshToken: z.string(),
@@ -116,11 +116,7 @@ export const RefreshTokenRequestSchema = z.object({
 export type RefreshTokenRequest = z.infer<typeof RefreshTokenRequestSchema>;
 
 /**
- * Change password request schema
+ * Refresh token response
  */
-export const ChangePasswordRequestSchema = z.object({
-  currentPassword: z.string().min(8),
-  newPassword: z.string().min(8),
-});
-
-export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
+export const RefreshTokenResponseSchema = AuthTokensSchema;
+export type RefreshTokenResponse = z.infer<typeof RefreshTokenResponseSchema>;
