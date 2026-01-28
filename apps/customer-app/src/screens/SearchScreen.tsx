@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ScreenWrapper, useNetworkStatus } from '@hypermarket/mobile-core';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, Keyboard } from 'react-native';
 
-import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard } from '@/components/ui';
 import { useSearchProducts } from '@/hooks/use-api';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
@@ -13,6 +13,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function SearchScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { isOffline } = useNetworkStatus();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -58,8 +59,29 @@ export function SearchScreen() {
         </View>
       </View>
 
+      {/* Offline Notice in Search Bar */}
+      {isOffline && (
+        <View className="mx-4 mt-2">
+          <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex-row items-center">
+            <View className="flex-1 mr-2">
+              <Text className="text-amber-800 text-sm text-right">البحث غير متاح بدون اتصال</Text>
+            </View>
+            <Ionicons name="cloud-offline-outline" size={20} color="#b45309" />
+          </View>
+        </View>
+      )}
+
       {/* Content */}
-      {query.length < 2 ? (
+      {isOffline ? (
+        // Offline state
+        <View className="flex-1 items-center justify-center px-6">
+          <Ionicons name="cloud-offline-outline" size={48} color="#9ca3af" />
+          <Text className="text-gray-900 font-bold text-lg mt-4">غير متصل بالإنترنت</Text>
+          <Text className="text-gray-500 text-center mt-2">
+            البحث يتطلب اتصالاً بالإنترنت. يمكنك تصفح المنتجات من الصفحة الرئيسية.
+          </Text>
+        </View>
+      ) : query.length < 2 ? (
         // Recent Searches
         <View className="p-4">
           <Text className="text-gray-900 font-bold text-right mb-4">عمليات البحث الأخيرة</Text>

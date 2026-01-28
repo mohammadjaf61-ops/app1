@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ScreenWrapper, useNetworkStatus } from '@hypermarket/mobile-core';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 
-import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
+import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { ProductCard } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
@@ -13,6 +14,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { isOffline: _isOffline, refresh: refreshNetwork } = useNetworkStatus();
   const {
     data: categories,
     isLoading: categoriesLoading,
@@ -27,13 +29,17 @@ export function HomeScreen() {
   const products = (productsData as any)?.data || productsData || [];
   const isLoading = categoriesLoading || productsLoading;
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
+    await refreshNetwork();
     refetchCategories();
     refetchProducts();
   };
 
   return (
     <ScreenWrapper>
+      {/* Offline Banner */}
+      <OfflineBanner onRetry={onRefresh} />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={onRefresh} />}

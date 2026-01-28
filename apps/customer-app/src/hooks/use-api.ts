@@ -1,3 +1,4 @@
+import { cacheService, CacheKeys, useNetworkStatus } from '@hypermarket/mobile-core';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/constants';
@@ -57,13 +58,39 @@ interface PaginatedResponse<T> {
   };
 }
 
+// Cache TTL constants
+const CACHE_TTL = {
+  categories: 24 * 60 * 60 * 1000, // 24 hours
+  products: 6 * 60 * 60 * 1000, // 6 hours
+  homeOffers: 2 * 60 * 60 * 1000, // 2 hours
+  homeRecommended: 2 * 60 * 60 * 1000, // 2 hours
+};
+
 // ========== Categories ==========
 
 export function useCategories() {
+  const { isOffline } = useNetworkStatus();
+
   return useQuery({
     queryKey: QUERY_KEYS.categories,
-    queryFn: () => apiClient.get<Category[]>('/catalog/categories'),
-    staleTime: 1000 * 60 * 10, // 10 minutes - categories don't change often
+    queryFn: async () => {
+      // Try to fetch from API
+      try {
+        const data = await apiClient.get<Category[]>('/catalog/categories');
+        // Cache the response
+        await cacheService.set(CacheKeys.categories(), data, { ttl: CACHE_TTL.categories });
+        return data;
+      } catch (error) {
+        // If offline or error, try cache
+        const cached = await cacheService.get<Category[]>(CacheKeys.categories());
+        if (cached) {
+          return cached;
+        }
+        throw error;
+      }
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    retry: isOffline ? 0 : 3,
   });
 }
 
@@ -83,6 +110,7 @@ export function useProducts(params?: {
   limit?: number;
   search?: string;
 }) {
+  const { isOffline } = useNetworkStatus();
   const searchParams = new URLSearchParams();
   if (params?.categoryId) {
     searchParams.set('categoryId', params.categoryId);
@@ -97,30 +125,66 @@ export function useProducts(params?: {
     searchParams.set('search', params.search);
   }
 
+  const cacheKey = CacheKeys.products(params);
+
   return useQuery({
     queryKey: QUERY_KEYS.products(params),
-    queryFn: () =>
-      apiClient.get<PaginatedResponse<Product>>(`/catalog/products?${searchParams.toString()}`),
+    queryFn: async () => {
+      try {
+        const data = await apiClient.get<PaginatedResponse<Product>>(
+          `/catalog/products?${searchParams.toString()}`,
+        );
+        // Cache the response
+        await cacheService.set(cacheKey, data, { ttl: CACHE_TTL.products });
+        return data;
+      } catch (error) {
+        // If offline or error, try cache
+        const cached = await cacheService.get<PaginatedResponse<Product>>(cacheKey);
+        if (cached) {
+          return cached;
+        }
+        throw error;
+      }
+    },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: isOffline ? 0 : 3,
   });
 }
 
 export function useProduct(id: string) {
+  const { isOffline } = useNetworkStatus();
+  const cacheKey = CacheKeys.product(id);
+
   return useQuery({
     queryKey: QUERY_KEYS.product(id),
-    queryFn: () => apiClient.get<Product>(`/catalog/products/${id}`),
+    queryFn: async () => {
+      try {
+        const data = await apiClient.get<Product>(`/catalog/products/${id}`);
+        await cacheService.set(cacheKey, data, { ttl: CACHE_TTL.products });
+        return data;
+      } catch (error) {
+        const cached = await cacheService.get<Product>(cacheKey);
+        if (cached) {
+          return cached;
+        }
+        throw error;
+      }
+    },
     enabled: !!id,
+    retry: isOffline ? 0 : 3,
   });
 }
 
 export function useSearchProducts(query: string) {
+  const { isOffline } = useNetworkStatus();
+
   return useQuery({
     queryKey: QUERY_KEYS.searchProducts(query),
     queryFn: () =>
       apiClient.get<PaginatedResponse<Product>>(
         `/catalog/products?search=${encodeURIComponent(query)}&limit=20`,
       ),
-    enabled: query.length >= 2,
+    enabled: query.length >= 2 && !isOffline, // Disable search when offline
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
@@ -128,35 +192,72 @@ export function useSearchProducts(query: string) {
 // ========== Home ==========
 
 export function useHomeOffers() {
+  const { isOffline } = useNetworkStatus();
+  const cacheKey = CacheKeys.homeOffers();
+
   return useQuery({
     queryKey: QUERY_KEYS.homeOffers,
-    queryFn: () => apiClient.get<Product[]>('/catalog/products?hasOffer=true&limit=10'),
+    queryFn: async () => {
+      try {
+        const data = await apiClient.get<Product[]>('/catalog/products?hasOffer=true&limit=10');
+        await cacheService.set(cacheKey, data, { ttl: CACHE_TTL.homeOffers });
+        return data;
+      } catch (error) {
+        const cached = await cacheService.get<Product[]>(cacheKey);
+        if (cached) {
+          return cached;
+        }
+        throw error;
+      }
+    },
     staleTime: 1000 * 60 * 5,
+    retry: isOffline ? 0 : 3,
   });
 }
 
 export function useHomeRecommended() {
+  const { isOffline } = useNetworkStatus();
+  const cacheKey = CacheKeys.homeRecommended();
+
   return useQuery({
     queryKey: QUERY_KEYS.homeRecommended,
-    queryFn: () => apiClient.get<Product[]>('/catalog/products?featured=true&limit=10'),
+    queryFn: async () => {
+      try {
+        const data = await apiClient.get<Product[]>('/catalog/products?featured=true&limit=10');
+        await cacheService.set(cacheKey, data, { ttl: CACHE_TTL.homeRecommended });
+        return data;
+      } catch (error) {
+        const cached = await cacheService.get<Product[]>(cacheKey);
+        if (cached) {
+          return cached;
+        }
+        throw error;
+      }
+    },
     staleTime: 1000 * 60 * 5,
+    retry: isOffline ? 0 : 3,
   });
 }
 
 // ========== Orders ==========
 
 export function useOrders() {
+  const { isOffline } = useNetworkStatus();
+
   return useQuery({
     queryKey: QUERY_KEYS.orders,
     queryFn: () => apiClient.get<PaginatedResponse<Order>>('/orders/my'),
+    enabled: !isOffline, // Orders require online connection
   });
 }
 
 export function useOrder(id: string) {
+  const { isOffline } = useNetworkStatus();
+
   return useQuery({
     queryKey: QUERY_KEYS.order(id),
     queryFn: () => apiClient.get<Order>(`/orders/${id}`),
-    enabled: !!id,
+    enabled: !!id && !isOffline,
   });
 }
 
@@ -185,9 +286,12 @@ export function useCreateOrder() {
 // ========== Profile ==========
 
 export function useProfile() {
+  const { isOffline } = useNetworkStatus();
+
   return useQuery({
     queryKey: QUERY_KEYS.profile,
     queryFn: () => apiClient.get('/auth/me'),
+    enabled: !isOffline,
   });
 }
 

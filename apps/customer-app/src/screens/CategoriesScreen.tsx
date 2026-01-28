@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ScreenWrapper } from '@hypermarket/mobile-core';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 
-import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
+import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { ProductCard } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
@@ -31,6 +32,9 @@ export function CategoriesScreen() {
 
   return (
     <ScreenWrapper>
+      {/* Offline Banner */}
+      <OfflineBanner />
+
       {/* Header */}
       <View className="bg-white px-4 pt-12 pb-4 border-b border-gray-100">
         <Text className="text-2xl font-bold text-gray-900 text-right">الأقسام</Text>
