@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+
+import { useNetworkStatus } from '@hypermarket/mobile-core';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button, Input } from '@/components/ui';
@@ -24,8 +19,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export function CheckoutScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuthStore();
-  const { items, deliveryAddress, notes, setDeliveryAddress, setNotes, clearCart } =
-    useCartStore();
+  const { items, deliveryAddress, notes, setDeliveryAddress, setNotes, clearCart } = useCartStore();
+  const { isOffline } = useNetworkStatus();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = 5000;
@@ -205,15 +200,37 @@ export function CheckoutScreen() {
           </View>
         </ScrollView>
 
+        {/* Offline Warning */}
+        {isOffline && (
+          <View className="mx-4 mb-4 bg-amber-50 p-4 rounded-xl flex-row items-center">
+            <View className="flex-1">
+              <Text className="text-amber-800 font-medium text-right">لا يمكن إتمام الطلب</Text>
+              <Text className="text-amber-600 text-sm text-right">
+                يرجى الاتصال بالإنترنت لإتمام عملية الشراء
+              </Text>
+            </View>
+            <View className="bg-amber-100 w-10 h-10 rounded-full items-center justify-center mr-3">
+              <Ionicons name="wifi-outline" size={20} color="#d97706" />
+            </View>
+          </View>
+        )}
+
         {/* Confirm Button */}
         <View className="p-4 bg-white border-t border-gray-100">
           <Button
-            title="تأكيد الطلب"
+            title={isOffline ? 'غير متصل بالإنترنت' : 'تأكيد الطلب'}
             onPress={handleConfirmOrder}
             loading={createOrder.isPending}
+            disabled={isOffline}
             fullWidth
             size="lg"
-            icon={<Ionicons name="checkmark-circle-outline" size={20} color="white" />}
+            icon={
+              <Ionicons
+                name={isOffline ? 'cloud-offline-outline' : 'checkmark-circle-outline'}
+                size={20}
+                color="white"
+              />
+            }
           />
         </View>
       </KeyboardAvoidingView>

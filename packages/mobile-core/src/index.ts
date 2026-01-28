@@ -10,6 +10,21 @@ export type { ApiError, ApiClientConfig } from './api/api-client';
 export { createLogger, appLogger, apiLogger, authLogger, navigationLogger } from './utils/logger';
 export type { LogLevel, LogContext, LogEntry } from './utils/logger';
 
+// Network
+export { networkService, useNetworkStatus } from './network';
+export type { NetworkState, NetworkStatus, UseNetworkStatusResult } from './network';
+
+// Cache
+export {
+  getCachedData,
+  setCachedData,
+  removeCachedData,
+  clearCache,
+  getCacheStats,
+  createCacheKey,
+  CACHE_TTL,
+} from './cache';
+
 // Utils/Formatters
 export {
   formatCurrency,

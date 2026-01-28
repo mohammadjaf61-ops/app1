@@ -15,6 +15,8 @@
     "@hypermarket/mobile-core": "workspace:*",
     "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",
+    "@react-native-async-storage/async-storage": "1.21.0",
+    "@react-native-community/netinfo": "^11.3.0",
     "@react-navigation/bottom-tabs": "^6.5.0",
     "@react-navigation/native": "^6.1.0",
     "@react-navigation/native-stack": "^6.9.0",

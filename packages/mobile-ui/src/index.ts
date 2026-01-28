@@ -13,3 +13,7 @@ export type { ErrorBoundaryProps, ErrorFallbackProps } from './components/ErrorB
 
 export { ErrorFallback } from './components/ErrorFallback';
 export type { ErrorFallbackScreenProps } from './components/ErrorFallback';
+
+// Offline
+export { OfflineBanner } from './components/OfflineBanner';
+export type { OfflineBannerProps } from './components/OfflineBanner';

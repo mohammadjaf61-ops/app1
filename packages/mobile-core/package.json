@@ -14,15 +14,19 @@
     "@hypermarket/shared-types": "workspace:*"
   },
   "peerDependencies": {
+    "@react-native-async-storage/async-storage": ">=1.21.0",
+    "@react-native-community/netinfo": ">=11.0.0",
     "expo-secure-store": ">=12.0.0",
+    "nativewind": ">=2.0.0",
     "react": ">=18.0.0",
     "react-native": ">=0.72.0",
-    "react-native-safe-area-context": ">=4.0.0",
-    "nativewind": ">=2.0.0"
+    "react-native-safe-area-context": ">=4.0.0"
   },
   "devDependencies": {
     "@hypermarket/eslint-config": "workspace:*",
     "@hypermarket/tsconfig": "workspace:*",
+    "@react-native-async-storage/async-storage": "1.21.0",
+    "@react-native-community/netinfo": "^11.3.0",
     "@types/react": "^18.2.0",
     "eslint": "^8.57.0",
     "expo-secure-store": "~12.8.0",
