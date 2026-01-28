@@ -12,8 +12,12 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@hypermarket/contracts": "workspace:*",
+    "@hypermarket/i18n": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",
     "@hypermarket/shared-utils": "workspace:*",
+    "i18next": "^23.10.0",
+    "react-i18next": "^14.1.0",
     "@hookform/resolvers": "^3.3.4",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",

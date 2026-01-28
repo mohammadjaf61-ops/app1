@@ -45,11 +45,28 @@ enum OrderStatus {
   OUT_FOR_DELIVERY   // With driver
   DELIVERED          // Successfully delivered
   CANCELLED          // Cancelled before delivery
+  COMPLETED          // POS order completed (paid and handed over)
+}
+
+/// Order type - distinguishes delivery orders from POS sales
+enum OrderType {
+  DELIVERY // Online order for delivery
+  POS      // In-store point of sale
 }
 
 /// Payment methods (COD primary for Iraq market)
 enum PaymentMethod {
-  COD // Cash on Delivery - الدفع عند الاستلام
+  COD  // Cash on Delivery - الدفع عند الاستلام
+  CARD // Card payment via payment gateway (future)
+  CASH // In-store cash payment (POS)
+}
+
+/// Payment status for tracking payment lifecycle
+enum PaymentStatus {
+  PENDING   // Payment initiated, awaiting completion
+  PAID      // Payment confirmed/collected
+  FAILED    // Payment failed or rejected
+  REFUNDED  // Payment refunded (partial or full)
 }
 
 /// Delivery assignment status
@@ -71,6 +88,7 @@ enum AuditAction {
   LOGOUT
   STATUS_CHANGE
   ASSIGNMENT
+  PAYMENT_STATUS_CHANGE
 }
 
 // ============================================
@@ -96,6 +114,7 @@ model User {
 
   // Relations
   pickerAssignments Order[]              @relation("OrderPicker")
+  cashierOrders     Order[]              @relation("OrderCashier")
   driverAssignments DeliveryAssignment[] @relation("DeliveryDriver")
   auditLogs         AuditLog[]           @relation("AuditActor")
 
@@ -223,22 +242,26 @@ model InventoryItem {
 /// Customer info stored directly (no customer accounts in MVP)
 model Order {
   id                  String        @id @default(uuid())
-  /// Human-readable order number (e.g., "HM-20250126-ABC12")
+  /// Human-readable order number (e.g., "HM-20250126-ABC12" or "POS-20250128-XYZ")
   orderNumber         String        @unique @map("order_number")
-  /// Customer name in Arabic - اسم الزبون
-  customerName        String        @map("customer_name")
-  /// Customer phone number for contact
-  customerPhone       String        @map("customer_phone")
-  /// Full delivery address as text - العنوان
-  deliveryAddressText String        @map("delivery_address_text")
+  /// Order type: DELIVERY or POS
+  orderType           OrderType     @default(DELIVERY) @map("order_type")
+  /// Customer name in Arabic - اسم الزبون (optional for POS walk-in)
+  customerName        String?       @map("customer_name")
+  /// Customer phone number for contact (optional for POS)
+  customerPhone       String?       @map("customer_phone")
+  /// Full delivery address as text - العنوان (null for POS orders)
+  deliveryAddressText String?       @map("delivery_address_text")
   /// Total order amount in IQD
   totalAmountIqd      Int           @map("total_amount_iqd")
   /// Payment method (COD for Iraq)
   paymentMethod       PaymentMethod @default(COD) @map("payment_method")
   /// Current order status
   status              OrderStatus   @default(PENDING)
-  /// Assigned picker (staff member)
+  /// Assigned picker (staff member) - for delivery orders
   pickerId            String?       @map("picker_id")
+  /// Cashier who processed this order (for POS orders)
+  cashierId           String?       @map("cashier_id")
   /// Order notes from customer
   notes               String?
   createdAt           DateTime      @default(now()) @map("created_at")
@@ -246,13 +269,17 @@ model Order {
 
   // Relations
   picker             User?               @relation("OrderPicker", fields: [pickerId], references: [id])
+  cashier            User?               @relation("OrderCashier", fields: [cashierId], references: [id])
   items              OrderItem[]
   deliveryAssignment DeliveryAssignment?
   refunds            Refund[]
+  payment            Payment?
 
   @@index([orderNumber])
+  @@index([orderType], map: "idx_order_type")
   @@index([status], map: "idx_order_status")
   @@index([pickerId], map: "idx_order_picker_id")
+  @@index([cashierId], map: "idx_order_cashier_id")
   @@index([createdAt], map: "idx_order_created_at")
   @@index([customerPhone], map: "idx_order_customer_phone")
   @@map("order")
@@ -341,6 +368,43 @@ model Refund {
   @@map("refund")
 }
 
+/// Payment records for orders
+/// Tracks payment status and provider references
+model Payment {
+  id          String        @id @default(uuid())
+  /// Associated order
+  orderId     String        @unique @map("order_id")
+  /// Payment method (COD or CARD)
+  method      PaymentMethod
+  /// Current payment status
+  status      PaymentStatus @default(PENDING)
+  /// Payment amount in IQD
+  amountIqd   Int           @map("amount_iqd")
+  /// External provider reference (for card payments)
+  providerRef String?       @map("provider_ref")
+  /// Provider name (e.g., "zaincash", "asiahawala")
+  providerName String?      @map("provider_name")
+  /// When payment was collected/confirmed
+  paidAt      DateTime?     @map("paid_at")
+  /// Who marked as paid (for manual COD marking)
+  paidBy      String?       @map("paid_by")
+  /// Failure reason if failed
+  failureReason String?     @map("failure_reason")
+  /// Additional metadata (JSON)
+  metadata    Json?         @default("{}")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "idx_payment_order_id")
+  @@index([status], map: "idx_payment_status")
+  @@index([method], map: "idx_payment_method")
+  @@index([createdAt], map: "idx_payment_created_at")
+  @@map("payment")
+}
+
 // ============================================
 // AUDIT & LOGGING
 // ============================================
@@ -393,6 +457,61 @@ model Setting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("setting")
+}
+
+/// Delivery zones with configurable fees and minimum order
+/// Each zone represents a geographic delivery area
+model DeliveryZone {
+  id        String   @id @default(uuid())
+  /// Zone name in Arabic - اسم المنطقة
+  nameAr    String   @map("name_ar")
+  /// Zone name in English (optional)
+  nameEn    String?  @map("name_en")
+  /// Delivery fee in IQD for this zone
+  feeIqd    Int      @map("fee_iqd")
+  /// Minimum order value in IQD for this zone
+  minOrderIqd Int    @map("min_order_iqd")
+  /// Estimated delivery time in minutes
+  estimatedMinutes Int? @map("estimated_minutes")
+  /// Whether this zone is currently active
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive], map: "idx_delivery_zone_active")
+  @@map("delivery_zone")
+}
+
+/// Day of week enum for store hours
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+/// Store working hours configuration
+/// Defines open/close times per day of week
+model StoreHours {
+  id        String    @id @default(uuid())
+  /// Day of week
+  dayOfWeek DayOfWeek @map("day_of_week")
+  /// Opening time (HH:MM format stored as string)
+  openAt    String    @map("open_at")
+  /// Closing time (HH:MM format stored as string)
+  closeAt   String    @map("close_at")
+  /// Whether store is closed on this day
+  isClosed  Boolean   @default(false) @map("is_closed")
+  /// Order cutoff minutes before closing (e.g., 60 = no orders 1hr before close)
+  orderCutoffMinutes Int @default(60) @map("order_cutoff_minutes")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@unique([dayOfWeek])
+  @@map("store_hours")
 }
 
 // ============================================

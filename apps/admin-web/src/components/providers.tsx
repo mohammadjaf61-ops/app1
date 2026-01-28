@@ -3,6 +3,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
+// Initialize i18n (must be imported before components)
+import '@/lib/i18n';
+
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/lib/auth';
 

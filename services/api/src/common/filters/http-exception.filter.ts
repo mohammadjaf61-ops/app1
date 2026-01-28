@@ -4,9 +4,10 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+
+import { StructuredLogger } from '../observability';
 import '../types/express.d';
 
 /**
@@ -43,7 +44,7 @@ const ERROR_CODES: Record<number, string> = {
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+  private readonly logger = new StructuredLogger(HttpExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
@@ -80,18 +81,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       errorCode = ERROR_CODES[status] || 'INTERNAL_SERVER_ERROR';
     }
 
-    // Log error with correlation ID
-    this.logger.error(
-      JSON.stringify({
-        correlationId,
-        method: request.method,
-        url: request.url,
-        statusCode: status,
-        errorCode,
-        message,
-        stack: exception instanceof Error ? exception.stack : undefined,
-      }),
-    );
+    // Log error - use warn for client errors, error for server errors
+    const logLevel = status >= 500 ? 'error' : 'warn';
+    const logMessage = status >= 500 ? 'Server error' : 'Client error';
+
+    this.logger[logLevel](logMessage, exception instanceof Error ? exception.stack : undefined, {
+      method: request.method,
+      url: request.url,
+      statusCode: status,
+      errorCode,
+      message,
+    });
 
     const errorResponse: ErrorResponse = {
       statusCode: status,

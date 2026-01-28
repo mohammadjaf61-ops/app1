@@ -14,6 +14,15 @@ export enum OrderStatus {
   OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY', // في الطريق
   DELIVERED = 'DELIVERED', // تم التوصيل
   CANCELLED = 'CANCELLED', // ملغي
+  COMPLETED = 'COMPLETED', // POS order completed - مكتمل
+}
+
+/**
+ * Order type - distinguishes delivery orders from POS sales
+ */
+export enum OrderType {
+  DELIVERY = 'DELIVERY', // Online order for delivery
+  POS = 'POS', // In-store point of sale
 }
 
 /**
@@ -22,6 +31,18 @@ export enum OrderStatus {
  */
 export enum PaymentMethod {
   COD = 'COD', // الدفع عند الاستلام - Cash on Delivery
+  CARD = 'CARD', // Card payment via gateway (future)
+  CASH = 'CASH', // In-store cash payment (POS)
+}
+
+/**
+ * Payment status
+ */
+export enum PaymentStatus {
+  PENDING = 'PENDING', // قيد الانتظار
+  PAID = 'PAID', // مدفوع
+  FAILED = 'FAILED', // فشل
+  REFUNDED = 'REFUNDED', // مسترجع
 }
 
 /**
@@ -30,10 +51,11 @@ export enum PaymentMethod {
  */
 export interface Order extends BaseEntity {
   orderNumber: string;
+  orderType: OrderType;
   status: OrderStatus;
-  customerName: string;
-  customerPhone: string;
-  deliveryAddressText: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  deliveryAddressText: string | null;
   subtotal: number; // IQD
   deliveryFee: number; // IQD
   total: number; // IQD
@@ -41,6 +63,7 @@ export interface Order extends BaseEntity {
   isPaid: boolean;
   notes: string | null;
   pickerId: string | null;
+  cashierId: string | null;
   pickedAt: Date | null;
   deliveredAt: Date | null;
 }
@@ -88,7 +111,9 @@ export interface CreateOrderItemDto {
  */
 export interface OrderFilters {
   status?: OrderStatus;
+  orderType?: OrderType;
   pickerId?: string;
+  cashierId?: string;
   dateFrom?: Date;
   dateTo?: Date;
   search?: string;

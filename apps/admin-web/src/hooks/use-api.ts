@@ -4,8 +4,9 @@ import { apiClient } from '@/lib/api-client';
 
 // Query keys
 export const queryKeys = {
-  // Dashboard
+  // Dashboard / Admin
   dashboardStats: ['dashboard', 'stats'],
+  adminKpis: ['admin', 'kpis'],
   dailySales: (from: string, to: string) => ['dashboard', 'daily-sales', from, to],
 
   // Orders
@@ -49,11 +50,27 @@ export const queryKeys = {
   ],
 };
 
-// Dashboard hooks
+// Dashboard / Admin hooks
 export function useDashboardStats() {
   return useQuery({
     queryKey: queryKeys.dashboardStats,
     queryFn: () => apiClient.get('/reports/sales/summary'),
+  });
+}
+
+export interface AdminKPIs {
+  totalOrdersToday: number;
+  revenueToday: number;
+  pendingOrders: number;
+  outOfStockCount: number;
+}
+
+export function useAdminKPIs() {
+  return useQuery<AdminKPIs>({
+    queryKey: queryKeys.adminKpis,
+    queryFn: () => apiClient.get<AdminKPIs>('/admin/kpis'),
+    refetchInterval: 60000, // Refetch every 60 seconds
+    staleTime: 30000, // Consider data stale after 30 seconds
   });
 }
 

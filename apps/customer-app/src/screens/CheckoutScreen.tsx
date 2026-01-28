@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ScreenWrapper, useNetworkStatus } from '@hypermarket/mobile-core';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 
-import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
+import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { Button, Input } from '@/components/ui';
 import { useCreateOrder } from '@/hooks/use-api';
 import { formatCurrencyShort } from '@/lib/formatters';
@@ -17,6 +18,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export function CheckoutScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuthStore();
+  const { isOffline } = useNetworkStatus();
   const { items, deliveryAddress, notes, setDeliveryAddress, setNotes, clearCart } = useCartStore();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -31,6 +33,16 @@ export function CheckoutScreen() {
   const createOrder = useCreateOrder();
 
   const handleConfirmOrder = async () => {
+    // Check if offline
+    if (isOffline) {
+      Alert.alert(
+        'لا يوجد اتصال',
+        'لا يمكن إتمام الطلب بدون اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.',
+        [{ text: 'حسناً' }],
+      );
+      return;
+    }
+
     // Validation
     if (!customerName.trim()) {
       Alert.alert('خطأ', 'يرجى إدخال الاسم');
@@ -79,12 +91,31 @@ export function CheckoutScreen() {
 
   return (
     <ScreenWrapper bgColor="#fff">
+      {/* Offline Banner */}
+      <OfflineBanner showCacheMessage={false} />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="p-4">
+            {/* Offline Warning */}
+            {isOffline && (
+              <View className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex-row items-center">
+                <View className="flex-1 mr-3">
+                  <Text className="text-amber-800 font-bold text-right mb-1">
+                    لا يمكن إتمام الطلب حالياً
+                  </Text>
+                  <Text className="text-amber-700 text-sm text-right">
+                    أنت غير متصل بالإنترنت. يمكنك تصفح المنتجات ولكن إتمام الطلب يتطلب اتصالاً
+                    بالإنترنت.
+                  </Text>
+                </View>
+                <Ionicons name="warning-outline" size={32} color="#b45309" />
+              </View>
+            )}
+
             {/* Customer Info */}
             <View className="mb-6">
               <Text className="text-lg font-bold text-gray-900 text-right mb-4">
@@ -183,12 +214,19 @@ export function CheckoutScreen() {
         {/* Confirm Button */}
         <View className="p-4 bg-white border-t border-gray-100">
           <Button
-            title="تأكيد الطلب"
+            title={isOffline ? 'غير متصل - لا يمكن إتمام الطلب' : 'تأكيد الطلب'}
             onPress={handleConfirmOrder}
             loading={createOrder.isPending}
+            disabled={isOffline}
             fullWidth
             size="lg"
-            icon={<Ionicons name="checkmark-circle-outline" size={20} color="white" />}
+            icon={
+              <Ionicons
+                name={isOffline ? 'cloud-offline-outline' : 'checkmark-circle-outline'}
+                size={20}
+                color={isOffline ? '#9ca3af' : 'white'}
+              />
+            }
           />
         </View>
       </KeyboardAvoidingView>

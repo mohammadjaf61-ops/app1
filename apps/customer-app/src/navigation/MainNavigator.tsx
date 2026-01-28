@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { View, Text } from 'react-native';
 
+import { useT } from '@/hooks/use-t';
 import { AccountScreen } from '@/screens/AccountScreen';
 import { CartScreen } from '@/screens/CartScreen';
 import { CategoriesScreen } from '@/screens/CategoriesScreen';
@@ -38,6 +39,8 @@ function CartIconWithBadge({ color, size }: { color: string; size: number }) {
 }
 
 export function MainNavigator() {
+  const { t } = useT();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -59,7 +62,7 @@ export function MainNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'الرئيسية',
+          tabBarLabel: t('navigation.home'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -69,7 +72,7 @@ export function MainNavigator() {
         name="Categories"
         component={CategoriesScreen}
         options={{
-          tabBarLabel: 'الأقسام',
+          tabBarLabel: t('navigation.categories'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />
           ),
@@ -79,7 +82,7 @@ export function MainNavigator() {
         name="Cart"
         component={CartScreen}
         options={{
-          tabBarLabel: 'السلة',
+          tabBarLabel: t('navigation.cart'),
           tabBarIcon: ({ color, size }) => <CartIconWithBadge color={color} size={size} />,
         }}
       />
@@ -87,7 +90,7 @@ export function MainNavigator() {
         name="Orders"
         component={OrdersScreen}
         options={{
-          tabBarLabel: 'طلباتي',
+          tabBarLabel: t('navigation.orders'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="receipt-outline" size={size} color={color} />
           ),
@@ -97,7 +100,7 @@ export function MainNavigator() {
         name="Account"
         component={AccountScreen}
         options={{
-          tabBarLabel: 'حسابي',
+          tabBarLabel: t('navigation.account'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),

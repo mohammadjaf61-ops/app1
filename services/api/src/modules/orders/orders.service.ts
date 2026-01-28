@@ -1,7 +1,10 @@
 import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 
+import { StructuredLogger, createLogger } from '@/common/observability';
+import { BusinessRulesService } from '@/modules/business-rules';
+import { PaymentsService } from '@/modules/payments';
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -9,9 +12,15 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Injectable()
 export class OrdersService {
-  private readonly logger = new Logger(OrdersService.name);
+  private readonly logger: StructuredLogger;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly businessRules: BusinessRulesService,
+    private readonly paymentsService: PaymentsService,
+  ) {
+    this.logger = createLogger('OrdersService');
+  }
 
   /**
    * Get all orders with filters and pagination
@@ -117,6 +126,17 @@ export class OrdersService {
             driver: { select: { id: true, fullName: true, phone: true } },
           },
         },
+        payment: {
+          select: {
+            id: true,
+            method: true,
+            status: true,
+            amountIqd: true,
+            paidAt: true,
+            paidBy: true,
+            failureReason: true,
+          },
+        },
       },
     });
 
@@ -179,22 +199,20 @@ export class OrdersService {
 
   /**
    * Create a new order
+   * Validates business rules before creation
    */
   async create(dto: CreateOrderDto) {
-    // Get delivery fee from settings
-    const deliveryFeeSetting = await this.prisma.setting.findUnique({
-      where: { key: 'delivery_fee_iqd' },
-    });
-    const deliveryFee = deliveryFeeSetting ? parseInt(deliveryFeeSetting.value, 10) : 5000;
-
-    // Get products and calculate totals
+    // Get products and calculate subtotal first
     const productIds = dto.items.map((item) => item.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds }, deletedAt: null, isActive: true },
     });
 
     if (products.length !== productIds.length) {
-      throw new BadRequestException('بعض المنتجات غير متوفرة');
+      throw new BadRequestException({
+        errorCode: 'errors.productNotAvailable',
+        message: 'Some products are not available',
+      });
     }
 
     type ProductType = (typeof products)[number];
@@ -206,7 +224,10 @@ export class OrdersService {
         | { id: string; nameAr: string; salePrice: number }
         | undefined;
       if (!product) {
-        throw new BadRequestException(`المنتج غير موجود: ${item.productId}`);
+        throw new BadRequestException({
+          errorCode: 'errors.productNotFound',
+          message: `Product not found: ${item.productId}`,
+        });
       }
 
       const itemTotal = product.salePrice * item.quantity;
@@ -221,7 +242,14 @@ export class OrdersService {
       };
     });
 
-    const total = subtotal + deliveryFee;
+    // Validate business rules (store hours, minimum order, zone)
+    const { deliveryFeeIqd, totalAmountIqd } = await this.businessRules.validateOrderOrThrow({
+      subtotalIqd: subtotal,
+      deliveryZoneId: dto.deliveryZoneId,
+    });
+
+    // Determine payment method (default to COD, allow CARD from DTO if provided)
+    const paymentMethod = dto.paymentMethod || PaymentMethod.COD;
 
     // Create order
     const order = await this.prisma.order.create({
@@ -231,10 +259,11 @@ export class OrdersService {
         customerName: dto.customerName,
         customerPhone: dto.customerPhone,
         deliveryAddressText: dto.deliveryAddressText,
+        deliveryZoneId: dto.deliveryZoneId,
         subtotal,
-        deliveryFee,
-        total,
-        paymentMethod: PaymentMethod.COD,
+        deliveryFee: deliveryFeeIqd,
+        total: totalAmountIqd,
+        paymentMethod,
         isPaid: false,
         notes: dto.notes || null,
         items: {
@@ -246,9 +275,30 @@ export class OrdersService {
       },
     });
 
-    this.logger.log(`Order created: ${order.orderNumber}`);
+    // Create payment record for the order
+    const paymentResult = await this.paymentsService.createPayment({
+      orderId: order.id,
+      method: paymentMethod,
+      amountIqd: totalAmountIqd,
+      customerPhone: dto.customerPhone,
+    });
 
-    return order;
+    this.logger.log('Order created with payment', {
+      orderNumber: order.orderNumber,
+      total: totalAmountIqd,
+      paymentId: paymentResult.id,
+      paymentMethod,
+    });
+
+    return {
+      ...order,
+      payment: {
+        id: paymentResult.id,
+        status: paymentResult.status,
+        method: paymentResult.method,
+        redirectUrl: paymentResult.redirectUrl,
+      },
+    };
   }
 
   /**
@@ -412,6 +462,7 @@ export class OrdersService {
       [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.DELIVERED],
       [OrderStatus.DELIVERED]: [],
       [OrderStatus.CANCELLED]: [],
+      [OrderStatus.COMPLETED]: [], // POS orders go directly to COMPLETED
     };
 
     if (!validTransitions[currentStatus]?.includes(newStatus)) {
