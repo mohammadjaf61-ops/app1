@@ -1,8 +1,8 @@
-import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 
-import { OrdersListScreen } from '@/screens/OrdersListScreen';
 import { OrderDetailsScreen } from '@/screens/OrderDetailsScreen';
+import { OrdersListScreen } from '@/screens/OrdersListScreen';
 
 export type MainStackParamList = {
   OrdersList: undefined;

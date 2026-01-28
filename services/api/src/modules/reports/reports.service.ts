@@ -1,7 +1,7 @@
+import { OrderStatus, DeliveryStatus } from '@hypermarket/shared-types';
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '@/prisma/prisma.service';
-import { OrderStatus, DeliveryStatus } from '@hypermarket/shared-types';
 
 @Injectable()
 export class ReportsService {
@@ -10,21 +10,21 @@ export class ReportsService {
   /**
    * Get sales summary report
    */
-  async getSalesSummary(params: {
-    dateFrom?: Date;
-    dateTo?: Date;
-    categoryId?: string;
-  }) {
+  async getSalesSummary(params: { dateFrom?: Date; dateTo?: Date; categoryId?: string }) {
     const { dateFrom, dateTo, categoryId } = params;
 
-    const orderWhere: Record<string, unknown> = {
+    const orderWhere: { status: OrderStatus; deliveredAt?: { gte?: Date; lte?: Date } } = {
       status: OrderStatus.DELIVERED,
     };
 
     if (dateFrom || dateTo) {
       orderWhere.deliveredAt = {};
-      if (dateFrom) orderWhere.deliveredAt['gte'] = dateFrom;
-      if (dateTo) orderWhere.deliveredAt['lte'] = dateTo;
+      if (dateFrom) {
+        orderWhere.deliveredAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        orderWhere.deliveredAt.lte = dateTo;
+      }
     }
 
     // Get orders with items
@@ -48,19 +48,27 @@ export class ReportsService {
     });
 
     // Filter by category if specified
-    let filteredOrders = orders;
+    type OrderWithItems = (typeof orders)[number];
+    type OrderItem = OrderWithItems['items'][number];
+    let filteredOrders: OrderWithItems[] = orders;
     if (categoryId) {
-      filteredOrders = orders.map(order => ({
-        ...order,
-        items: order.items.filter(item => item.product.categoryId === categoryId),
-      })).filter(order => order.items.length > 0);
+      filteredOrders = orders
+        .map((order: OrderWithItems) => ({
+          ...order,
+          items: order.items.filter((item: OrderItem) => item.product.categoryId === categoryId),
+        }))
+        .filter((order: OrderWithItems) => order.items.length > 0);
     }
 
     // Calculate totals
     const totalOrders = filteredOrders.length;
-    const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalRevenue = filteredOrders.reduce(
+      (sum: number, order: OrderWithItems) => sum + order.total,
+      0,
+    );
     const totalItems = filteredOrders.reduce(
-      (sum, order) => sum + order.items.reduce((s, item) => s + item.quantity, 0),
+      (sum: number, order: OrderWithItems) =>
+        sum + order.items.reduce((s: number, item: OrderItem) => s + item.quantity, 0),
       0,
     );
 
@@ -68,7 +76,8 @@ export class ReportsService {
     const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
     // Get top selling products
-    const productSales: Record<string, { product: unknown; quantity: number; revenue: number }> = {};
+    const productSales: Record<string, { product: unknown; quantity: number; revenue: number }> =
+      {};
     for (const order of filteredOrders) {
       for (const item of order.items) {
         const key = item.productId;
@@ -89,7 +98,8 @@ export class ReportsService {
       .slice(0, 10);
 
     // Sales by category
-    const categorySales: Record<string, { category: unknown; quantity: number; revenue: number }> = {};
+    const categorySales: Record<string, { category: unknown; quantity: number; revenue: number }> =
+      {};
     for (const order of filteredOrders) {
       for (const item of order.items) {
         const key = item.product.categoryId;
@@ -105,8 +115,7 @@ export class ReportsService {
       }
     }
 
-    const salesByCategory = Object.values(categorySales)
-      .sort((a, b) => b.revenue - a.revenue);
+    const salesByCategory = Object.values(categorySales).sort((a, b) => b.revenue - a.revenue);
 
     return {
       summary: {
@@ -144,7 +153,9 @@ export class ReportsService {
     // Group by date
     const dailySales: Record<string, { date: string; orders: number; revenue: number }> = {};
     for (const order of orders) {
-      if (!order.deliveredAt) continue;
+      if (!order.deliveredAt) {
+        continue;
+      }
       const dateKey = order.deliveredAt.toISOString().split('T')[0];
       if (!dailySales[dateKey]) {
         dailySales[dateKey] = { date: dateKey, orders: 0, revenue: 0 };
@@ -186,7 +197,9 @@ export class ReportsService {
     const good: typeof inventory = []; // More than 30 days
 
     for (const item of inventory) {
-      if (!item.expiryDate) continue;
+      if (!item.expiryDate) {
+        continue;
+      }
 
       const daysUntilExpiry = Math.floor(
         (item.expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
@@ -223,18 +236,22 @@ export class ReportsService {
   async getCategoryPerformance(params: { dateFrom?: Date; dateTo?: Date }) {
     const { dateFrom, dateTo } = params;
 
-    const orderWhere: Record<string, unknown> = {
+    const orderWhere: { status: OrderStatus; deliveredAt?: { gte?: Date; lte?: Date } } = {
       status: OrderStatus.DELIVERED,
     };
 
     if (dateFrom || dateTo) {
       orderWhere.deliveredAt = {};
-      if (dateFrom) orderWhere.deliveredAt['gte'] = dateFrom;
-      if (dateTo) orderWhere.deliveredAt['lte'] = dateTo;
+      if (dateFrom) {
+        orderWhere.deliveredAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        orderWhere.deliveredAt.lte = dateTo;
+      }
     }
 
-    // Get all categories
-    const categories = await this.prisma.category.findMany({
+    // Get all categories (for reference) - currently unused but kept for future use
+    await this.prisma.category.findMany({
       where: { parentId: null }, // Top-level categories only
       select: { id: true, nameAr: true },
     });
@@ -275,7 +292,9 @@ export class ReportsService {
     for (const item of orderItems) {
       // Get root category
       const rootCategory = item.product.category?.parent || item.product.category;
-      if (!rootCategory) continue;
+      if (!rootCategory) {
+        continue;
+      }
 
       const key = rootCategory.id;
       if (!categoryPerformance[key]) {
@@ -299,7 +318,7 @@ export class ReportsService {
     );
 
     const results = Object.values(categoryPerformance)
-      .map(cat => ({
+      .map((cat) => ({
         category: cat.category,
         totalItems: cat.totalItems,
         totalRevenue: cat.totalRevenue,
@@ -321,12 +340,16 @@ export class ReportsService {
   async getDriverPerformance(params: { dateFrom?: Date; dateTo?: Date }) {
     const { dateFrom, dateTo } = params;
 
-    const deliveryWhere: Record<string, unknown> = {};
+    const deliveryWhere: { assignedAt?: { gte?: Date; lte?: Date } } = {};
 
     if (dateFrom || dateTo) {
       deliveryWhere.assignedAt = {};
-      if (dateFrom) deliveryWhere.assignedAt['gte'] = dateFrom;
-      if (dateTo) deliveryWhere.assignedAt['lte'] = dateTo;
+      if (dateFrom) {
+        deliveryWhere.assignedAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        deliveryWhere.assignedAt.lte = dateTo;
+      }
     }
 
     // Get all drivers
@@ -376,7 +399,9 @@ export class ReportsService {
 
     for (const delivery of deliveries) {
       const stats = driverStats[delivery.driverId];
-      if (!stats) continue;
+      if (!stats) {
+        continue;
+      }
 
       stats.total += 1;
 
@@ -399,8 +424,8 @@ export class ReportsService {
     }
 
     // Convert to results
-    const results = Object.values(driverStats)
-      .map(stats => ({
+    return Object.values(driverStats)
+      .map((stats) => ({
         driver: stats.driver,
         total: stats.total,
         delivered: stats.delivered,
@@ -415,10 +440,8 @@ export class ReportsService {
               )
             : null,
       }))
-      .filter(d => d.total > 0)
+      .filter((d) => d.total > 0)
       .sort((a, b) => b.delivered - a.delivered);
-
-    return results;
   }
 
   /**
@@ -427,14 +450,18 @@ export class ReportsService {
   async getPickerPerformance(params: { dateFrom?: Date; dateTo?: Date }) {
     const { dateFrom, dateTo } = params;
 
-    const orderWhere: Record<string, unknown> = {
+    const orderWhere: { pickerId: { not: null }; createdAt?: { gte?: Date; lte?: Date } } = {
       pickerId: { not: null },
     };
 
     if (dateFrom || dateTo) {
       orderWhere.createdAt = {};
-      if (dateFrom) orderWhere.createdAt['gte'] = dateFrom;
-      if (dateTo) orderWhere.createdAt['lte'] = dateTo;
+      if (dateFrom) {
+        orderWhere.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        orderWhere.createdAt.lte = dateTo;
+      }
     }
 
     // Get all pickers
@@ -482,9 +509,13 @@ export class ReportsService {
     ];
 
     for (const order of orders) {
-      if (!order.pickerId) continue;
+      if (!order.pickerId) {
+        continue;
+      }
       const stats = pickerStats[order.pickerId];
-      if (!stats) continue;
+      if (!stats) {
+        continue;
+      }
 
       stats.total += 1;
       stats.totalItems += order._count.items;
@@ -495,17 +526,15 @@ export class ReportsService {
     }
 
     // Convert to results
-    const results = Object.values(pickerStats)
-      .map(stats => ({
+    return Object.values(pickerStats)
+      .map((stats) => ({
         picker: stats.picker,
         total: stats.total,
         completed: stats.completed,
         totalItems: stats.totalItems,
         completionRate: stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(1) : '0',
       }))
-      .filter(p => p.total > 0)
+      .filter((p) => p.total > 0)
       .sort((a, b) => b.completed - a.completed);
-
-    return results;
   }
 }

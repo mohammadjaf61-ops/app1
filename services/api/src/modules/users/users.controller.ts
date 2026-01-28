@@ -1,27 +1,12 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
-
 import { UserRole } from '@hypermarket/shared-types';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { Roles } from '@/common/decorators/roles.decorator';
 
-import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UsersService } from './users.service';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -78,10 +63,7 @@ export class UsersController {
   @Post(':id/reset-password')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Reset user password' })
-  async resetPassword(
-    @Param('id') id: string,
-    @Body('password') password: string,
-  ) {
+  async resetPassword(@Param('id') id: string, @Body('password') password: string) {
     return this.usersService.resetPassword(id, password);
   }
 }

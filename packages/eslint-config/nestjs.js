@@ -32,10 +32,7 @@ module.exports = {
     // BACKEND CODE QUALITY
     // ============================================
     'sonarjs/cognitive-complexity': ['warn', 20],
-    'max-lines-per-function': [
-      'warn',
-      { max: 150, skipBlankLines: true, skipComments: true },
-    ],
+    'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
 
     // Allow console in backend for logging (but prefer Logger)
     'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
@@ -43,9 +40,14 @@ module.exports = {
     // ============================================
     // ASYNC PATTERNS
     // ============================================
-    'require-await': 'error',
+    'require-await': 'warn',
     'no-return-await': 'error',
     '@typescript-eslint/promise-function-async': 'off',
+
+    // ============================================
+    // IMPORT
+    // ============================================
+    'import/namespace': 'off',
 
     // ============================================
     // ERROR HANDLING

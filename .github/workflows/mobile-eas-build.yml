@@ -5,15 +5,15 @@ on:
   push:
     branches: [main]
     paths:
-      - 'apps/customer-mobile/**'
-      - 'apps/picker-mobile/**'
-      - 'apps/driver-mobile/**'
+      - "apps/customer-mobile/**"
+      - "apps/picker-mobile/**"
+      - "apps/driver-mobile/**"
   workflow_dispatch:
     inputs:
       app:
-        description: 'Which app to build'
+        description: "Which app to build"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
           - all
@@ -21,18 +21,18 @@ on:
           - picker-mobile
           - driver-mobile
       platform:
-        description: 'Platform to build'
+        description: "Platform to build"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
           - all
           - android
           - ios
       profile:
-        description: 'Build profile'
+        description: "Build profile"
         required: true
-        default: 'preview'
+        default: "preview"
         type: choice
         options:
           - development

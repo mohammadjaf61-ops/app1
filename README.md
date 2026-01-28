@@ -5,6 +5,7 @@
 ## المشروع
 
 منصة تجارة إلكترونية كاملة تتضمن:
+
 - **لوحة تحكم المسؤول** (Next.js)
 - **تطبيق العملاء** (React Native / Expo)
 - **تطبيق جامع الطلبات** (React Native / Expo)
@@ -14,6 +15,7 @@
 ## التقنيات المستخدمة
 
 ### Backend
+
 - Node.js 20 LTS
 - NestJS
 - PostgreSQL 16
@@ -23,18 +25,21 @@
 - JWT Authentication
 
 ### Frontend (Admin Web)
+
 - Next.js 14 (App Router)
 - TailwindCSS
 - shadcn/ui
 - React Query
 
 ### Mobile Apps
+
 - React Native (Expo)
 - NativeWind
 - React Navigation
 - Zustand
 
 ### Infrastructure
+
 - Docker
 - Google Cloud Run
 - GitHub Actions
@@ -61,6 +66,7 @@
 ## البدء السريع
 
 ### المتطلبات
+
 - Node.js 20+
 - pnpm 9+
 - Docker & Docker Compose
@@ -93,6 +99,7 @@ pnpm dev
 ```
 
 ### المنافذ
+
 - API: http://localhost:3000
 - Admin Web: http://localhost:3001
 - PostgreSQL: localhost:5432
@@ -131,11 +138,11 @@ pnpm test             # تشغيل الاختبارات
 
 ## البيئات
 
-| البيئة | الوصف |
-|--------|-------|
+| البيئة      | الوصف                |
+| ----------- | -------------------- |
 | Development | بيئة التطوير المحلية |
-| Staging | بيئة الاختبار |
-| Production | بيئة الإنتاج |
+| Staging     | بيئة الاختبار        |
+| Production  | بيئة الإنتاج         |
 
 ## الميزات الرئيسية
 

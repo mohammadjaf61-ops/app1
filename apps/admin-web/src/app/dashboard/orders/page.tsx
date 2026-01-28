@@ -1,19 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
   getSortedRowModel,
-  SortingState,
 } from '@tanstack/react-table';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -22,17 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Separator } from '@/components/ui/separator';
 import { useOrders, useOrder, useUpdateOrderStatus } from '@/hooks/use-api';
 import {
   formatCurrency,
@@ -91,9 +90,7 @@ export default function OrdersPage() {
     {
       accessorKey: 'orderNumber',
       header: 'رقم الطلب',
-      cell: ({ row }) => (
-        <span className="font-medium">#{row.original.orderNumber}</span>
-      ),
+      cell: ({ row }) => <span className="font-medium">#{row.original.orderNumber}</span>,
     },
     {
       accessorKey: 'customerName',
@@ -101,9 +98,7 @@ export default function OrdersPage() {
       cell: ({ row }) => (
         <div>
           <p className="font-medium">{row.original.customerName}</p>
-          <p className="text-xs text-muted-foreground">
-            {formatPhone(row.original.customerPhone)}
-          </p>
+          <p className="text-xs text-muted-foreground">{formatPhone(row.original.customerPhone)}</p>
         </div>
       ),
     },
@@ -119,9 +114,7 @@ export default function OrdersPage() {
     {
       accessorKey: 'total',
       header: 'المجموع',
-      cell: ({ row }) => (
-        <span className="font-medium">{formatCurrency(row.original.total)}</span>
-      ),
+      cell: ({ row }) => <span className="font-medium">{formatCurrency(row.original.total)}</span>,
     },
     {
       accessorKey: 'createdAt',
@@ -136,11 +129,7 @@ export default function OrdersPage() {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setSelectedOrderId(row.original.id)}
-        >
+        <Button variant="ghost" size="icon" onClick={() => setSelectedOrderId(row.original.id)}>
           <Eye className="h-4 w-4" />
         </Button>
       ),
@@ -205,10 +194,7 @@ export default function OrdersPage() {
                           <TableHead key={header.id}>
                             {header.isPlaceholder
                               ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
+                              : flexRender(header.column.columnDef.header, header.getContext())}
                           </TableHead>
                         ))}
                       </TableRow>
@@ -220,20 +206,14 @@ export default function OrdersPage() {
                         <TableRow key={row.id}>
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-24 text-center"
-                        >
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
                           لا توجد طلبات
                         </TableCell>
                       </TableRow>
@@ -274,28 +254,21 @@ export default function OrdersPage() {
       </Card>
 
       {/* Order Details Drawer */}
-      <OrderDetailsSheet
-        orderId={selectedOrderId}
-        onClose={() => setSelectedOrderId(null)}
-      />
+      <OrderDetailsSheet orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
     </div>
   );
 }
 
-function OrderDetailsSheet({
-  orderId,
-  onClose,
-}: {
-  orderId: string | null;
-  onClose: () => void;
-}) {
+function OrderDetailsSheet({ orderId, onClose }: { orderId: string | null; onClose: () => void }) {
   const { data: order, isLoading } = useOrder(orderId || '');
   const updateStatus = useUpdateOrderStatus();
 
   const orderData = order as Order | undefined;
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!orderId) return;
+    if (!orderId) {
+      return;
+    }
     try {
       await updateStatus.mutateAsync({ id: orderId, status: newStatus });
     } catch (error) {
@@ -377,9 +350,7 @@ function OrderDetailsSheet({
                         {item.quantity} × {formatCurrency(item.unitPrice)}
                       </p>
                     </div>
-                    <span className="font-medium">
-                      {formatCurrency(item.subtotal)}
-                    </span>
+                    <span className="font-medium">{formatCurrency(item.subtotal)}</span>
                   </div>
                 ))}
               </div>

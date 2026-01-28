@@ -6,7 +6,8 @@
 
 - [ ] Bug fix (non-breaking change that fixes an issue)
 - [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that causes existing functionality to change)
+- [ ] Breaking change (fix or feature that causes existing functionality to
+      change)
 - [ ] Refactoring (no functional changes)
 - [ ] Documentation update
 - [ ] Infrastructure/CI change
@@ -22,6 +23,7 @@
 ### Submitter Checklist (Complete before requesting review)
 
 #### Code Quality
+
 - [ ] Code follows the project's ESLint configuration
 - [ ] Code is formatted with Prettier (`pnpm format`)
 - [ ] TypeScript has no type errors (`pnpm type-check`)
@@ -30,6 +32,7 @@
 - [ ] Cognitive complexity is reasonable (no deeply nested logic)
 
 #### Security (OWASP Top 10)
+
 - [ ] No hardcoded secrets, API keys, or credentials
 - [ ] User input is validated and sanitized
 - [ ] SQL queries use parameterized queries (Prisma handles this)
@@ -38,18 +41,21 @@
 - [ ] Sensitive data is not logged
 
 #### Testing
+
 - [ ] Unit tests added for new functionality
 - [ ] Existing tests pass (`pnpm test`)
 - [ ] Edge cases are covered
 - [ ] Error scenarios are tested
 
 #### Documentation
+
 - [ ] Code is self-documenting (clear names, simple logic)
 - [ ] Complex logic has inline comments
 - [ ] API changes are documented (Swagger/OpenAPI)
 - [ ] README updated if needed
 
 #### Performance
+
 - [ ] No N+1 query issues
 - [ ] Large data sets use pagination
 - [ ] Expensive operations are cached or optimized
@@ -60,12 +66,14 @@
 ### Reviewer Checklist
 
 #### First Pass (Quick Review)
+
 - [ ] PR description clearly explains the change
 - [ ] Change size is reasonable (<500 lines preferred)
 - [ ] No obvious security issues
 - [ ] No hardcoded values that should be configurable
 
 #### Deep Review
+
 - [ ] Business logic is correct
 - [ ] Error handling is appropriate
 - [ ] Edge cases are handled
@@ -73,6 +81,7 @@
 - [ ] No breaking changes to public APIs (or documented)
 
 #### Architecture
+
 - [ ] Changes follow existing patterns
 - [ ] No unnecessary dependencies added
 - [ ] Separation of concerns is maintained

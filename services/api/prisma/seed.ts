@@ -10,7 +10,8 @@
  * Usage: pnpm --filter @hypermarket/api prisma:seed
  */
 
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { UserRole } from '@hypermarket/shared-types';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();

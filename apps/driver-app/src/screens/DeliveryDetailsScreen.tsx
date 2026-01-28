@@ -1,3 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
   View,
@@ -10,11 +13,9 @@ import {
   Modal,
   TextInput,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 
-import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { OfflineBanner } from '@/components/layout/OfflineBanner';
+import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button, Badge } from '@/components/ui';
 import {
   useDelivery,
@@ -23,7 +24,8 @@ import {
   useCompleteDelivery,
   useFailDelivery,
 } from '@/hooks/use-api';
-import { useDeliveryStore } from '@/stores/delivery-store';
+import type { FailedDeliveryReason } from '@/lib/constants';
+import { FAILED_DELIVERY_REASONS } from '@/lib/constants';
 import {
   formatCurrency,
   formatDateTime,
@@ -32,8 +34,8 @@ import {
   orderStatusColors,
   paymentMethodLabels,
 } from '@/lib/formatters';
-import { FAILED_DELIVERY_REASONS, FailedDeliveryReason } from '@/lib/constants';
-import { MainStackParamList } from '@/navigation/MainNavigator';
+import type { MainStackParamList } from '@/navigation/MainNavigator';
+import { useDeliveryStore } from '@/stores/delivery-store';
 
 type RouteProps = RouteProp<MainStackParamList, 'DeliveryDetails'>;
 
@@ -67,7 +69,7 @@ export function DeliveryDetailsScreen() {
   const { data, isLoading, refetch } = useDelivery(deliveryId);
   const delivery = data as Delivery | undefined;
 
-  const { isOffline } = useDeliveryStore();
+  const { isOffline: _isOffline } = useDeliveryStore();
 
   const confirmPickup = useConfirmPickup();
   const startDelivery = useStartDelivery();
@@ -87,45 +89,37 @@ export function DeliveryDetailsScreen() {
   };
 
   const handlePickup = () => {
-    Alert.alert(
-      'تأكيد الاستلام',
-      'هل تم استلام الطلب من المتجر؟',
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        {
-          text: 'نعم، تم الاستلام',
-          onPress: async () => {
-            try {
-              await confirmPickup.mutateAsync(deliveryId);
-              refetch();
-            } catch (error: any) {
-              Alert.alert('خطأ', error.message);
-            }
-          },
+    Alert.alert('تأكيد الاستلام', 'هل تم استلام الطلب من المتجر؟', [
+      { text: 'إلغاء', style: 'cancel' },
+      {
+        text: 'نعم، تم الاستلام',
+        onPress: async () => {
+          try {
+            await confirmPickup.mutateAsync(deliveryId);
+            refetch();
+          } catch (error: any) {
+            Alert.alert('خطأ', error.message);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const handleStartDelivery = () => {
-    Alert.alert(
-      'بدء التوصيل',
-      'هل أنت في الطريق إلى العميل الآن؟',
-      [
-        { text: 'إلغاء', style: 'cancel' },
-        {
-          text: 'نعم، في الطريق',
-          onPress: async () => {
-            try {
-              await startDelivery.mutateAsync(deliveryId);
-              refetch();
-            } catch (error: any) {
-              Alert.alert('خطأ', error.message);
-            }
-          },
+  const _handleStartDelivery = () => {
+    Alert.alert('بدء التوصيل', 'هل أنت في الطريق إلى العميل الآن؟', [
+      { text: 'إلغاء', style: 'cancel' },
+      {
+        text: 'نعم، في الطريق',
+        onPress: async () => {
+          try {
+            await startDelivery.mutateAsync(deliveryId);
+            refetch();
+          } catch (error: any) {
+            Alert.alert('خطأ', error.message);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleComplete = () => {
@@ -196,10 +190,7 @@ export function DeliveryDetailsScreen() {
       {/* Header */}
       <View className="bg-white px-4 pt-4 pb-4 border-b border-gray-100">
         <View className="flex-row items-center justify-between">
-          <View
-            className="px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: statusColor.bg }}
-          >
+          <View className="px-3 py-1.5 rounded-full" style={{ backgroundColor: statusColor.bg }}>
             <Text style={{ color: statusColor.text }} className="font-bold">
               {orderStatusLabels[delivery.status]}
             </Text>
@@ -264,9 +255,7 @@ export function DeliveryDetailsScreen() {
 
           {delivery.notes && (
             <View className="mt-3 pt-3 border-t border-gray-100">
-              <Text className="text-amber-600 text-right">
-                ملاحظات العميل: {delivery.notes}
-              </Text>
+              <Text className="text-amber-600 text-right">ملاحظات العميل: {delivery.notes}</Text>
             </View>
           )}
         </View>
@@ -278,11 +267,12 @@ export function DeliveryDetailsScreen() {
           </Text>
 
           {delivery.items?.map((item) => (
-            <View key={item.id} className="flex-row items-center justify-between py-2 border-b border-gray-50">
+            <View
+              key={item.id}
+              className="flex-row items-center justify-between py-2 border-b border-gray-50"
+            >
               <Text className="text-gray-500">{item.quantity}x</Text>
-              <Text className="text-gray-700 flex-1 text-right mr-2">
-                {item.product?.nameAr}
-              </Text>
+              <Text className="text-gray-700 flex-1 text-right mr-2">{item.product?.nameAr}</Text>
             </View>
           ))}
 
@@ -381,9 +371,7 @@ export function DeliveryDetailsScreen() {
       >
         <View className="flex-1 bg-black/50 justify-end">
           <View className="bg-white rounded-t-3xl p-6 max-h-[80%]">
-            <Text className="text-xl font-bold text-gray-900 text-right mb-6">
-              سبب فشل التوصيل
-            </Text>
+            <Text className="text-xl font-bold text-gray-900 text-right mb-6">سبب فشل التوصيل</Text>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {FAILED_DELIVERY_REASONS.map((reason) => (
@@ -406,9 +394,7 @@ export function DeliveryDetailsScreen() {
                       <Ionicons name="checkmark" size={16} color="white" />
                     )}
                   </View>
-                  <Text className="text-gray-900 font-medium text-lg">
-                    {reason.label}
-                  </Text>
+                  <Text className="text-gray-900 font-medium text-lg">{reason.label}</Text>
                 </TouchableOpacity>
               ))}
 
@@ -458,9 +444,7 @@ export function DeliveryDetailsScreen() {
       >
         <View className="flex-1 bg-black/50 justify-end">
           <View className="bg-white rounded-t-3xl p-6">
-            <Text className="text-xl font-bold text-gray-900 text-right mb-4">
-              تأكيد التسليم
-            </Text>
+            <Text className="text-xl font-bold text-gray-900 text-right mb-4">تأكيد التسليم</Text>
 
             <TextInput
               className="bg-gray-100 rounded-xl p-4 text-right text-gray-900 min-h-[100px] mb-4"

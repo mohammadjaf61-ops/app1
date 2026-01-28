@@ -1,26 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Pencil, User, Phone, Shield } from 'lucide-react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Plus, Pencil, User, Phone, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +18,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -37,6 +27,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useUsers, useCreateUser, useUpdateUser } from '@/hooks/use-api';
 import { formatPhone, userRoleLabels, userRoleColors } from '@/lib/formatters';
 
@@ -49,13 +49,15 @@ interface UserData {
   createdAt: string;
 }
 
+type UserRole = 'ADMIN' | 'MANAGER' | 'PICKER' | 'DRIVER' | 'CASHIER';
+
 const userSchema = z.object({
   phone: z.string().min(10, 'رقم الهاتف غير صحيح'),
   fullName: z.string().min(2, 'الاسم مطلوب'),
   role: z.enum(['ADMIN', 'MANAGER', 'PICKER', 'DRIVER', 'CASHIER']),
 });
 
-const roleOptions = [
+const roleOptions: { value: UserRole; label: string }[] = [
   { value: 'ADMIN', label: 'مسؤول' },
   { value: 'MANAGER', label: 'مدير' },
   { value: 'PICKER', label: 'محضّر' },
@@ -75,12 +77,12 @@ export default function UsersPage() {
 
   const users = ((data as { data?: UserData[] })?.data || data || []) as UserData[];
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       phone: '',
       fullName: '',
-      role: 'PICKER' as const,
+      role: 'PICKER',
     },
   });
 
@@ -117,9 +119,7 @@ export default function UsersPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>قائمة المستخدمين</CardTitle>
-              <CardDescription>
-                {users.length} مستخدم في النظام
-              </CardDescription>
+              <CardDescription>{users.length} مستخدم في النظام</CardDescription>
             </div>
             <div className="flex gap-2">
               <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -145,9 +145,7 @@ export default function UsersPage() {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>إضافة مستخدم جديد</DialogTitle>
-                    <DialogDescription>
-                      أدخل بيانات المستخدم الجديد
-                    </DialogDescription>
+                    <DialogDescription>أدخل بيانات المستخدم الجديد</DialogDescription>
                   </DialogHeader>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <div className="space-y-2">
@@ -177,9 +175,7 @@ export default function UsersPage() {
                       <Label htmlFor="role">الدور</Label>
                       <Select
                         value={form.watch('role')}
-                        onValueChange={(v: 'ADMIN' | 'MANAGER' | 'PICKER' | 'DRIVER' | 'CASHIER') =>
-                          form.setValue('role', v)
-                        }
+                        onValueChange={(v) => form.setValue('role', v as UserRole)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="اختر الدور" />
@@ -220,7 +216,7 @@ export default function UsersPage() {
                     <TableHead>رقم الهاتف</TableHead>
                     <TableHead>الدور</TableHead>
                     <TableHead>الحالة</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

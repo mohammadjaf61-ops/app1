@@ -1,7 +1,7 @@
 'use client';
 
+import { Download, TrendingUp, Package, Calendar } from 'lucide-react';
 import { useState } from 'react';
-import { Download, FileSpreadsheet, TrendingUp, Package, Truck, Calendar } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -18,14 +18,12 @@ import * as XLSX from 'xlsx';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSalesSummary, useStockAging, useCategoryPerformance } from '@/hooks/use-api';
-import { formatCurrency, formatNumber, formatDateForInput } from '@/lib/formatters';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+import { formatCurrency, formatNumber } from '@/lib/formatters';
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState('sales');
@@ -114,29 +112,33 @@ function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string })
     dateTo: dateTo || undefined,
   });
 
-  const salesData = data as {
-    summary?: {
-      totalOrders: number;
-      totalRevenue: number;
-      totalItems: number;
-      averageOrderValue: number;
-    };
-    topProducts?: Array<{
-      product: { nameAr: string; sku: string };
-      quantity: number;
-      revenue: number;
-    }>;
-  } | undefined;
+  const salesData = data as
+    | {
+        summary?: {
+          totalOrders: number;
+          totalRevenue: number;
+          totalItems: number;
+          averageOrderValue: number;
+        };
+        topProducts?: Array<{
+          product: { nameAr: string; sku: string };
+          quantity: number;
+          revenue: number;
+        }>;
+      }
+    | undefined;
 
   const exportToExcel = () => {
-    if (!salesData?.topProducts) return;
+    if (!salesData?.topProducts) {
+      return;
+    }
 
     const wsData = salesData.topProducts.map((item, index) => ({
       '#': index + 1,
-      'المنتج': item.product.nameAr,
-      'SKU': item.product.sku,
-      'الكمية': item.quantity,
-      'الإيرادات': item.revenue,
+      المنتج: item.product.nameAr,
+      SKU: item.product.sku,
+      الكمية: item.quantity,
+      الإيرادات: item.revenue,
     }));
 
     const ws = XLSX.utils.json_to_sheet(wsData);
@@ -249,9 +251,7 @@ function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string })
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              لا توجد بيانات كافية
-            </div>
+            <div className="text-center py-12 text-muted-foreground">لا توجد بيانات كافية</div>
           )}
         </CardContent>
       </Card>
@@ -262,27 +262,29 @@ function SalesReport({ dateFrom, dateTo }: { dateFrom: string; dateTo: string })
 function StockAgingReport() {
   const { data, isLoading } = useStockAging();
 
-  const stockData = data as {
-    summary?: {
-      expired: number;
-      critical: number;
-      warning: number;
-      good: number;
-      total: number;
-    };
-    expired?: Array<{
-      id: string;
-      product: { nameAr: string; sku: string };
-      quantity: number;
-      expiryDate: string;
-    }>;
-    critical?: Array<{
-      id: string;
-      product: { nameAr: string; sku: string };
-      quantity: number;
-      expiryDate: string;
-    }>;
-  } | undefined;
+  const stockData = data as
+    | {
+        summary?: {
+          expired: number;
+          critical: number;
+          warning: number;
+          good: number;
+          total: number;
+        };
+        expired?: Array<{
+          id: string;
+          product: { nameAr: string; sku: string };
+          quantity: number;
+          expiryDate: string;
+        }>;
+        critical?: Array<{
+          id: string;
+          product: { nameAr: string; sku: string };
+          quantity: number;
+          expiryDate: string;
+        }>;
+      }
+    | undefined;
 
   const pieData = stockData?.summary
     ? [
@@ -294,7 +296,9 @@ function StockAgingReport() {
     : [];
 
   const exportToExcel = () => {
-    if (!stockData) return;
+    if (!stockData) {
+      return;
+    }
 
     const allItems = [
       ...(stockData.expired || []).map((i) => ({ ...i, status: 'منتهي' })),
@@ -303,11 +307,11 @@ function StockAgingReport() {
 
     const wsData = allItems.map((item, index) => ({
       '#': index + 1,
-      'المنتج': item.product.nameAr,
-      'SKU': item.product.sku,
-      'الكمية': item.quantity,
+      المنتج: item.product.nameAr,
+      SKU: item.product.sku,
+      الكمية: item.quantity,
       'تاريخ الانتهاء': item.expiryDate,
-      'الحالة': item.status,
+      الحالة: item.status,
     }));
 
     const ws = XLSX.utils.json_to_sheet(wsData);
@@ -420,26 +424,30 @@ function CategoryPerformanceReport({ dateFrom, dateTo }: { dateFrom: string; dat
     dateTo: dateTo || undefined,
   });
 
-  const categoryData = data as {
-    totalRevenue?: number;
-    categories?: Array<{
-      category: { id: string; nameAr: string };
-      totalItems: number;
-      totalRevenue: number;
-      uniqueProducts: number;
-      revenuePercentage: string;
-    }>;
-  } | undefined;
+  const categoryData = data as
+    | {
+        totalRevenue?: number;
+        categories?: Array<{
+          category: { id: string; nameAr: string };
+          totalItems: number;
+          totalRevenue: number;
+          uniqueProducts: number;
+          revenuePercentage: string;
+        }>;
+      }
+    | undefined;
 
   const exportToExcel = () => {
-    if (!categoryData?.categories) return;
+    if (!categoryData?.categories) {
+      return;
+    }
 
     const wsData = categoryData.categories.map((item, index) => ({
       '#': index + 1,
-      'القسم': item.category.nameAr,
+      القسم: item.category.nameAr,
       'عدد المنتجات': item.uniqueProducts,
       'المنتجات المباعة': item.totalItems,
-      'الإيرادات': item.totalRevenue,
+      الإيرادات: item.totalRevenue,
       'النسبة المئوية': `${item.revenuePercentage}%`,
     }));
 
@@ -486,9 +494,7 @@ function CategoryPerformanceReport({ dateFrom, dateTo }: { dateFrom: string; dat
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            لا توجد بيانات كافية
-          </div>
+          <div className="text-center py-12 text-muted-foreground">لا توجد بيانات كافية</div>
         )}
       </CardContent>
     </Card>

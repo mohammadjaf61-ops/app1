@@ -1,7 +1,6 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
 import { OrderStatus } from '@hypermarket/shared-types';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateOrderStatusDto {
   @ApiProperty({ enum: OrderStatus })

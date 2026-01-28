@@ -1,8 +1,5 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -16,12 +13,12 @@ import {
   BarChart3,
   Store,
 } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +27,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/lib/auth';
 import { userRoleLabels } from '@/lib/formatters';
+import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
@@ -57,8 +57,8 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
         }
 
         const Icon = item.icon;
-        const isActive = pathname === item.href ||
-          (item.href !== '/dashboard' && pathname.startsWith(item.href));
+        const isActive =
+          pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
 
         return (
           <Link
@@ -95,11 +95,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const userInitials = user?.fullName
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .slice(0, 2) || 'م';
+  const userInitials =
+    user?.fullName
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2) || 'م';
 
   return (
     <div className="flex min-h-screen">

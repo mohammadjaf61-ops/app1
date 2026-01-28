@@ -1,12 +1,11 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-import { DeliveryFailureReason } from '@hypermarket/shared-types';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class FailDeliveryDto {
-  @ApiProperty({ enum: DeliveryFailureReason })
-  @IsEnum(DeliveryFailureReason, { message: 'سبب الفشل غير صالح' })
-  reason: DeliveryFailureReason;
+  @ApiProperty({ description: 'Reason for delivery failure' })
+  @IsString()
+  @IsNotEmpty({ message: 'سبب الفشل مطلوب' })
+  reason: string;
 
   @ApiPropertyOptional()
   @IsOptional()

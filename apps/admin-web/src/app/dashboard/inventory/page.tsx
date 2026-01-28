@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { AlertTriangle, Calendar, MapPin, Package } from 'lucide-react';
+import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -13,8 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInventory, useLowStockItems, useNearExpiryItems } from '@/hooks/use-api';
 import { formatDate, formatNumber } from '@/lib/formatters';
@@ -106,12 +105,8 @@ function AllInventoryTable() {
                 {items.length > 0 ? (
                   items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="font-mono text-sm">
-                        {item.product.sku}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.product.nameAr}
-                      </TableCell>
+                      <TableCell className="font-mono text-sm">{item.product.sku}</TableCell>
+                      <TableCell className="font-medium">{item.product.nameAr}</TableCell>
                       <TableCell>
                         <QuantityBadge quantity={item.quantity} />
                       </TableCell>
@@ -119,7 +114,8 @@ function AllInventoryTable() {
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">
-                            {item.location?.name || `${item.location?.aisle}-${item.location?.shelf}`}
+                            {item.location?.name ||
+                              `${item.location?.aisle}-${item.location?.shelf}`}
                           </span>
                         </div>
                       </TableCell>
@@ -159,9 +155,7 @@ function LowStockTable() {
           <AlertTriangle className="h-5 w-5 text-destructive" />
           منتجات بمخزون منخفض
         </CardTitle>
-        <CardDescription>
-          المنتجات التي تحتاج إلى إعادة تزويد
-        </CardDescription>
+        <CardDescription>المنتجات التي تحتاج إلى إعادة تزويد</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -180,12 +174,8 @@ function LowStockTable() {
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id} className="bg-destructive/5">
-                    <TableCell className="font-mono text-sm">
-                      {item.product.sku}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {item.product.nameAr}
-                    </TableCell>
+                    <TableCell className="font-mono text-sm">{item.product.sku}</TableCell>
+                    <TableCell className="font-medium">{item.product.nameAr}</TableCell>
                     <TableCell>
                       <Badge variant="destructive">{item.quantity}</Badge>
                     </TableCell>
@@ -202,9 +192,7 @@ function LowStockTable() {
         ) : (
           <div className="text-center py-12">
             <Package className="h-12 w-12 mx-auto text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">
-              لا توجد منتجات بمخزون منخفض
-            </p>
+            <p className="mt-4 text-muted-foreground">لا توجد منتجات بمخزون منخفض</p>
           </div>
         )}
       </CardContent>
@@ -223,9 +211,7 @@ function NearExpiryTable() {
           <Calendar className="h-5 w-5 text-yellow-600" />
           منتجات قريبة من انتهاء الصلاحية
         </CardTitle>
-        <CardDescription>
-          المنتجات التي ستنتهي صلاحيتها خلال 30 يوم
-        </CardDescription>
+        <CardDescription>المنتجات التي ستنتهي صلاحيتها خلال 30 يوم</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -245,12 +231,8 @@ function NearExpiryTable() {
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id} className="bg-yellow-50">
-                    <TableCell className="font-mono text-sm">
-                      {item.product.sku}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {item.product.nameAr}
-                    </TableCell>
+                    <TableCell className="font-mono text-sm">{item.product.sku}</TableCell>
+                    <TableCell className="font-medium">{item.product.nameAr}</TableCell>
                     <TableCell>{formatNumber(item.quantity)}</TableCell>
                     <TableCell>
                       <ExpiryBadge date={item.expiryDate!} />
@@ -268,9 +250,7 @@ function NearExpiryTable() {
         ) : (
           <div className="text-center py-12">
             <Calendar className="h-12 w-12 mx-auto text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">
-              لا توجد منتجات قريبة من انتهاء الصلاحية
-            </p>
+            <p className="mt-4 text-muted-foreground">لا توجد منتجات قريبة من انتهاء الصلاحية</p>
           </div>
         )}
       </CardContent>
@@ -283,7 +263,11 @@ function QuantityBadge({ quantity }: { quantity: number }) {
     return <Badge variant="destructive">{quantity}</Badge>;
   }
   if (quantity <= 20) {
-    return <Badge variant="outline" className="border-yellow-500 text-yellow-700">{quantity}</Badge>;
+    return (
+      <Badge variant="outline" className="border-yellow-500 text-yellow-700">
+        {quantity}
+      </Badge>
+    );
   }
   return <Badge variant="secondary">{quantity}</Badge>;
 }
@@ -292,7 +276,7 @@ function ExpiryBadge({ date }: { date: string }) {
   const expiryDate = new Date(date);
   const now = new Date();
   const daysUntilExpiry = Math.floor(
-    (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (daysUntilExpiry < 0) {

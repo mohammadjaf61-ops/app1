@@ -1,15 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-
 import { UserRole } from '@hypermarket/shared-types';
+import { Controller, Get, Post, Patch, Delete, Body, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
 import { Public } from '@/common/decorators/public.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';

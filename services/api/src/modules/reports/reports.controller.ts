@@ -1,12 +1,6 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
-
 import { UserRole } from '@hypermarket/shared-types';
+import { Controller, Get, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 import { Roles } from '@/common/decorators/roles.decorator';
 
@@ -41,10 +35,7 @@ export class ReportsController {
   @ApiOperation({ summary: 'Get daily sales report' })
   @ApiQuery({ name: 'dateFrom', required: true, type: String, description: 'ISO date string' })
   @ApiQuery({ name: 'dateTo', required: true, type: String, description: 'ISO date string' })
-  async getDailySales(
-    @Query('dateFrom') dateFrom: string,
-    @Query('dateTo') dateTo: string,
-  ) {
+  async getDailySales(@Query('dateFrom') dateFrom: string, @Query('dateTo') dateTo: string) {
     return this.reportsService.getDailySales({
       dateFrom: new Date(dateFrom),
       dateTo: new Date(dateTo),

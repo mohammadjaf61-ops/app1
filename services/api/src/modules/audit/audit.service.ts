@@ -37,9 +37,8 @@ export class AuditService {
         },
       });
 
-      this.logger.log(
-        `Audit: ${dto.action} on ${dto.entity}${dto.entityId ? `:${dto.entityId}` : ''} by user ${dto.userId}`,
-      );
+      const entityInfo = dto.entityId ? `:${dto.entityId}` : '';
+      this.logger.log(`Audit: ${dto.action} on ${dto.entity}${entityInfo} by user ${dto.userId}`);
 
       return auditLog;
     } catch (error) {
@@ -62,29 +61,38 @@ export class AuditService {
     page?: number;
     limit?: number;
   }) {
-    const {
-      userId,
-      action,
-      entity,
-      entityId,
-      dateFrom,
-      dateTo,
-      page = 1,
-      limit = 50,
-    } = params;
+    const { userId, action, entity, entityId, dateFrom, dateTo, page = 1, limit = 50 } = params;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    const where: {
+      userId?: string;
+      action?: string;
+      entity?: string;
+      entityId?: string;
+      createdAt?: { gte?: Date; lte?: Date };
+    } = {};
 
-    if (userId) where.userId = userId;
-    if (action) where.action = action;
-    if (entity) where.entity = entity;
-    if (entityId) where.entityId = entityId;
+    if (userId) {
+      where.userId = userId;
+    }
+    if (action) {
+      where.action = action;
+    }
+    if (entity) {
+      where.entity = entity;
+    }
+    if (entityId) {
+      where.entityId = entityId;
+    }
 
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt['gte'] = dateFrom;
-      if (dateTo) where.createdAt['lte'] = dateTo;
+      if (dateFrom) {
+        where.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt.lte = dateTo;
+      }
     }
 
     const [logs, total] = await Promise.all([
@@ -161,11 +169,15 @@ export class AuditService {
   async getStatistics(params: { dateFrom?: Date; dateTo?: Date }) {
     const { dateFrom, dateTo } = params;
 
-    const where: Record<string, unknown> = {};
+    const where: { createdAt?: { gte?: Date; lte?: Date } } = {};
     if (dateFrom || dateTo) {
       where.createdAt = {};
-      if (dateFrom) where.createdAt['gte'] = dateFrom;
-      if (dateTo) where.createdAt['lte'] = dateTo;
+      if (dateFrom) {
+        where.createdAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.createdAt.lte = dateTo;
+      }
     }
 
     // Get counts by action
@@ -192,24 +204,24 @@ export class AuditService {
     });
 
     // Get user names for top users
-    const userIds = userCounts.map(u => u.userId);
+    const userIds = userCounts.map((u: { userId: string }) => u.userId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, fullName: true },
     });
 
-    const userMap = new Map(users.map(u => [u.id, u.fullName]));
+    const userMap = new Map(users.map((u: { id: string; fullName: string }) => [u.id, u.fullName]));
 
     return {
-      byAction: actionCounts.map(a => ({
+      byAction: actionCounts.map((a: { action: string; _count: { action: number } }) => ({
         action: a.action,
         count: a._count.action,
       })),
-      byEntity: entityCounts.map(e => ({
+      byEntity: entityCounts.map((e: { entity: string; _count: { entity: number } }) => ({
         entity: e.entity,
         count: e._count.entity,
       })),
-      topUsers: userCounts.map(u => ({
+      topUsers: userCounts.map((u: { userId: string; _count: { userId: number } }) => ({
         userId: u.userId,
         userName: userMap.get(u.userId) || 'Unknown',
         count: u._count.userId,

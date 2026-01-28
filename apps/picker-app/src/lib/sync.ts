@@ -1,10 +1,7 @@
-import { apiClient } from './api-client';
-import {
-  getPendingActions,
-  removePendingAction,
-  clearOldOfflineData,
-} from './database';
 import { usePickingStore } from '@/stores/picking-store';
+
+import { apiClient } from './api-client';
+import { getPendingActions, removePendingAction, clearOldOfflineData } from './database';
 
 interface PendingAction {
   id: number;
@@ -46,7 +43,7 @@ export async function syncPendingActions(): Promise<{
               action.order_id,
               action.item_id,
               payload.reason,
-              payload.notes
+              payload.notes,
             );
             break;
 

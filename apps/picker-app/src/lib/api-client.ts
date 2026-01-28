@@ -1,7 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
+
 import { API_URL, STORAGE_KEYS } from './constants';
 
-interface ApiResponse<T = any> {
+interface _ApiResponse<T = any> {
   data?: T;
   error?: string;
   message?: string;
@@ -28,10 +29,7 @@ class ApiClient {
     this.accessToken = token;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
     const headers: HeadersInit = {
@@ -118,12 +116,7 @@ class ApiClient {
     });
   }
 
-  async markItemUnavailable(
-    orderId: string,
-    itemId: string,
-    reason: string,
-    notes?: string
-  ) {
+  async markItemUnavailable(orderId: string, itemId: string, reason: string, notes?: string) {
     return this.request<any>(`/orders/${orderId}/items/${itemId}/unavailable`, {
       method: 'POST',
       body: JSON.stringify({ reason, notes }),

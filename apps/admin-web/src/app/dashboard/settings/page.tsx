@@ -1,14 +1,12 @@
 'use client';
 
+import { Save, Globe, Bell, Shield } from 'lucide-react';
 import { useState } from 'react';
-import { Save, Globe, Palette, Bell, Shield } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -16,7 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -49,17 +49,13 @@ export default function SettingsPage() {
               <Globe className="h-5 w-5" />
               اللغة والعرض
             </CardTitle>
-            <CardDescription>
-              إعدادات اللغة واتجاه النص
-            </CardDescription>
+            <CardDescription>إعدادات اللغة واتجاه النص</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="language">اللغة</Label>
-                <p className="text-sm text-muted-foreground">
-                  اختر لغة الواجهة
-                </p>
+                <p className="text-sm text-muted-foreground">اختر لغة الواجهة</p>
               </div>
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger className="w-[180px]">
@@ -79,9 +75,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="rtl">اتجاه النص (RTL)</Label>
-                <p className="text-sm text-muted-foreground">
-                  تفعيل اتجاه النص من اليمين لليسار
-                </p>
+                <p className="text-sm text-muted-foreground">تفعيل اتجاه النص من اليمين لليسار</p>
               </div>
               <Switch id="rtl" checked={isRTL} onCheckedChange={setIsRTL} />
             </div>
@@ -95,17 +89,13 @@ export default function SettingsPage() {
               <Bell className="h-5 w-5" />
               الإشعارات
             </CardTitle>
-            <CardDescription>
-              إعدادات التنبيهات والإشعارات
-            </CardDescription>
+            <CardDescription>إعدادات التنبيهات والإشعارات</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="notifications">تفعيل الإشعارات</Label>
-                <p className="text-sm text-muted-foreground">
-                  استلام إشعارات النظام
-                </p>
+                <p className="text-sm text-muted-foreground">استلام إشعارات النظام</p>
               </div>
               <Switch
                 id="notifications"
@@ -123,9 +113,7 @@ export default function SettingsPage() {
               <Shield className="h-5 w-5" />
               إعدادات المخزون
             </CardTitle>
-            <CardDescription>
-              حدود التنبيهات للمخزون
-            </CardDescription>
+            <CardDescription>حدود التنبيهات للمخزون</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -138,9 +126,7 @@ export default function SettingsPage() {
                   onChange={(e) => setLowStockThreshold(e.target.value)}
                   min="1"
                 />
-                <p className="text-xs text-muted-foreground">
-                  التنبيه عندما يصل المخزون لهذا الحد
-                </p>
+                <p className="text-xs text-muted-foreground">التنبيه عندما يصل المخزون لهذا الحد</p>
               </div>
 
               <div className="space-y-2">
@@ -164,9 +150,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>معلومات النظام</CardTitle>
-            <CardDescription>
-              معلومات عن إصدار النظام
-            </CardDescription>
+            <CardDescription>معلومات عن إصدار النظام</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2 text-sm">

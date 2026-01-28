@@ -1,11 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
-
 import { DeliveryStatus, OrderStatus } from '@hypermarket/shared-types';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -29,15 +23,27 @@ export class DeliveryService {
     const { status, driverId, dateFrom, dateTo, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
-    const where: Record<string, unknown> = {};
+    const where: {
+      status?: DeliveryStatus;
+      driverId?: string;
+      assignedAt?: { gte?: Date; lte?: Date };
+    } = {};
 
-    if (status) where.status = status;
-    if (driverId) where.driverId = driverId;
+    if (status) {
+      where.status = status;
+    }
+    if (driverId) {
+      where.driverId = driverId;
+    }
 
     if (dateFrom || dateTo) {
       where.assignedAt = {};
-      if (dateFrom) where.assignedAt['gte'] = dateFrom;
-      if (dateTo) where.assignedAt['lte'] = dateTo;
+      if (dateFrom) {
+        where.assignedAt.gte = dateFrom;
+      }
+      if (dateTo) {
+        where.assignedAt.lte = dateTo;
+      }
     }
 
     const [deliveries, total] = await Promise.all([
@@ -115,11 +121,7 @@ export class DeliveryService {
       where: {
         driverId,
         status: {
-          in: [
-            DeliveryStatus.ASSIGNED,
-            DeliveryStatus.PICKED_UP,
-            DeliveryStatus.IN_TRANSIT,
-          ],
+          in: [DeliveryStatus.ASSIGNED, DeliveryStatus.PICKED_UP, DeliveryStatus.IN_TRANSIT],
         },
       },
       orderBy: { assignedAt: 'asc' },
@@ -328,32 +330,27 @@ export class DeliveryService {
   async getStatistics(driverId?: string) {
     const where = driverId ? { driverId } : {};
 
-    const [total, delivered, failed, inProgress, totalCollected] =
-      await Promise.all([
-        this.prisma.deliveryAssignment.count({ where }),
-        this.prisma.deliveryAssignment.count({
-          where: { ...where, status: DeliveryStatus.DELIVERED },
-        }),
-        this.prisma.deliveryAssignment.count({
-          where: { ...where, status: DeliveryStatus.FAILED },
-        }),
-        this.prisma.deliveryAssignment.count({
-          where: {
-            ...where,
-            status: {
-              in: [
-                DeliveryStatus.ASSIGNED,
-                DeliveryStatus.PICKED_UP,
-                DeliveryStatus.IN_TRANSIT,
-              ],
-            },
+    const [total, delivered, failed, inProgress, totalCollected] = await Promise.all([
+      this.prisma.deliveryAssignment.count({ where }),
+      this.prisma.deliveryAssignment.count({
+        where: { ...where, status: DeliveryStatus.DELIVERED },
+      }),
+      this.prisma.deliveryAssignment.count({
+        where: { ...where, status: DeliveryStatus.FAILED },
+      }),
+      this.prisma.deliveryAssignment.count({
+        where: {
+          ...where,
+          status: {
+            in: [DeliveryStatus.ASSIGNED, DeliveryStatus.PICKED_UP, DeliveryStatus.IN_TRANSIT],
           },
-        }),
-        this.prisma.deliveryAssignment.aggregate({
-          where: { ...where, status: DeliveryStatus.DELIVERED },
-          _sum: { collectedAmount: true },
-        }),
-      ]);
+        },
+      }),
+      this.prisma.deliveryAssignment.aggregate({
+        where: { ...where, status: DeliveryStatus.DELIVERED },
+        _sum: { collectedAmount: true },
+      }),
+    ]);
 
     return {
       total,

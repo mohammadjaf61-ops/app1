@@ -1,12 +1,6 @@
-import {
-  IsString,
-  IsNotEmpty,
-  MinLength,
-  Matches,
-  IsEnum,
-} from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '@hypermarket/shared-types';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, MinLength, Matches, IsEnum } from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({

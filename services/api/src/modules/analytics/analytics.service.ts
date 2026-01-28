@@ -1,14 +1,9 @@
+import { InjectQueue } from '@nestjs/bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { AggregationService } from './services/aggregation.service';
-import { DemandForecastService } from './services/demand-forecast.service';
-import { ReorderService } from './services/reorder.service';
-import { BasketAnalysisService } from './services/basket-analysis.service';
-import { AnomalyDetectionService } from './services/anomaly-detection.service';
 
 @Injectable()
 export class AnalyticsService {
@@ -16,11 +11,6 @@ export class AnalyticsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly aggregation: AggregationService,
-    private readonly demandForecast: DemandForecastService,
-    private readonly reorder: ReorderService,
-    private readonly basketAnalysis: BasketAnalysisService,
-    private readonly anomalyDetection: AnomalyDetectionService,
     @InjectQueue('analytics') private readonly analyticsQueue: Queue,
   ) {}
 
@@ -158,10 +148,7 @@ export class AnalyticsService {
 
     return this.prisma.reorderRecommendation.findMany({
       where,
-      orderBy: [
-        { urgencyLevel: 'desc' },
-        { daysOfStock: 'asc' },
-      ],
+      orderBy: [{ urgencyLevel: 'desc' }, { daysOfStock: 'asc' }],
       take: 50,
     });
   }
@@ -185,10 +172,7 @@ export class AnalyticsService {
 
     return this.prisma.anomalyAlert.findMany({
       where,
-      orderBy: [
-        { severity: 'desc' },
-        { detectedAt: 'desc' },
-      ],
+      orderBy: [{ severity: 'desc' }, { detectedAt: 'desc' }],
     });
   }
 

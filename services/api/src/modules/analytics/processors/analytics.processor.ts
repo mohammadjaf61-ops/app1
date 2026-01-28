@@ -3,11 +3,11 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 
 import { AggregationService } from '../services/aggregation.service';
+import { AiGovernanceService } from '../services/ai-governance.service';
+import { AnomalyDetectionService } from '../services/anomaly-detection.service';
+import { BasketAnalysisService } from '../services/basket-analysis.service';
 import { DemandForecastService } from '../services/demand-forecast.service';
 import { ReorderService } from '../services/reorder.service';
-import { BasketAnalysisService } from '../services/basket-analysis.service';
-import { AnomalyDetectionService } from '../services/anomaly-detection.service';
-import { AiGovernanceService } from '../services/ai-governance.service';
 
 @Processor('analytics')
 export class AnalyticsProcessor {
@@ -123,7 +123,7 @@ export class AnalyticsProcessor {
   }
 
   @Process('reorder-recommendations')
-  async handleReorderRecommendations(job: Job) {
+  async handleReorderRecommendations(_job: Job) {
     const startedAt = new Date();
     const jobName = 'reorder-recommendations';
 
@@ -183,7 +183,7 @@ export class AnalyticsProcessor {
   }
 
   @Process('anomaly-detection')
-  async handleAnomalyDetection(job: Job) {
+  async handleAnomalyDetection(_job: Job) {
     const startedAt = new Date();
     const jobName = 'anomaly-detection';
 
@@ -212,7 +212,7 @@ export class AnalyticsProcessor {
   }
 
   @Process('stock-status-refresh')
-  async handleStockStatusRefresh(job: Job) {
+  async handleStockStatusRefresh(_job: Job) {
     const startedAt = new Date();
     const jobName = 'stock-status-refresh';
 

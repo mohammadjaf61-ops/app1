@@ -1,6 +1,6 @@
-import { IsOptional, IsString, IsNumber, IsBoolean, Min } from 'class-validator';
-import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsNumber, IsBoolean, Min } from 'class-validator';
 
 export class ProductQueryDto {
   @ApiPropertyOptional({ example: 1 })

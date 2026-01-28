@@ -1,21 +1,9 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
-
-import { Public } from '@/common/decorators/public.decorator';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { JwtPayload } from '@hypermarket/shared-types';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Public } from '@/common/decorators/public.decorator';
 
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';

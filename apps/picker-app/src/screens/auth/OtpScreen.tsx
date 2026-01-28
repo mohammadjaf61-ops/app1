@@ -1,3 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -8,15 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button } from '@/components/ui';
 import { useVerifyOtp, useRequestOtp } from '@/hooks/use-api';
-import { useAuthStore } from '@/stores/auth-store';
-import { AuthStackParamList } from '@/navigation/AuthNavigator';
 import { formatPhone } from '@/lib/formatters';
+import type { AuthStackParamList } from '@/navigation/AuthNavigator';
+import { useAuthStore } from '@/stores/auth-store';
 
 type RouteProps = RouteProp<AuthStackParamList, 'Otp'>;
 
@@ -88,11 +89,9 @@ export function OtpScreen() {
 
       // Check if user is a PICKER
       if (result.user.role !== 'PICKER') {
-        Alert.alert(
-          'غير مصرح',
-          'هذا التطبيق مخصص لموظفي التجهيز فقط',
-          [{ text: 'حسناً', onPress: () => navigation.goBack() }]
-        );
+        Alert.alert('غير مصرح', 'هذا التطبيق مخصص لموظفي التجهيز فقط', [
+          { text: 'حسناً', onPress: () => navigation.goBack() },
+        ]);
         return;
       }
 
@@ -137,12 +136,8 @@ export function OtpScreen() {
             <View className="w-20 h-20 bg-primary/10 rounded-full items-center justify-center mb-6">
               <Ionicons name="shield-checkmark-outline" size={40} color="#16a34a" />
             </View>
-            <Text className="text-2xl font-bold text-gray-900 mb-2">
-              رمز التحقق
-            </Text>
-            <Text className="text-gray-500 text-center">
-              تم إرسال رمز التحقق إلى
-            </Text>
+            <Text className="text-2xl font-bold text-gray-900 mb-2">رمز التحقق</Text>
+            <Text className="text-gray-500 text-center">تم إرسال رمز التحقق إلى</Text>
             <Text className="text-gray-900 font-bold text-lg mt-1" dir="ltr">
               {formatPhone(phone)}
             </Text>
@@ -182,23 +177,17 @@ export function OtpScreen() {
           {/* Resend */}
           <View className="mt-6 items-center">
             {countdown > 0 ? (
-              <Text className="text-gray-500">
-                إعادة الإرسال بعد {countdown} ثانية
-              </Text>
+              <Text className="text-gray-500">إعادة الإرسال بعد {countdown} ثانية</Text>
             ) : (
               <TouchableOpacity onPress={handleResend} disabled={requestOtp.isPending}>
-                <Text className="text-primary font-bold text-lg">
-                  إعادة إرسال الرمز
-                </Text>
+                <Text className="text-primary font-bold text-lg">إعادة إرسال الرمز</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {/* Dev Note */}
           <View className="mt-8 bg-blue-50 p-4 rounded-xl">
-            <Text className="text-blue-700 text-center text-sm">
-              للتجربة: استخدم الرمز 123456
-            </Text>
+            <Text className="text-blue-700 text-center text-sm">للتجربة: استخدم الرمز 123456</Text>
           </View>
         </View>
       </KeyboardAvoidingView>

@@ -1,6 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { formatCurrencyShort } from '@/lib/formatters';
 import { useCartStore } from '@/stores/cart-store';
@@ -17,11 +17,7 @@ interface ProductCardProps {
   variant?: 'default' | 'horizontal' | 'compact';
 }
 
-export function ProductCard({
-  product,
-  onPress,
-  variant = 'default',
-}: ProductCardProps) {
+export function ProductCard({ product, onPress, variant = 'default' }: ProductCardProps) {
   const { addItem, getItemQuantity, updateQuantity } = useCartStore();
   const quantity = getItemQuantity(product.id);
 
@@ -100,11 +96,7 @@ export function ProductCard({
     >
       <View className="h-32 bg-gray-100">
         {product.imageUrl ? (
-          <Image
-            source={{ uri: product.imageUrl }}
-            className="w-full h-full"
-            resizeMode="cover"
-          />
+          <Image source={{ uri: product.imageUrl }} className="w-full h-full" resizeMode="cover" />
         ) : (
           <View className="w-full h-full items-center justify-center">
             <Ionicons name="cube-outline" size={40} color="#9ca3af" />
@@ -133,9 +125,7 @@ export function ProductCard({
               </TouchableOpacity>
             )}
           </View>
-          <Text className="text-primary font-bold">
-            {formatCurrencyShort(product.price)}
-          </Text>
+          <Text className="text-primary font-bold">{formatCurrencyShort(product.price)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -170,9 +160,7 @@ function QuantityControl({
           color={quantity === 1 ? '#ef4444' : '#16a34a'}
         />
       </Pressable>
-      <Text className="mx-2 font-bold text-gray-900 min-w-[20px] text-center">
-        {quantity}
-      </Text>
+      <Text className="mx-2 font-bold text-gray-900 min-w-[20px] text-center">{quantity}</Text>
       <Pressable
         onPress={onIncrement}
         className={`${buttonSize} bg-primary rounded-full items-center justify-center`}
