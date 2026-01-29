@@ -254,6 +254,17 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
 - Order event hooks ready for future activation
 - ADR 0031 documents the architecture
 
+### PR#32 - Data Migration & Cutover Strategy
+- Created idempotent migration toolkit in `scripts/migrations/legacy/`
+- Import scripts: categories, products, inventory, customers
+- Natural key strategy (SKU, phone, nameAr) for upsert operations
+- Dry-run mode for validation without database writes
+- Batch processing with configurable size
+- Post-migration validation suite (10 checks)
+- Field mapping reference (`docs/MIGRATION_MAPPING.md`)
+- Cutover plan with rollback procedures (`docs/CUTOVER_PLAN.md`)
+- ADR 0032 documents the migration architecture
+
 ---
 
 ## Support Contacts
@@ -273,4 +284,6 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
 3. Perform load testing
 4. ~~Address xlsx vulnerability~~ ✅ Resolved in PR#29
 5. ~~Final security review~~ ✅ Completed in PR#29 (see SECURITY_REVIEW.md)
-6. Go-live!
+6. ~~Data migration toolkit~~ ✅ Completed in PR#32 (see CUTOVER_PLAN.md)
+7. Execute data migration (dry-run → production)
+8. Go-live!
