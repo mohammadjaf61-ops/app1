@@ -31,6 +31,7 @@ export const SETTINGS_KEYS = {
   ENABLE_DEMAND_FORECASTING: 'feature_demand_forecasting',
   ENABLE_BASKET_ANALYSIS: 'feature_basket_analysis',
   ENABLE_ANOMALY_DETECTION: 'feature_anomaly_detection',
+  ENABLE_AI_INSIGHTS: 'feature_ai_insights',
 } as const;
 
 /**
@@ -51,10 +52,14 @@ const SETTINGS_DEFAULTS: Record<string, number | boolean | string> = {
   [SETTINGS_KEYS.LOW_STOCK_THRESHOLD]: 10,
   [SETTINGS_KEYS.NEAR_EXPIRY_DAYS]: 30,
 
-  // Feature Flags - all enabled by default
-  [SETTINGS_KEYS.ENABLE_DEMAND_FORECASTING]: true,
-  [SETTINGS_KEYS.ENABLE_BASKET_ANALYSIS]: true,
+  // Feature Flags
+  // Complex AI features disabled by default (PR#24 - AI Repositioning)
+  [SETTINGS_KEYS.ENABLE_DEMAND_FORECASTING]: false,
+  [SETTINGS_KEYS.ENABLE_BASKET_ANALYSIS]: false,
+  // Anomaly detection kept for operational alerts
   [SETTINGS_KEYS.ENABLE_ANOMALY_DETECTION]: true,
+  // AI Insights: read-only, explainable decision support (PR#24)
+  [SETTINGS_KEYS.ENABLE_AI_INSIGHTS]: true,
 };
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

@@ -54,6 +54,10 @@ export const queryKeys = {
   permissionsGrouped: ['permissions', 'grouped'],
   roles: ['permissions', 'roles'],
   role: (id: string) => ['permissions', 'roles', id],
+
+  // AI Insights (PR#24)
+  insights: ['analytics', 'insights'],
+  insightsStatus: ['analytics', 'insights', 'status'],
 };
 
 // Dashboard / Admin hooks
@@ -549,5 +553,40 @@ export function useRemoveRole() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
+  });
+}
+
+// AI Insights hooks (PR#24)
+export interface Insight {
+  id: string;
+  type: 'STAGNANT_PRODUCTS' | 'PEAK_HOURS' | 'HIGH_CANCELLATION' | 'LOW_STOCK_VELOCITY';
+  title: string;
+  titleAr: string;
+  summary: string;
+  summaryAr: string;
+  explanation: {
+    reason: string;
+    reasonAr: string;
+    dataSource: string;
+    periodDays: number;
+    methodology: string;
+  };
+  data: unknown;
+  severity: 'info' | 'warning' | 'critical';
+  generatedAt: string;
+}
+
+export function useInsights() {
+  return useQuery<Insight[]>({
+    queryKey: queryKeys.insights,
+    queryFn: () => apiClient.get<Insight[]>('/analytics/insights'),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useInsightsStatus() {
+  return useQuery<{ enabled: boolean }>({
+    queryKey: queryKeys.insightsStatus,
+    queryFn: () => apiClient.get<{ enabled: boolean }>('/analytics/insights/status'),
   });
 }

@@ -13,6 +13,7 @@ import {
   BarChart3,
   Store,
   Shield,
+  Lightbulb,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -48,6 +49,12 @@ const navItems = [
     href: '/dashboard/reports',
     labelKey: 'reports.title',
     icon: BarChart3,
+    roles: ['ADMIN', 'MANAGER'],
+  },
+  {
+    href: '/dashboard/insights',
+    labelKey: 'insights.title',
+    icon: Lightbulb,
     roles: ['ADMIN', 'MANAGER'],
   },
   {

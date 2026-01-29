@@ -8,6 +8,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 
 import { AnalyticsService } from './analytics.service';
 import { AiGovernanceService } from './services/ai-governance.service';
+import { AiInsightsService } from './services/ai-insights.service';
 import { AnomalyDetectionService } from './services/anomaly-detection.service';
 import { BasketAnalysisService } from './services/basket-analysis.service';
 import { ReorderService } from './services/reorder.service';
@@ -23,6 +24,7 @@ export class AnalyticsController {
     private readonly basket: BasketAnalysisService,
     private readonly anomaly: AnomalyDetectionService,
     private readonly governance: AiGovernanceService,
+    private readonly insights: AiInsightsService,
   ) {}
 
   // ============================================
@@ -143,6 +145,26 @@ export class AnalyticsController {
   ) {
     await this.anomaly.resolveAlert(id, user.id, body.resolutionNotes);
     return { success: true };
+  }
+
+  // ============================================
+  // AI INSIGHTS (PR#24)
+  // Read-only, explainable decision support
+  // ============================================
+
+  @Get('insights')
+  @Roles('ADMIN', 'MANAGER')
+  @ApiOperation({ summary: 'Get AI-powered operational insights with explanations' })
+  async getInsights() {
+    return this.insights.getAllInsights();
+  }
+
+  @Get('insights/status')
+  @Roles('ADMIN', 'MANAGER')
+  @ApiOperation({ summary: 'Check if AI insights feature is enabled' })
+  async getInsightsStatus() {
+    const enabled = await this.insights.isEnabled();
+    return { enabled };
   }
 
   // ============================================
