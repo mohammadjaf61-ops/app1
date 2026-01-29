@@ -91,6 +91,13 @@ enum AuditAction {
   PAYMENT_STATUS_CHANGE
 }
 
+/// Legal document types for consent tracking
+enum ConsentDocumentType {
+  TERMS_OF_SERVICE   // شروط الخدمة
+  PRIVACY_POLICY     // سياسة الخصوصية
+  RETURN_REFUND      // سياسة الإرجاع والاسترداد
+}
+
 // ============================================
 // USERS & AUTHENTICATION
 // ============================================
@@ -900,4 +907,33 @@ model JobExecution {
   @@index([status], map: "idx_job_execution_status")
   @@index([startedAt], map: "idx_job_execution_started_at")
   @@map("job_execution")
+}
+
+// ============================================
+// LEGAL & COMPLIANCE
+// ============================================
+
+/// User consent records for legal documents
+/// Tracks acceptance of Terms, Privacy Policy, and Return Policy
+/// Required for compliance before first order
+model UserConsent {
+  id           String              @id @default(uuid())
+  /// Customer phone number (Iraqi format: 07XXXXXXXXX)
+  customerPhone String             @map("customer_phone")
+  /// Type of document accepted
+  documentType ConsentDocumentType @map("document_type")
+  /// Document version accepted (e.g., "1.0")
+  version      String
+  /// IP address when consent was given
+  ipAddress    String?             @map("ip_address")
+  /// User agent when consent was given
+  userAgent    String?             @map("user_agent")
+  /// Timestamp of acceptance
+  acceptedAt   DateTime            @default(now()) @map("accepted_at")
+
+  @@unique([customerPhone, documentType, version], map: "uq_consent_phone_doc_version")
+  @@index([customerPhone], map: "idx_consent_phone")
+  @@index([documentType], map: "idx_consent_document_type")
+  @@index([acceptedAt], map: "idx_consent_accepted_at")
+  @@map("user_consent")
 }

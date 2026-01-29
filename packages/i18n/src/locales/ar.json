@@ -479,6 +479,25 @@
     "minutesAgo": "منذ {{count}} دقيقة",
     "justNow": "الآن"
   },
+  "compliance": {
+    "title": "الامتثال والموافقات",
+    "consentStats": "إحصائيات الموافقات",
+    "totalConsents": "إجمالي الموافقات",
+    "uniqueCustomers": "العملاء الفريدون",
+    "byDocumentType": "حسب نوع الوثيقة",
+    "recentConsents": "الموافقات الأخيرة",
+    "documentTypes": {
+      "TERMS_OF_SERVICE": "شروط الخدمة",
+      "PRIVACY_POLICY": "سياسة الخصوصية",
+      "RETURN_REFUND": "سياسة الإرجاع والاسترداد"
+    },
+    "legalDocuments": "الوثائق القانونية",
+    "viewDocument": "عرض الوثيقة",
+    "version": "الإصدار",
+    "lastUpdated": "آخر تحديث",
+    "noConsents": "لا توجد موافقات مسجلة بعد",
+    "consentRequired": "الموافقة مطلوبة قبل الطلب الأول"
+  },
   "pos": {
     "title": "نقطة البيع",
     "cashier": "الكاشير",

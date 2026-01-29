@@ -109,3 +109,226 @@ export function formatRelativeTime(date: Date | string | number, locale: string 
   }
   return rtf.format(-diffSec, 'second');
 }
+
+// ============================================
+// IRAQ LOCAL DATE FORMATS
+// ============================================
+
+/**
+ * Date format options for Iraq
+ * Iraq uses Gregorian calendar primarily
+ * Hijri calendar shown as secondary (placeholder for future implementation)
+ */
+export type IraqDateFormat = 'short' | 'medium' | 'long' | 'full' | 'datetime' | 'time';
+
+/**
+ * Format date for Iraq locale (ar-IQ)
+ * Uses Gregorian calendar as primary
+ *
+ * @param date - Date to format
+ * @param format - Format style
+ * @returns Formatted date string
+ */
+export function formatDateIraq(
+  date: Date | string | number,
+  format: IraqDateFormat = 'medium',
+): string {
+  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+
+  const formatOptions: Record<IraqDateFormat, Intl.DateTimeFormatOptions> = {
+    short: {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    },
+    medium: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    },
+    long: {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    },
+    full: {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+    datetime: {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+    time: {
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+  };
+
+  return new Intl.DateTimeFormat('ar-IQ', formatOptions[format]).format(d);
+}
+
+/**
+ * Format date with Hijri calendar (Islamic)
+ * Placeholder implementation - for future integration with proper Hijri library
+ *
+ * @param date - Date to format
+ * @param format - Format style
+ * @returns Formatted Hijri date string
+ */
+export function formatDateHijri(
+  date: Date | string | number,
+  format: IraqDateFormat = 'medium',
+): string {
+  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+
+  // Use Intl with islamic-umalqura calendar
+  // Note: Browser support varies, may need polyfill
+  const formatOptions: Record<IraqDateFormat, Intl.DateTimeFormatOptions> = {
+    short: {
+      calendar: 'islamic-umalqura',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    },
+    medium: {
+      calendar: 'islamic-umalqura',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    },
+    long: {
+      calendar: 'islamic-umalqura',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    },
+    full: {
+      calendar: 'islamic-umalqura',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+    datetime: {
+      calendar: 'islamic-umalqura',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+    time: {
+      hour: '2-digit',
+      minute: '2-digit',
+    },
+  };
+
+  try {
+    return new Intl.DateTimeFormat('ar-IQ', formatOptions[format]).format(d);
+  } catch {
+    // Fallback if islamic calendar not supported
+    return formatDateIraq(date, format) + ' (هـ)';
+  }
+}
+
+/**
+ * Format date with both Gregorian and Hijri
+ * Example: "29 يناير 2026 م | 29 رجب 1447 هـ"
+ *
+ * @param date - Date to format
+ * @returns Combined Gregorian and Hijri date string
+ */
+export function formatDateDual(date: Date | string | number): string {
+  const gregorian = formatDateIraq(date, 'medium');
+  const hijri = formatDateHijri(date, 'medium');
+  return `${gregorian} م | ${hijri} هـ`;
+}
+
+/**
+ * Get Iraq timezone date
+ * Iraq timezone is AST (Arabia Standard Time) = UTC+3
+ */
+export function getIraqDate(date?: Date | string | number): Date {
+  const d = date
+    ? typeof date === 'string' || typeof date === 'number'
+      ? new Date(date)
+      : date
+    : new Date();
+
+  // Convert to Iraq timezone
+  return new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Baghdad' }));
+}
+
+/**
+ * Format time in 12-hour format (common in Iraq)
+ */
+export function formatTimeIraq(date: Date | string | number): string {
+  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+
+  return new Intl.DateTimeFormat('ar-IQ', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(d);
+}
+
+/**
+ * Iraqi day names
+ */
+export const iraqDayNames = {
+  SUNDAY: 'الأحد',
+  MONDAY: 'الإثنين',
+  TUESDAY: 'الثلاثاء',
+  WEDNESDAY: 'الأربعاء',
+  THURSDAY: 'الخميس',
+  FRIDAY: 'الجمعة',
+  SATURDAY: 'السبت',
+} as const;
+
+/**
+ * Iraqi month names (Gregorian)
+ */
+export const iraqMonthNames = [
+  'يناير',
+  'فبراير',
+  'مارس',
+  'أبريل',
+  'مايو',
+  'يونيو',
+  'يوليو',
+  'أغسطس',
+  'سبتمبر',
+  'أكتوبر',
+  'نوفمبر',
+  'ديسمبر',
+] as const;
+
+/**
+ * Hijri month names
+ */
+export const hijriMonthNames = [
+  'محرم',
+  'صفر',
+  'ربيع الأول',
+  'ربيع الثاني',
+  'جمادى الأولى',
+  'جمادى الآخرة',
+  'رجب',
+  'شعبان',
+  'رمضان',
+  'شوال',
+  'ذو القعدة',
+  'ذو الحجة',
+] as const;

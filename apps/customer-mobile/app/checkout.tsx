@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Banknote, MapPin, User, Phone, FileText, AlertTriangle } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,9 @@ import {
 import { useToast } from '../components/Toast';
 import { formatCurrencyShort } from '../lib/formatters';
 import { useCartStore } from '../stores/cart-store';
+
+// API base URL - in production, use environment variable
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 // Error codes from API
 const ERROR_MESSAGES: Record<string, string> = {
@@ -92,6 +95,40 @@ export default function CheckoutScreen() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [hasConsent, setHasConsent] = useState<boolean | null>(null);
+  const [isCheckingConsent, setIsCheckingConsent] = useState(false);
+
+  // Check consent status when phone number changes
+  const checkConsentStatus = useCallback(async (phone: string) => {
+    if (!phone || !/^07\d{9}$/.test(phone)) {
+      setHasConsent(null);
+      return;
+    }
+
+    setIsCheckingConsent(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/consent/check?phone=${phone}`);
+      if (response.ok) {
+        const data = await response.json();
+        setHasConsent(data.hasAcceptedAll);
+      } else {
+        // If API fails, assume consent needed for safety
+        setHasConsent(false);
+      }
+    } catch (error) {
+      console.error('Consent check error:', error);
+      // If network error, allow proceeding but check again at submit
+      setHasConsent(null);
+    } finally {
+      setIsCheckingConsent(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (customerPhone) {
+      checkConsentStatus(customerPhone);
+    }
+  }, [customerPhone, checkConsentStatus]);
 
   const subtotal = getSubtotal();
   const deliveryFee = getDeliveryFee();
@@ -129,6 +166,16 @@ export default function CheckoutScreen() {
     if (items.length === 0) {
       showToast('السلة فارغة', 'warning');
       router.back();
+      return;
+    }
+
+    // Check consent before submitting
+    if (hasConsent === false) {
+      showToast('يجب الموافقة على الشروط أولاً', 'warning');
+      router.push({
+        pathname: '/consent',
+        params: { returnTo: '/checkout' },
+      });
       return;
     }
 
@@ -264,6 +311,52 @@ export default function CheckoutScreen() {
                 </View>
               </View>
             </View>
+
+            {/* Consent Status */}
+            {customerPhone && /^07\d{9}$/.test(customerPhone) && (
+              <View className="mb-6">
+                <Text className="text-lg font-bold text-gray-900 text-right mb-4">
+                  الموافقة على الشروط
+                </Text>
+                {isCheckingConsent ? (
+                  <View className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex-row items-center justify-center">
+                    <ActivityIndicator size="small" color="#6b7280" />
+                    <Text className="text-gray-600 mr-2">جاري التحقق...</Text>
+                  </View>
+                ) : hasConsent === true ? (
+                  <View className="bg-green-50 border border-green-200 p-4 rounded-xl flex-row items-center">
+                    <View className="flex-1">
+                      <Text className="text-green-800 font-semibold text-right">
+                        تمت الموافقة على الشروط ✓
+                      </Text>
+                      <Text className="text-green-600 text-sm text-right">
+                        يمكنك إتمام الطلب
+                      </Text>
+                    </View>
+                  </View>
+                ) : hasConsent === false ? (
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: '/consent',
+                        params: { returnTo: '/checkout' },
+                      })
+                    }
+                    className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex-row items-center"
+                  >
+                    <View className="flex-1">
+                      <Text className="text-amber-800 font-semibold text-right">
+                        مطلوب الموافقة على الشروط
+                      </Text>
+                      <Text className="text-amber-600 text-sm text-right">
+                        اضغط هنا للموافقة قبل إتمام الطلب
+                      </Text>
+                    </View>
+                    <AlertTriangle size={24} color="#d97706" />
+                  </Pressable>
+                ) : null}
+              </View>
+            )}
 
             {/* Order Summary */}
             <View className="mb-6">

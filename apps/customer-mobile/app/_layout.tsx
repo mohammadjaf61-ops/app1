@@ -41,6 +41,14 @@ export default function RootLayout() {
           <Stack.Screen name="auth" options={{ headerShown: false }} />
           <Stack.Screen name="tabs" options={{ headerShown: false }} />
           <Stack.Screen
+            name="consent"
+            options={{
+              headerShown: true,
+              title: 'الموافقة على الشروط',
+              headerBackTitle: 'رجوع',
+            }}
+          />
+          <Stack.Screen
             name="checkout"
             options={{
               headerShown: true,

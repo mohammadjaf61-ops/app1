@@ -14,6 +14,7 @@ import {
   Store,
   Shield,
   Lightbulb,
+  FileCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -62,6 +63,12 @@ const navItems = [
     labelKey: 'admin.roles',
     icon: Shield,
     roles: ['ADMIN'],
+  },
+  {
+    href: '/dashboard/compliance',
+    labelKey: 'compliance.title',
+    icon: FileCheck,
+    roles: ['ADMIN', 'MANAGER'],
   },
   { href: '/dashboard/settings', labelKey: 'admin.settings', icon: Settings, roles: ['ADMIN'] },
 ];

@@ -25,7 +25,18 @@ export {
   formatCurrency,
   formatDate,
   formatRelativeTime,
+  // Iraq-specific date formatting
+  formatDateIraq,
+  formatDateHijri,
+  formatDateDual,
+  getIraqDate,
+  formatTimeIraq,
+  iraqDayNames,
+  iraqMonthNames,
+  hijriMonthNames,
 } from './utils';
+
+export type { IraqDateFormat } from './utils';
 
 // Re-export locales for convenience (they can also be imported directly)
 import ar from './locales/ar.json';

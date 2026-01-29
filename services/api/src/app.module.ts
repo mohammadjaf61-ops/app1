@@ -10,6 +10,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BusinessRulesModule } from './modules/business-rules';
 import { CacheModule } from './modules/cache';
+import { ConsentModule } from './modules/consent';
 import { UsersModule } from './modules/users/users.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
@@ -82,6 +83,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AdminModule,
     PosModule,
     PermissionsModule,
+    ConsentModule,
   ],
 })
 export class AppModule {}
