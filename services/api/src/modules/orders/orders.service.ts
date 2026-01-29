@@ -4,6 +4,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 
 import { clampPage, clampPageSize } from '@/common/constants';
 import { StructuredLogger, createLogger } from '@/common/observability';
+import { AuditService } from '@/modules/audit/audit.service';
 import { BusinessRulesService } from '@/modules/business-rules';
 import { PaymentsService } from '@/modules/payments';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -19,6 +20,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly businessRules: BusinessRulesService,
     private readonly paymentsService: PaymentsService,
+    private readonly auditService: AuditService,
   ) {
     this.logger = createLogger('OrdersService');
   }
@@ -309,8 +311,9 @@ export class OrdersService {
   /**
    * Update order status
    */
-  async updateStatus(id: string, dto: UpdateOrderStatusDto) {
+  async updateStatus(id: string, dto: UpdateOrderStatusDto, userId?: string) {
     const order = await this.findById(id);
+    const previousStatus = order.status;
 
     // Validate status transition
     this.validateStatusTransition(order.status as OrderStatus, dto.status);
@@ -334,13 +337,23 @@ export class OrdersService {
 
     this.logger.log(`Order ${id} status changed to ${dto.status}`);
 
+    // Audit: Log order status changes (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'STATUS_CHANGE',
+      entity: 'Order',
+      entityId: id,
+      oldData: { status: previousStatus, orderNumber: order.orderNumber },
+      newData: { status: dto.status },
+    });
+
     return updated;
   }
 
   /**
    * Assign picker to order
    */
-  async assignPicker(orderId: string, pickerId: string) {
+  async assignPicker(orderId: string, pickerId: string, assignedByUserId?: string) {
     const order = await this.findById(orderId);
 
     if (order.status !== OrderStatus.PENDING) {
@@ -366,6 +379,16 @@ export class OrdersService {
 
     this.logger.log(`Picker ${pickerId} assigned to order ${orderId}`);
 
+    // Audit: Log picker assignment (PR#21)
+    await this.auditService.log({
+      userId: assignedByUserId || 'system',
+      action: 'ASSIGNMENT',
+      entity: 'Order',
+      entityId: orderId,
+      oldData: { pickerId: order.pickerId, status: order.status },
+      newData: { pickerId, status: OrderStatus.PICKING, pickerName: picker.fullName },
+    });
+
     return updated;
   }
 
@@ -388,8 +411,9 @@ export class OrdersService {
   /**
    * Cancel order
    */
-  async cancel(id: string, reason: string) {
+  async cancel(id: string, reason: string, userId?: string) {
     const order = await this.findById(id);
+    const previousStatus = order.status;
 
     const cancellableStatuses = [OrderStatus.PENDING, OrderStatus.PICKING];
     if (!cancellableStatuses.includes(order.status as OrderStatus)) {
@@ -405,6 +429,16 @@ export class OrdersService {
     });
 
     this.logger.log(`Order ${id} cancelled. Reason: ${reason}`);
+
+    // Audit: Log order cancellation (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'STATUS_CHANGE',
+      entity: 'Order',
+      entityId: id,
+      oldData: { status: previousStatus, orderNumber: order.orderNumber },
+      newData: { status: OrderStatus.CANCELLED, reason },
+    });
 
     return updated;
   }

@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
+import { AuditService } from '@/modules/audit/audit.service';
 import { CacheService, CACHE_KEYS } from '@/modules/cache';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -82,6 +83,7 @@ export class SettingsService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
+    private readonly auditService: AuditService,
   ) {}
 
   async onModuleInit() {
@@ -194,7 +196,10 @@ export class SettingsService implements OnModuleInit {
   /**
    * Update a setting (for future admin UI)
    */
-  async set(key: SettingKey, value: unknown, description?: string): Promise<void> {
+  async set(key: SettingKey, value: unknown, description?: string, userId?: string): Promise<void> {
+    // Get old value before update
+    const oldValue = this.settingsCache.get(key) ?? SETTINGS_DEFAULTS[key];
+
     await this.prisma.setting.upsert({
       where: { key },
       update: {
@@ -215,6 +220,16 @@ export class SettingsService implements OnModuleInit {
     await this.cacheService.del(`${CACHE_KEYS.SETTINGS}:${key}`);
 
     this.logger.log(`Setting updated: ${key} = ${JSON.stringify(value)}`);
+
+    // Audit: Log setting changes (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'UPDATE',
+      entity: 'Setting',
+      entityId: key,
+      oldData: { key, value: oldValue },
+      newData: { key, value },
+    });
   }
 
   /**

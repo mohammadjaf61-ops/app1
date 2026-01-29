@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { PrismaService } from '../../prisma/prisma.service';
+import { AuditService } from '@/modules/audit/audit.service';
+import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class PermissionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private auditService: AuditService,
+  ) {}
 
   // ============================================
   // PERMISSIONS
@@ -103,12 +107,15 @@ export class PermissionsService {
   /**
    * Create a new custom role
    */
-  async createRole(data: {
-    nameAr: string;
-    nameEn?: string;
-    description?: string;
-    permissionIds: string[];
-  }) {
+  async createRole(
+    data: {
+      nameAr: string;
+      nameEn?: string;
+      description?: string;
+      permissionIds: string[];
+    },
+    userId?: string,
+  ) {
     // Verify all permissions exist
     const permissions = await this.prisma.permission.findMany({
       where: { id: { in: data.permissionIds } },
@@ -118,7 +125,7 @@ export class PermissionsService {
       throw new BadRequestException('بعض الصلاحيات المحددة غير موجودة');
     }
 
-    return this.prisma.role.create({
+    const role = await this.prisma.role.create({
       data: {
         nameAr: data.nameAr,
         nameEn: data.nameEn,
@@ -138,6 +145,21 @@ export class PermissionsService {
         },
       },
     });
+
+    // Audit: Log role creation (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'CREATE',
+      entity: 'Role',
+      entityId: role.id,
+      newData: {
+        nameAr: role.nameAr,
+        nameEn: role.nameEn,
+        permissionCount: data.permissionIds.length,
+      },
+    });
+
+    return role;
   }
 
   /**
@@ -151,8 +173,16 @@ export class PermissionsService {
       description?: string;
       permissionIds?: string[];
     },
+    userId?: string,
   ) {
-    const role = await this.prisma.role.findUnique({ where: { id } });
+    const role = await this.prisma.role.findUnique({
+      where: { id },
+      include: {
+        permissions: {
+          include: { permission: true },
+        },
+      },
+    });
 
     if (!role) {
       throw new NotFoundException('الدور غير موجود');
@@ -161,6 +191,9 @@ export class PermissionsService {
     if (role.isSystem) {
       throw new BadRequestException('لا يمكن تعديل الأدوار الأساسية للنظام');
     }
+
+    // Capture old data for audit
+    const oldPermissionCount = role.permissions.length;
 
     // If permissions are being updated, verify they exist
     if (data.permissionIds) {
@@ -173,7 +206,7 @@ export class PermissionsService {
       }
     }
 
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const updatedRole = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Update role basic info
       await tx.role.update({
         where: { id },
@@ -211,12 +244,32 @@ export class PermissionsService {
         },
       });
     });
+
+    // Audit: Log role update (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'UPDATE',
+      entity: 'Role',
+      entityId: id,
+      oldData: {
+        nameAr: role.nameAr,
+        nameEn: role.nameEn,
+        permissionCount: oldPermissionCount,
+      },
+      newData: {
+        nameAr: data.nameAr ?? role.nameAr,
+        nameEn: data.nameEn ?? role.nameEn,
+        permissionCount: data.permissionIds?.length ?? oldPermissionCount,
+      },
+    });
+
+    return updatedRole;
   }
 
   /**
    * Delete a custom role
    */
-  async deleteRole(id: string) {
+  async deleteRole(id: string, userId?: string) {
     const role = await this.prisma.role.findUnique({
       where: { id },
       include: {
@@ -240,6 +293,15 @@ export class PermissionsService {
 
     await this.prisma.role.delete({ where: { id } });
 
+    // Audit: Log role deletion (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'DELETE',
+      entity: 'Role',
+      entityId: id,
+      oldData: { nameAr: role.nameAr, nameEn: role.nameEn },
+    });
+
     return { success: true };
   }
 
@@ -250,7 +312,7 @@ export class PermissionsService {
   /**
    * Assign a custom role to a user
    */
-  async assignRoleToUser(userId: string, roleId: string) {
+  async assignRoleToUser(userId: string, roleId: string, assignedByUserId?: string) {
     const [user, role] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: userId } }),
       this.prisma.role.findUnique({ where: { id: roleId } }),
@@ -279,18 +341,38 @@ export class PermissionsService {
       return existing;
     }
 
-    return this.prisma.userCustomRole.create({
+    const assignment = await this.prisma.userCustomRole.create({
       data: { userId, roleId },
     });
+
+    // Audit: Log role assignment (PR#21)
+    await this.auditService.log({
+      userId: assignedByUserId || 'system',
+      action: 'ASSIGNMENT',
+      entity: 'UserCustomRole',
+      entityId: assignment.id,
+      newData: {
+        targetUserId: userId,
+        targetUserName: user.fullName,
+        roleId,
+        roleName: role.nameAr,
+      },
+    });
+
+    return assignment;
   }
 
   /**
    * Remove a custom role from a user
    */
-  async removeRoleFromUser(userId: string, roleId: string) {
+  async removeRoleFromUser(userId: string, roleId: string, removedByUserId?: string) {
     const assignment = await this.prisma.userCustomRole.findUnique({
       where: {
         userId_roleId: { userId, roleId },
+      },
+      include: {
+        user: { select: { fullName: true } },
+        role: { select: { nameAr: true } },
       },
     });
 
@@ -300,6 +382,20 @@ export class PermissionsService {
 
     await this.prisma.userCustomRole.delete({
       where: { id: assignment.id },
+    });
+
+    // Audit: Log role removal (PR#21)
+    await this.auditService.log({
+      userId: removedByUserId || 'system',
+      action: 'DELETE',
+      entity: 'UserCustomRole',
+      entityId: assignment.id,
+      oldData: {
+        targetUserId: userId,
+        targetUserName: assignment.user.fullName,
+        roleId,
+        roleName: assignment.role.nameAr,
+      },
     });
 
     return { success: true };

@@ -2,6 +2,7 @@ import type { PaginationMeta } from '@hypermarket/shared-types';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { clampPage, clampPageSize } from '@/common/constants';
+import { AuditService } from '@/modules/audit/audit.service';
 import { CacheService, CACHE_KEYS, CACHE_TTL, createCacheKey } from '@/modules/cache';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -48,6 +49,7 @@ export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
+    private readonly auditService: AuditService,
   ) {}
 
   async findAll(query: ProductQueryDto) {
@@ -181,7 +183,7 @@ export class ProductsService {
     return product as ProductWithCategory;
   }
 
-  async create(dto: CreateProductDto) {
+  async create(dto: CreateProductDto, userId?: string) {
     const product = await this.prisma.product.create({
       data: {
         sku: dto.sku,
@@ -213,12 +215,21 @@ export class ProductsService {
 
     this.logger.log(`Product created: ${product.id} (${product.sku})`);
 
+    // Audit: Log product creation (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'CREATE',
+      entity: 'Product',
+      entityId: product.id,
+      newData: { sku: product.sku, price: product.price, nameAr: product.nameAr },
+    });
+
     // No cache to invalidate on create - lists are not cached due to dynamic filters
 
     return product;
   }
 
-  async update(id: string, dto: UpdateProductDto) {
+  async update(id: string, dto: UpdateProductDto, userId?: string) {
     const existing = await this.findById(id);
 
     const product = await this.prisma.product.update({
@@ -233,6 +244,18 @@ export class ProductsService {
 
     this.logger.log(`Product updated: ${id}`);
 
+    // Audit: Log price changes (PR#21)
+    if (dto.price !== undefined && dto.price !== existing.price) {
+      await this.auditService.log({
+        userId: userId || 'system',
+        action: 'UPDATE',
+        entity: 'Product',
+        entityId: id,
+        oldData: { price: existing.price, sku: existing.sku },
+        newData: { price: dto.price, sku: product.sku },
+      });
+    }
+
     // Invalidate cache entries
     await Promise.all([
       this.cacheService.del(createCacheKey(CACHE_KEYS.PRODUCT_BY_ID, id)),
@@ -246,7 +269,7 @@ export class ProductsService {
     return product;
   }
 
-  async delete(id: string) {
+  async delete(id: string, userId?: string) {
     const existing = await this.findById(id);
 
     // Soft delete
@@ -256,6 +279,15 @@ export class ProductsService {
     });
 
     this.logger.log(`Product deleted: ${id}`);
+
+    // Audit: Log product deletion (PR#21)
+    await this.auditService.log({
+      userId: userId || 'system',
+      action: 'DELETE',
+      entity: 'Product',
+      entityId: id,
+      oldData: { sku: existing.sku, nameAr: existing.nameAr, price: existing.price },
+    });
 
     // Invalidate cache entries
     await Promise.all([
