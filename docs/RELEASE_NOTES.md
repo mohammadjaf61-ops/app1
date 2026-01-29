@@ -106,9 +106,8 @@ This release candidate (RC1) represents the feature-complete version of the Hype
 | Critical | @remix-run/node | Path Traversal | Low - Not directly used | Expo dependency, await upstream fix |
 | High | semver | ReDoS | Low - Build time only | Development dependency |
 | High | ip | SSRF | Low - CLI tool only | React Native dependency |
-| High | xlsx | Prototype Pollution | Medium | Consider replacing with sheetjs-ce |
 
-**Note:** The xlsx vulnerability in admin-web should be addressed in the next release by migrating to a patched version or alternative library.
+**Note:** The xlsx vulnerability has been resolved in PR#29 by removing the library and replacing it with a secure CSV export utility.
 
 ### Lint Warnings
 
@@ -220,6 +219,26 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
 - Verified build process
 - Documented known issues
 
+### PR#27 - Load & Stability Testing
+- Added comprehensive load testing scenarios
+- Created stability test suite
+- Documented failure scenario tests
+- Performance benchmarks established
+
+### PR#28 - Legal Compliance
+- Added Terms of Service
+- Added Privacy Policy
+- Added Return/Refund Policy
+- Implemented user consent tracking
+- Added Iraq-specific date formatting (Gregorian + Hijri)
+
+### PR#29 - Final Security Hardening
+- **Removed vulnerable xlsx library** (CVE-2024-22363 - Prototype Pollution)
+- Added secure CSV export utility (`export-utils.ts`)
+- Added security utility functions (`security-utils.ts`)
+- Created comprehensive security review document
+- Documented all known vulnerabilities and mitigations
+
 ---
 
 ## Support Contacts
@@ -237,6 +256,6 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
 1. Complete production environment setup
 2. Run full integration tests
 3. Perform load testing
-4. Address xlsx vulnerability
-5. Final security review
+4. ~~Address xlsx vulnerability~~ ✅ Resolved in PR#29
+5. ~~Final security review~~ ✅ Completed in PR#29 (see SECURITY_REVIEW.md)
 6. Go-live!
