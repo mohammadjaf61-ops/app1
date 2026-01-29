@@ -32,11 +32,53 @@ async function bootstrap(): Promise<void> {
   const requestContextMiddleware = new RequestContextMiddleware();
   app.use(requestContextMiddleware.use.bind(requestContextMiddleware));
 
-  // Security
-  app.use(helmet());
+  // Security Headers (PR#20)
+  app.use(
+    helmet({
+      // Content Security Policy - relaxed for API
+      contentSecurityPolicy:
+        nodeEnv === 'production'
+          ? {
+              directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'"],
+                imgSrc: ["'self'", 'data:', 'https:'],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                frameAncestors: ["'none'"],
+              },
+            }
+          : false, // Disable CSP in development for Swagger
+      // Prevent clickjacking
+      frameguard: { action: 'deny' },
+      // Prevent MIME type sniffing
+      noSniff: true,
+      // Hide X-Powered-By
+      hidePoweredBy: true,
+      // HSTS (Strict Transport Security) - production only
+      hsts:
+        nodeEnv === 'production'
+          ? {
+              maxAge: 31536000, // 1 year
+              includeSubDomains: true,
+              preload: true,
+            }
+          : false,
+      // Referrer Policy
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    }),
+  );
+
+  // CORS Configuration (PR#20)
+  const allowedOrigins = configService.get<string>('CORS_ORIGINS')?.split(',').filter(Boolean) || [];
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGINS')?.split(',') || '*',
+    origin: allowedOrigins.length > 0 ? allowedOrigins : nodeEnv !== 'production', // Allow all in dev, strict in prod
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-ID'],
+    maxAge: 86400, // 24 hours preflight cache
   });
 
   // API Versioning

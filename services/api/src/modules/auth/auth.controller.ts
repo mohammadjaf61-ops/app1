@@ -1,9 +1,11 @@
 import { JwtPayload } from '@hypermarket/shared-types';
-import { Controller, Post, Get, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Public } from '@/common/decorators/public.decorator';
+import { ThrottleAuth, ThrottleOtp } from '@/common/decorators/throttle.decorator';
 import { ApiErrorResponse } from '@/common/errors';
 
 import { AuthService } from './auth.service';
@@ -11,13 +13,18 @@ import { LoginDto } from './dto/login.dto';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 
+/**
+ * Authentication controller with rate limiting (Security PR#20)
+ */
 @ApiTags('auth')
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
   @Public()
+  @ThrottleAuth() // 5 attempts per minute (Security PR#20)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login with phone and password',
@@ -58,6 +65,7 @@ export class AuthController {
 
   @Post('otp/send')
   @Public()
+  @ThrottleOtp() // 3 requests per 5 minutes (Security PR#20)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Send OTP to phone',
@@ -93,6 +101,7 @@ export class AuthController {
 
   @Post('otp/verify')
   @Public()
+  @ThrottleAuth() // 5 attempts per minute (Security PR#20)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify OTP and get token',

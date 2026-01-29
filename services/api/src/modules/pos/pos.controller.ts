@@ -1,3 +1,4 @@
+import { UserRole } from '@hypermarket/shared-types';
 import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -7,11 +8,12 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { Roles } from '@/common/decorators/roles.decorator';
+import { ThrottlePOS } from '@/common/decorators/throttle.decorator';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/modules/auth/guards/roles.guard';
-import { UserRole } from '@hypermarket/shared-types';
 
 import {
   CreatePosOrderDto,
@@ -28,9 +30,13 @@ interface AuthenticatedRequest {
   };
 }
 
+/**
+ * POS Controller with rate limiting (Security PR#20)
+ */
 @ApiTags('POS - Point of Sale')
 @Controller('pos')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, ThrottlerGuard)
+@ThrottlePOS() // 60 requests per minute for all POS endpoints
 @ApiBearerAuth()
 export class PosController {
   constructor(private readonly posService: PosService) {}

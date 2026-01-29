@@ -1,5 +1,5 @@
 import { UserRole, OrderStatus, JwtPayload } from '@hypermarket/shared-types';
-import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,10 +9,12 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Public } from '@/common/decorators/public.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
+import { ThrottleOrderCreate } from '@/common/decorators/throttle.decorator';
 import { ApiErrorResponse } from '@/common/errors';
 
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -163,6 +165,8 @@ export class OrdersController {
 
   @Post()
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @ThrottleOrderCreate() // 30 orders per minute (Security PR#20)
   @ApiOperation({
     summary: 'Create order (Customer)',
     description: 'إنشاء طلب جديد - للعملاء',

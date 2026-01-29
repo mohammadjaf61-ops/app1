@@ -82,7 +82,8 @@ export class AuthService {
     }
 
     // Mock OTP - In production, send SMS here
-    this.logger.log(`[MOCK OTP] Sending OTP ${MOCK_OTP} to ${dto.phone}`);
+    // Security: Never log actual OTP values (PR#20)
+    this.logger.log(`[MOCK OTP] Sending OTP to phone ending in ...${dto.phone.slice(-4)}`);
 
     return { message: 'تم إرسال رمز التحقق' };
   }
@@ -108,6 +109,7 @@ export class AuthService {
       throw new BadRequestException('الحساب معطل');
     }
 
+    // Security: Log user ID only, not phone or OTP (PR#20)
     this.logger.log(`OTP verified for user: ${user.id}`);
 
     return this.generateAccessToken(user);
