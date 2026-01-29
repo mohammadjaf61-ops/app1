@@ -8,7 +8,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
 } from '@tanstack/react-table';
-import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight, User, Truck } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -32,7 +32,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useOrders, useOrder, useUpdateOrderStatus } from '@/hooks/use-api';
+import {
+  useOrders,
+  useOrder,
+  useUpdateOrderStatus,
+  useAssignPicker,
+  useUsers,
+} from '@/hooks/use-api';
 import {
   formatCurrency,
   formatDateTime,
@@ -59,6 +65,20 @@ interface Order {
     unitPrice: number;
     subtotal: number;
   }>;
+  picker?: {
+    id: string;
+    fullName: string;
+    phone?: string;
+  };
+  deliveryAssignment?: {
+    id: string;
+    status: string;
+    driver?: {
+      id: string;
+      fullName: string;
+      phone?: string;
+    };
+  };
 }
 
 const statusOptions = [
@@ -110,6 +130,32 @@ export default function OrdersPage() {
           {orderStatusLabels[row.original.status] || row.original.status}
         </Badge>
       ),
+    },
+    {
+      id: 'assignedStaff',
+      header: 'المُكلّف',
+      cell: ({ row }) => {
+        const order = row.original;
+        if (order.picker && ['PICKING'].includes(order.status)) {
+          return (
+            <div className="flex items-center gap-1.5 text-sm">
+              <User className="h-3.5 w-3.5 text-blue-600" />
+              <span className="text-muted-foreground">{order.picker.fullName}</span>
+            </div>
+          );
+        }
+        if (order.deliveryAssignment?.driver && ['OUT_FOR_DELIVERY'].includes(order.status)) {
+          return (
+            <div className="flex items-center gap-1.5 text-sm">
+              <Truck className="h-3.5 w-3.5 text-indigo-600" />
+              <span className="text-muted-foreground">
+                {order.deliveryAssignment.driver.fullName}
+              </span>
+            </div>
+          );
+        }
+        return <span className="text-xs text-muted-foreground">-</span>;
+      },
     },
     {
       accessorKey: 'total',
@@ -259,11 +305,22 @@ export default function OrdersPage() {
   );
 }
 
+interface Picker {
+  id: string;
+  fullName: string;
+  phone: string;
+  isActive: boolean;
+}
+
 function OrderDetailsSheet({ orderId, onClose }: { orderId: string | null; onClose: () => void }) {
   const { data: order, isLoading } = useOrder(orderId || '');
+  const { data: pickersData } = useUsers({ role: 'PICKER' });
   const updateStatus = useUpdateOrderStatus();
+  const assignPicker = useAssignPicker();
 
   const orderData = order as Order | undefined;
+  const pickers = ((pickersData as { data?: Picker[] })?.data || pickersData || []) as Picker[];
+  const activePickers = pickers.filter((p) => p.isActive);
 
   const handleStatusChange = async (newStatus: string) => {
     if (!orderId) {
@@ -273,6 +330,17 @@ function OrderDetailsSheet({ orderId, onClose }: { orderId: string | null; onClo
       await updateStatus.mutateAsync({ id: orderId, status: newStatus });
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleAssignPicker = async (pickerId: string) => {
+    if (!orderId) {
+      return;
+    }
+    try {
+      await assignPicker.mutateAsync({ orderId, pickerId });
+    } catch (error) {
+      console.error('Failed to assign picker:', error);
     }
   };
 
@@ -319,6 +387,75 @@ function OrderDetailsSheet({ orderId, onClose }: { orderId: string | null; onClo
             </div>
 
             <Separator />
+
+            {/* Assign Picker - for PENDING orders */}
+            {orderData.status === 'PENDING' && !orderData.picker && (
+              <>
+                <div className="space-y-2">
+                  <h3 className="font-medium">تعيين جامع</h3>
+                  <Select onValueChange={handleAssignPicker} disabled={assignPicker.isPending}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر الجامع..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {activePickers.map((picker) => (
+                        <SelectItem key={picker.id} value={picker.id}>
+                          {picker.fullName}
+                        </SelectItem>
+                      ))}
+                      {activePickers.length === 0 && (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          لا يوجد جامعون نشطون
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* Assigned Staff Info */}
+            {(orderData.picker || orderData.deliveryAssignment?.driver) && (
+              <>
+                <div className="space-y-2">
+                  <h3 className="font-medium">الموظف المُكلّف</h3>
+                  <div className="space-y-3">
+                    {orderData.picker && (
+                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                        <User className="h-5 w-5 text-blue-600" />
+                        <div>
+                          <p className="font-medium text-blue-900">{orderData.picker.fullName}</p>
+                          <p className="text-xs text-blue-700">الجامع (Picker)</p>
+                          {orderData.picker.phone && (
+                            <p className="text-xs text-muted-foreground" dir="ltr">
+                              {formatPhone(orderData.picker.phone)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {orderData.deliveryAssignment?.driver && (
+                      <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg">
+                        <Truck className="h-5 w-5 text-indigo-600" />
+                        <div>
+                          <p className="font-medium text-indigo-900">
+                            {orderData.deliveryAssignment.driver.fullName}
+                          </p>
+                          <p className="text-xs text-indigo-700">السائق (Driver)</p>
+                          {orderData.deliveryAssignment.driver.phone && (
+                            <p className="text-xs text-muted-foreground" dir="ltr">
+                              {formatPhone(orderData.deliveryAssignment.driver.phone)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Customer Info */}
             <div className="space-y-2">

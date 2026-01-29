@@ -119,6 +119,18 @@ export function useUpdateOrderStatus() {
   });
 }
 
+export function useAssignPicker() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ orderId, pickerId }: { orderId: string; pickerId: string }) =>
+      apiClient.patch(`/orders/${orderId}/assign-picker`, { pickerId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+}
+
 // Inventory hooks
 export function useInventory(filters?: { page?: number; limit?: number; lowStock?: boolean }) {
   const params = new URLSearchParams();
