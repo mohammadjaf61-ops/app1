@@ -1,5 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+
 import { StructuredLogger, createLogger } from '@/common/observability';
+
 import { PricingRulesService, PricingValidationResult } from './pricing-rules.service';
 import { StoreAvailabilityService, StoreAvailabilityResult } from './store-availability.service';
 

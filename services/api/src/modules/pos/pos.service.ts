@@ -1,6 +1,6 @@
 import { OrderStatus, PaymentMethod, PaymentStatus } from '@hypermarket/shared-types';
-import { Prisma } from '@prisma/client';
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import { StructuredLogger, createLogger } from '@/common/observability';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -165,7 +165,9 @@ export class PosService {
       let remainingQty = item.quantity;
 
       for (const invItem of product.inventoryItems) {
-        if (remainingQty <= 0) break;
+        if (remainingQty <= 0) {
+          break;
+        }
 
         const deductQty = Math.min(invItem.quantity, remainingQty);
         if (deductQty > 0) {

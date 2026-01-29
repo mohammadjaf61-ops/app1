@@ -1,7 +1,6 @@
+import { PaymentMethod, PaymentStatus } from '@hypermarket/shared-types';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-
-import { PaymentMethod, PaymentStatus } from '@hypermarket/shared-types';
 
 /**
  * DTO for marking payment as paid

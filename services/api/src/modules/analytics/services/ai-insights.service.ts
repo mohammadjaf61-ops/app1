@@ -274,10 +274,7 @@ export class AiInsightsService {
     }
 
     type OrderStat = { status: string; count: bigint };
-    const totalOrders = orderStats.reduce(
-      (sum: number, s: OrderStat) => sum + Number(s.count),
-      0,
-    );
+    const totalOrders = orderStats.reduce((sum: number, s: OrderStat) => sum + Number(s.count), 0);
     const cancelledCount = Number(
       orderStats.find((s: OrderStat) => s.status === 'CANCELLED')?.count || 0,
     );

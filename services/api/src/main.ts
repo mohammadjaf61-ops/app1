@@ -72,7 +72,8 @@ async function bootstrap(): Promise<void> {
   );
 
   // CORS Configuration (PR#20)
-  const allowedOrigins = configService.get<string>('CORS_ORIGINS')?.split(',').filter(Boolean) || [];
+  const allowedOrigins =
+    configService.get<string>('CORS_ORIGINS')?.split(',').filter(Boolean) || [];
   app.enableCors({
     origin: allowedOrigins.length > 0 ? allowedOrigins : nodeEnv !== 'production', // Allow all in dev, strict in prod
     credentials: true,

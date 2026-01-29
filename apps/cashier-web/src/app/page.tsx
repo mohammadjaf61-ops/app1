@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Barcode,
   Minus,
@@ -11,9 +10,12 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { posApi, PosOrderResponse } from '@/lib/api';
-import { useCart, CartItem } from '@/hooks/use-cart';
+import type { CartItem } from '@/hooks/use-cart';
+import { useCart } from '@/hooks/use-cart';
+import type { PosOrderResponse } from '@/lib/api';
+import { posApi } from '@/lib/api';
 
 type ViewState = 'cart' | 'receipt' | 'login';
 
@@ -50,7 +52,9 @@ export default function PosPage() {
   // Handle barcode/SKU input
   const handleBarcodeSubmit = async () => {
     const sku = barcodeInput.trim().toUpperCase();
-    if (!sku) return;
+    if (!sku) {
+      return;
+    }
 
     setError(null);
     setIsLoading(true);
@@ -77,7 +81,9 @@ export default function PosPage() {
 
   // Handle payment (checkout)
   const handleCheckout = async () => {
-    if (cart.isEmpty) return;
+    if (cart.isEmpty) {
+      return;
+    }
 
     setError(null);
     setIsLoading(true);
@@ -128,7 +134,9 @@ export default function PosPage() {
 
   // Keyboard shortcuts
   useEffect(() => {
-    if (view !== 'cart') return;
+    if (view !== 'cart') {
+      return;
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Escape = Clear cart

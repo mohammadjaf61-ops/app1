@@ -57,7 +57,9 @@ export function AddToCartButton({
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handlePress = useCallback(async () => {
-    if (disabled || loading) return;
+    if (disabled || loading) {
+      return;
+    }
 
     // Trigger success animation
     Animated.sequence([

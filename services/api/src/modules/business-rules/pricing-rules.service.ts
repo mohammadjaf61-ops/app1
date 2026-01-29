@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CacheService, CACHE_KEYS } from '@/modules/cache';
+
 import { StructuredLogger, createLogger } from '@/common/observability';
+import { CacheService, CACHE_KEYS } from '@/modules/cache';
+import { PrismaService } from '@/prisma/prisma.service';
 
 /**
  * Validation result for order pricing rules
@@ -145,7 +146,7 @@ export class PricingRulesService {
   async getDeliveryFee(zoneId: string): Promise<number> {
     const zone = await this.getDeliveryZoneById(zoneId);
 
-    if (!zone || !zone.isActive) {
+    if (!zone?.isActive) {
       throw new BadRequestException({
         errorCode: 'errors.deliveryUnavailable',
         message: 'Delivery zone not available',
@@ -169,7 +170,7 @@ export class PricingRulesService {
   }> {
     const zone = await this.getDeliveryZoneById(zoneId);
 
-    if (!zone || !zone.isActive) {
+    if (!zone?.isActive) {
       throw new BadRequestException({
         errorCode: 'errors.deliveryUnavailable',
         message: 'Delivery zone not available',

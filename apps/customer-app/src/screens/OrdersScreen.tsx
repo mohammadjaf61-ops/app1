@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { Order } from '@hypermarket/contracts';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
-
-import type { Order } from '@hypermarket/contracts';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { useOrders } from '@/hooks/use-api';

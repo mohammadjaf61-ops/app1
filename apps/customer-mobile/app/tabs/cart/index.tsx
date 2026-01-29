@@ -14,7 +14,8 @@ import {
 
 import { useToast } from '../../../components/Toast';
 import { formatCurrencyShort } from '../../../lib/formatters';
-import { useCartStore, CartItem } from '../../../stores/cart-store';
+import type { CartItem } from '../../../stores/cart-store';
+import { useCartStore } from '../../../stores/cart-store';
 
 function QuantityControl({
   quantity,
@@ -120,7 +121,7 @@ function CartItemRow({ item, onRemove }: { item: CartItem; onRemove: () => void 
 export default function CartScreen() {
   const { items, clearCart, removeItem, getSubtotal, getDeliveryFee, getTotal } = useCartStore();
   const { showToast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, _setIsProcessing] = useState(false);
 
   const subtotal = getSubtotal();
   const deliveryFee = getDeliveryFee();

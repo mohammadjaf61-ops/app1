@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Banknote, MapPin, User, Phone, FileText, AlertTriangle, Loader2 } from 'lucide-react-native';
+import { Banknote, MapPin, User, Phone, FileText, AlertTriangle } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   View,
@@ -273,7 +273,9 @@ export default function CheckoutScreen() {
                 <View className="mb-3">
                   {items.slice(0, 3).map((item) => (
                     <View key={item.productId} className="flex-row justify-between mb-1">
-                      <Text className="text-gray-700">{formatCurrencyShort(item.price * item.quantity)}</Text>
+                      <Text className="text-gray-700">
+                        {formatCurrencyShort(item.price * item.quantity)}
+                      </Text>
                       <Text className="text-gray-600 flex-1 text-right mr-2" numberOfLines={1}>
                         {item.nameAr} × {item.quantity}
                       </Text>
@@ -299,7 +301,9 @@ export default function CheckoutScreen() {
                 </View>
                 <View className="h-px bg-gray-300 my-3" />
                 <View className="flex-row justify-between">
-                  <Text className="text-primary text-xl font-bold">{formatCurrencyShort(total)}</Text>
+                  <Text className="text-primary text-xl font-bold">
+                    {formatCurrencyShort(total)}
+                  </Text>
                   <Text className="text-gray-900 font-bold text-lg">المجموع الكلي</Text>
                 </View>
               </View>

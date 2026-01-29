@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
-import { CacheService, CACHE_KEYS } from '@/modules/cache';
+
 import { StructuredLogger, createLogger } from '@/common/observability';
+import { CacheService, CACHE_KEYS } from '@/modules/cache';
+import { PrismaService } from '@/prisma/prisma.service';
 
 /**
  * Day of week enum matching Prisma schema

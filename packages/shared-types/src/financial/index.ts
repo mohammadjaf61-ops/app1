@@ -2,7 +2,7 @@
  * Financial types
  */
 
-import { PaymentMethod, PaymentStatus } from '../order';
+import type { PaymentMethod, PaymentStatus } from '../order';
 
 /**
  * Payment record

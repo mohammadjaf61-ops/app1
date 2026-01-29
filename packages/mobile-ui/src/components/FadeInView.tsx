@@ -86,7 +86,9 @@ export function FadeInView({
 }
 
 function getInitialTranslate(slide: FadeInViewProps['slide'], distance: number): number {
-  if (!slide) return 0;
+  if (!slide) {
+    return 0;
+  }
 
   switch (slide) {
     case 'up':

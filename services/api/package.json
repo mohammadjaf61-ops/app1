@@ -1,6 +1,6 @@
 {
   "name": "@hypermarket/api",
-  "version": "0.0.1",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Hypermarket backend API service built with NestJS",
   "main": "dist/main.js",

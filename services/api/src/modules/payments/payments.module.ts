@@ -1,9 +1,9 @@
 import { Module, Global } from '@nestjs/common';
 
+import { PAYMENT_PROVIDER } from './payment-provider.interface';
 import { PaymentsAdminController } from './payments-admin.controller';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
-import { PAYMENT_PROVIDER } from './payment-provider.interface';
 import { PlaceholderPaymentProvider } from './providers/placeholder.provider';
 
 @Global()

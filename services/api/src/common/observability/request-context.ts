@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'async_hooks';
+
 import { Injectable } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -73,7 +74,9 @@ export class RequestContext {
    */
   static getElapsedMs(): number {
     const store = asyncLocalStorage.getStore();
-    if (!store?.startTime) return 0;
+    if (!store?.startTime) {
+      return 0;
+    }
     return Date.now() - store.startTime;
   }
 

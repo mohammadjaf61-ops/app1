@@ -119,7 +119,9 @@ export class SettingsService implements OnModuleInit {
    * Check if cache needs refresh
    */
   private isCacheStale(): boolean {
-    if (!this.cacheLoadedAt) return true;
+    if (!this.cacheLoadedAt) {
+      return true;
+    }
     return Date.now() - this.cacheLoadedAt.getTime() > this.CACHE_TTL_MS;
   }
 
@@ -158,9 +160,12 @@ export class SettingsService implements OnModuleInit {
    */
   async getNumber(key: SettingKey, defaultOverride?: number): Promise<number> {
     const value = await this.get<number>(key);
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string')
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'string') {
       return parseFloat(value) || (defaultOverride ?? (SETTINGS_DEFAULTS[key] as number));
+    }
     return defaultOverride ?? (SETTINGS_DEFAULTS[key] as number);
   }
 
@@ -169,8 +174,12 @@ export class SettingsService implements OnModuleInit {
    */
   async getBoolean(key: SettingKey, defaultOverride?: boolean): Promise<boolean> {
     const value = await this.get<boolean>(key);
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') return value === 'true' || value === '1';
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      return value === 'true' || value === '1';
+    }
     return defaultOverride ?? (SETTINGS_DEFAULTS[key] as boolean);
   }
 
@@ -179,7 +188,9 @@ export class SettingsService implements OnModuleInit {
    */
   async getString(key: SettingKey, defaultOverride?: string): Promise<string> {
     const value = await this.get<string>(key);
-    if (typeof value === 'string') return value;
+    if (typeof value === 'string') {
+      return value;
+    }
     return defaultOverride ?? String(SETTINGS_DEFAULTS[key] ?? '');
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "hypermarket-platform",
-  "version": "0.0.1",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Full hypermarket platform for Iraq market - Admin Web, Customer/Picker/Driver Mobile Apps, and Backend Services",
   "author": "Hypermarket Team",

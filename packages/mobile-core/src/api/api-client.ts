@@ -1,6 +1,6 @@
+import { ApiExceptionSchema } from '@hypermarket/contracts';
 import * as SecureStore from 'expo-secure-store';
 import type { ZodType, ZodTypeAny } from 'zod';
-import { ApiExceptionSchema } from '@hypermarket/contracts';
 
 /**
  * API Error interface

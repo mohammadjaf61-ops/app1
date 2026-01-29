@@ -1,27 +1,27 @@
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { BullModule } from '@nestjs/bull';
 
 import { configuration, validationSchema } from './config/configuration';
-import { PrismaModule } from './prisma/prisma.module';
-import { CacheModule } from './modules/cache';
-import { SettingsModule } from './modules/settings';
-import { BusinessRulesModule } from './modules/business-rules';
-import { PaymentsModule } from './modules/payments';
-import { HealthModule } from './modules/health/health.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BusinessRulesModule } from './modules/business-rules';
+import { CacheModule } from './modules/cache';
 import { UsersModule } from './modules/users/users.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
-import { ReportsModule } from './modules/reports/reports.module';
-import { AuditModule } from './modules/audit/audit.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { PosModule } from './modules/pos';
+import { HealthModule } from './modules/health/health.module';
+import { PaymentsModule } from './modules/payments';
 import { PermissionsModule } from './modules/permissions';
+import { PosModule } from './modules/pos';
+import { ReportsModule } from './modules/reports/reports.module';
+import { SettingsModule } from './modules/settings';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [

@@ -1,15 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { Product, Category } from '@hypermarket/contracts';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-
-import type { Product, Category } from '@hypermarket/contracts';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
-import { RootStackParamList } from '@/navigation/RootNavigator';
+import type { RootStackParamList } from '@/navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -17,7 +16,7 @@ export function CategoriesScreen() {
   const navigation = useNavigation<NavigationProp>();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const { data: categories, isLoading: _categoriesLoading } = useCategories();
   const { data: productsData, isLoading: productsLoading } = useProducts({
     categoryId: selectedCategory || undefined,
     limit: 20,

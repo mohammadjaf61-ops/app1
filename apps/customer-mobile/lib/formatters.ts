@@ -16,7 +16,9 @@ export function formatCurrencyShort(amount: number): string {
  * Format phone number for display
  */
 export function formatPhone(phone: string): string {
-  if (!phone) return '';
+  if (!phone) {
+    return '';
+  }
   // Format: 07XX XXX XXXX
   const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length === 11 && cleaned.startsWith('07')) {

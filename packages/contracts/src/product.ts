@@ -2,6 +2,7 @@
  * Product Zod schemas
  */
 import { z } from 'zod';
+
 import { BaseEntitySchema, PaginationMetaSchema } from './common';
 
 /**

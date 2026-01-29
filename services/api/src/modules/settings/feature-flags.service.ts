@@ -42,8 +42,7 @@ export class FeatureFlagsService {
    * Check if a feature flag is enabled
    */
   async isEnabled(flag: FeatureFlagKey): Promise<boolean> {
-    const enabled = await this.settingsService.getBoolean(flag, true);
-    return enabled;
+    return this.settingsService.getBoolean(flag, true);
   }
 
   /**

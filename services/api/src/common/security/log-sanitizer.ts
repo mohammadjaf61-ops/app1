@@ -69,7 +69,7 @@ export function maskPhone(phone: string): string {
  * @returns Masked email
  */
 export function maskEmail(email: string): string {
-  if (!email || !email.includes('@')) {
+  if (!email?.includes('@')) {
     return '****@****';
   }
   const [local, domain] = email.split('@');
@@ -83,7 +83,9 @@ export function maskEmail(email: string): string {
  * @returns True if string appears to be a JWT
  */
 export function isJwtLike(str: string): boolean {
-  if (typeof str !== 'string') return false;
+  if (typeof str !== 'string') {
+    return false;
+  }
   const parts = str.split('.');
   return parts.length === 3 && parts.every((part) => part.length > 10);
 }

@@ -2,8 +2,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, Package, Clock, Home, ClipboardList } from 'lucide-react-native';
 import { View, Text, SafeAreaView, Pressable } from 'react-native';
 
-import { formatCurrencyShort } from '../lib/formatters';
 import { ORDER_STATUS_LABELS } from '../lib/constants';
+import { formatCurrencyShort } from '../lib/formatters';
 
 export default function OrderConfirmationScreen() {
   const params = useLocalSearchParams<{
@@ -88,9 +88,7 @@ export default function OrderConfirmationScreen() {
             <Text className="text-primary font-bold w-6 text-center">١</Text>
           </View>
           <View className="flex-row items-start mb-2">
-            <Text className="text-gray-600 text-right flex-1">
-              سيتم تجهيز طلبك وإعداده للتوصيل
-            </Text>
+            <Text className="text-gray-600 text-right flex-1">سيتم تجهيز طلبك وإعداده للتوصيل</Text>
             <Text className="text-primary font-bold w-6 text-center">٢</Text>
           </View>
           <View className="flex-row items-start">

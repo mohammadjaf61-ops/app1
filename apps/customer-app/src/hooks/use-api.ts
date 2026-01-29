@@ -1,5 +1,3 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-
 import type {
   Product,
   Category,
@@ -8,9 +6,10 @@ import type {
   OrderListResponse,
   CreateOrderRequest,
 } from '@hypermarket/contracts';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { apiClient } from '@/services/api-client';
 import { QUERY_KEYS } from '@/lib/constants';
+import { apiClient } from '@/services/api-client';
 
 // ========== Categories ==========
 
@@ -39,10 +38,18 @@ export function useProducts(params?: {
   search?: string;
 }) {
   const searchParams = new URLSearchParams();
-  if (params?.categoryId) searchParams.set('categoryId', params.categoryId);
-  if (params?.page) searchParams.set('page', String(params.page));
-  if (params?.limit) searchParams.set('limit', String(params.limit));
-  if (params?.search) searchParams.set('search', params.search);
+  if (params?.categoryId) {
+    searchParams.set('categoryId', params.categoryId);
+  }
+  if (params?.page) {
+    searchParams.set('page', String(params.page));
+  }
+  if (params?.limit) {
+    searchParams.set('limit', String(params.limit));
+  }
+  if (params?.search) {
+    searchParams.set('search', params.search);
+  }
 
   return useQuery({
     queryKey: QUERY_KEYS.products(params),

@@ -13,7 +13,9 @@ import type { InterpolationParams } from './types';
  * interpolate('{{count}} items', { count: 5 }) // '5 items'
  */
 export function interpolate(text: string, params?: InterpolationParams): string {
-  if (!params) return text;
+  if (!params) {
+    return text;
+  }
 
   return text.replace(/\{\{(\w+)\}\}/g, (_, key) => {
     const value = params[key];

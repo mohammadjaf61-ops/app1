@@ -14,7 +14,9 @@ import { I18nManager } from 'react-native';
  */
 function getDeviceLocale(): Locale {
   const deviceLocale = Localization.locale?.split('-')[0];
-  if (deviceLocale === 'en') return 'en';
+  if (deviceLocale === 'en') {
+    return 'en';
+  }
   return DEFAULT_LOCALE; // Arabic by default
 }
 

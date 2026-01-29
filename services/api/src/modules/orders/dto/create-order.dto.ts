@@ -1,3 +1,4 @@
+import { PaymentMethod } from '@hypermarket/shared-types';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -13,8 +14,6 @@ import {
   ArrayMinSize,
   IsEnum,
 } from 'class-validator';
-
-import { PaymentMethod } from '@hypermarket/shared-types';
 
 export class OrderItemDto {
   @ApiProperty({

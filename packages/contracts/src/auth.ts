@@ -2,6 +2,7 @@
  * Authentication Zod schemas
  */
 import { z } from 'zod';
+
 import { BaseEntitySchema } from './common';
 
 /**
