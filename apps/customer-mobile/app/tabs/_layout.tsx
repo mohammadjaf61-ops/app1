@@ -1,5 +1,38 @@
 import { Tabs } from 'expo-router';
 import { Home, ShoppingCart, ClipboardList, User } from 'lucide-react-native';
+import { View, Text } from 'react-native';
+
+import { useCartStore } from '../../stores/cart-store';
+
+function CartTabIcon({ color, size }: { color: string; size: number }) {
+  const itemCount = useCartStore((state) => state.getItemCount());
+
+  return (
+    <View>
+      <ShoppingCart size={size} color={color} />
+      {itemCount > 0 && (
+        <View
+          style={{
+            position: 'absolute',
+            top: -6,
+            right: -10,
+            backgroundColor: '#dc2626',
+            borderRadius: 10,
+            minWidth: 18,
+            height: 18,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 4,
+          }}
+        >
+          <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>
+            {itemCount > 99 ? '99+' : itemCount}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   return (
@@ -28,7 +61,7 @@ export default function TabsLayout() {
         name="cart"
         options={{
           title: 'السلة',
-          tabBarIcon: ({ color, size }) => <ShoppingCart size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <CartTabIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen

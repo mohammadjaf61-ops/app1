@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { I18nManager } from 'react-native';
 
+import { ToastProvider } from '../components/Toast';
+
 // Enable RTL for Arabic
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -27,17 +29,34 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="auto" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_left', // RTL animation
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="tabs" options={{ headerShown: false }} />
-      </Stack>
+      <ToastProvider>
+        <StatusBar style="auto" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_left', // RTL animation
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="tabs" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="checkout"
+            options={{
+              headerShown: true,
+              title: 'إتمام الطلب',
+              headerBackTitle: 'السلة',
+            }}
+          />
+          <Stack.Screen
+            name="order-confirmation"
+            options={{
+              headerShown: false,
+              gestureEnabled: false, // Prevent back gesture
+            }}
+          />
+        </Stack>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

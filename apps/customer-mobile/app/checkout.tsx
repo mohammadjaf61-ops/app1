@@ -1,0 +1,344 @@
+import { router } from 'expo-router';
+import { Banknote, MapPin, User, Phone, FileText, AlertTriangle, Loader2 } from 'lucide-react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  SafeAreaView,
+  ScrollView,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
+
+import { useToast } from '../components/Toast';
+import { formatCurrencyShort } from '../lib/formatters';
+import { useCartStore } from '../stores/cart-store';
+
+// Error codes from API
+const ERROR_MESSAGES: Record<string, string> = {
+  'errors.productNotAvailable': 'بعض المنتجات غير متوفرة حالياً',
+  'errors.productNotFound': 'منتج غير موجود',
+  'errors.outOfStock': 'المنتج نفذ من المخزون',
+  'errors.priceChanged': 'تغير سعر المنتج، يرجى مراجعة السلة',
+  'errors.minimumOrderNotMet': 'الحد الأدنى للطلب غير مستوفى',
+  'errors.storeClosedForOrders': 'المتجر مغلق حالياً',
+};
+
+function InputField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  icon,
+  keyboardType = 'default',
+  multiline = false,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+  icon: React.ReactNode;
+  keyboardType?: 'default' | 'phone-pad' | 'email-address';
+  multiline?: boolean;
+  error?: string;
+}) {
+  return (
+    <View className="mb-4">
+      <Text className="text-gray-700 font-medium text-right mb-2">{label}</Text>
+      <View
+        className={`flex-row items-center bg-gray-50 rounded-xl px-4 border ${
+          error ? 'border-red-300' : 'border-gray-200'
+        }`}
+      >
+        <View className="mr-3">{icon}</View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="#9ca3af"
+          keyboardType={keyboardType}
+          multiline={multiline}
+          numberOfLines={multiline ? 3 : 1}
+          className={`flex-1 text-right py-4 text-gray-900 ${multiline ? 'min-h-[80px]' : ''}`}
+          textAlign="right"
+        />
+      </View>
+      {error && <Text className="text-red-500 text-sm text-right mt-1">{error}</Text>}
+    </View>
+  );
+}
+
+export default function CheckoutScreen() {
+  const { showToast } = useToast();
+  const {
+    items,
+    customerName,
+    customerPhone,
+    deliveryAddress,
+    notes,
+    setCustomerName,
+    setCustomerPhone,
+    setDeliveryAddress,
+    setNotes,
+    getSubtotal,
+    getDeliveryFee,
+    getTotal,
+    clearCart,
+  } = useCartStore();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const subtotal = getSubtotal();
+  const deliveryFee = getDeliveryFee();
+  const total = getTotal();
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!customerName.trim()) {
+      newErrors.customerName = 'يرجى إدخال الاسم';
+    }
+
+    if (!customerPhone.trim()) {
+      newErrors.customerPhone = 'يرجى إدخال رقم الهاتف';
+    } else if (!/^07\d{9}$/.test(customerPhone.trim())) {
+      newErrors.customerPhone = 'رقم الهاتف غير صحيح (07XXXXXXXXX)';
+    }
+
+    if (!deliveryAddress.trim()) {
+      newErrors.deliveryAddress = 'يرجى إدخال عنوان التوصيل';
+    } else if (deliveryAddress.trim().length < 10) {
+      newErrors.deliveryAddress = 'يرجى إدخال عنوان تفصيلي أكثر';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmitOrder = async () => {
+    if (!validate()) {
+      showToast('يرجى تصحيح الأخطاء', 'error');
+      return;
+    }
+
+    if (items.length === 0) {
+      showToast('السلة فارغة', 'warning');
+      router.back();
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Simulate API call - in production, this would be a real API call
+      // const response = await createOrder({
+      //   customerName: customerName.trim(),
+      //   customerPhone: customerPhone.trim(),
+      //   deliveryAddressText: deliveryAddress.trim(),
+      //   notes: notes.trim() || undefined,
+      //   items: items.map((item) => ({
+      //     productId: item.productId,
+      //     quantity: item.quantity,
+      //   })),
+      // });
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Mock successful order
+      const mockOrder = {
+        id: `order-${Date.now()}`,
+        orderNumber: `ORD-${Math.floor(Math.random() * 100000)}`,
+        status: 'PENDING',
+        total,
+        itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
+      };
+
+      // Clear cart after successful order
+      clearCart();
+
+      // Navigate to confirmation
+      router.replace({
+        pathname: '/order-confirmation',
+        params: {
+          orderId: mockOrder.id,
+          orderNumber: mockOrder.orderNumber,
+          total: total.toString(),
+          itemCount: mockOrder.itemCount.toString(),
+        },
+      });
+    } catch (error: any) {
+      const errorCode = error?.errorCode || error?.message;
+      const message = ERROR_MESSAGES[errorCode] || error?.message || 'فشل في إنشاء الطلب';
+
+      showToast(message, 'error');
+
+      // Handle specific errors
+      if (errorCode === 'errors.productNotAvailable' || errorCode === 'errors.outOfStock') {
+        // Could navigate back to cart to review items
+        showToast('يرجى مراجعة السلة وإزالة المنتجات غير المتوفرة', 'warning');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <SafeAreaView className="flex-1 bg-white">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <View className="p-4">
+            {/* Customer Info Section */}
+            <View className="mb-6">
+              <Text className="text-lg font-bold text-gray-900 text-right mb-4">
+                معلومات العميل
+              </Text>
+              <InputField
+                label="الاسم الكامل"
+                value={customerName}
+                onChangeText={setCustomerName}
+                placeholder="أدخل اسمك الكامل"
+                icon={<User size={20} color="#6b7280" />}
+                error={errors.customerName}
+              />
+              <InputField
+                label="رقم الهاتف"
+                value={customerPhone}
+                onChangeText={setCustomerPhone}
+                placeholder="07XX XXX XXXX"
+                icon={<Phone size={20} color="#6b7280" />}
+                keyboardType="phone-pad"
+                error={errors.customerPhone}
+              />
+            </View>
+
+            {/* Delivery Address Section */}
+            <View className="mb-6">
+              <Text className="text-lg font-bold text-gray-900 text-right mb-4">عنوان التوصيل</Text>
+              <InputField
+                label="العنوان التفصيلي"
+                value={deliveryAddress}
+                onChangeText={setDeliveryAddress}
+                placeholder="المنطقة، الشارع، أقرب نقطة دالة..."
+                icon={<MapPin size={20} color="#6b7280" />}
+                multiline
+                error={errors.deliveryAddress}
+              />
+            </View>
+
+            {/* Notes Section */}
+            <View className="mb-6">
+              <Text className="text-lg font-bold text-gray-900 text-right mb-4">
+                ملاحظات (اختياري)
+              </Text>
+              <InputField
+                label="تعليمات خاصة"
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="أي تعليمات خاصة للطلب..."
+                icon={<FileText size={20} color="#6b7280" />}
+                multiline
+              />
+            </View>
+
+            {/* Payment Method */}
+            <View className="mb-6">
+              <Text className="text-lg font-bold text-gray-900 text-right mb-4">طريقة الدفع</Text>
+              <View className="bg-green-50 border border-green-200 p-4 rounded-xl flex-row items-center">
+                <View className="flex-1">
+                  <Text className="text-gray-900 font-semibold text-right">الدفع عند الاستلام</Text>
+                  <Text className="text-gray-500 text-sm text-right">
+                    ادفع نقداً عند استلام الطلب
+                  </Text>
+                </View>
+                <View className="bg-green-100 w-12 h-12 rounded-full items-center justify-center">
+                  <Banknote size={24} color="#16a34a" />
+                </View>
+              </View>
+            </View>
+
+            {/* Order Summary */}
+            <View className="mb-6">
+              <Text className="text-lg font-bold text-gray-900 text-right mb-4">ملخص الطلب</Text>
+              <View className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                {/* Items Summary */}
+                <View className="mb-3">
+                  {items.slice(0, 3).map((item) => (
+                    <View key={item.productId} className="flex-row justify-between mb-1">
+                      <Text className="text-gray-700">{formatCurrencyShort(item.price * item.quantity)}</Text>
+                      <Text className="text-gray-600 flex-1 text-right mr-2" numberOfLines={1}>
+                        {item.nameAr} × {item.quantity}
+                      </Text>
+                    </View>
+                  ))}
+                  {items.length > 3 && (
+                    <Text className="text-gray-500 text-sm text-right">
+                      و {items.length - 3} منتجات أخرى...
+                    </Text>
+                  )}
+                </View>
+
+                <View className="h-px bg-gray-200 my-3" />
+
+                {/* Totals */}
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-gray-900">{formatCurrencyShort(subtotal)}</Text>
+                  <Text className="text-gray-500">المنتجات ({items.length})</Text>
+                </View>
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-gray-900">{formatCurrencyShort(deliveryFee)}</Text>
+                  <Text className="text-gray-500">رسوم التوصيل</Text>
+                </View>
+                <View className="h-px bg-gray-300 my-3" />
+                <View className="flex-row justify-between">
+                  <Text className="text-primary text-xl font-bold">{formatCurrencyShort(total)}</Text>
+                  <Text className="text-gray-900 font-bold text-lg">المجموع الكلي</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Warning for large orders */}
+            {items.length > 10 && (
+              <View className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex-row items-center mb-6">
+                <View className="flex-1 mr-3">
+                  <Text className="text-amber-800 text-sm text-right">
+                    طلبك يحتوي على {items.length} منتج. قد يستغرق التجهيز وقتاً أطول.
+                  </Text>
+                </View>
+                <AlertTriangle size={24} color="#d97706" />
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Submit Button */}
+        <View className="p-4 bg-white border-t border-gray-100 shadow-lg">
+          <Pressable
+            onPress={handleSubmitOrder}
+            disabled={isSubmitting}
+            className={`py-4 rounded-xl flex-row items-center justify-center ${
+              isSubmitting ? 'bg-gray-400' : 'bg-primary'
+            }`}
+          >
+            {isSubmitting ? (
+              <>
+                <ActivityIndicator color="white" size="small" />
+                <Text className="text-white font-bold text-lg mr-2">جاري إرسال الطلب...</Text>
+              </>
+            ) : (
+              <Text className="text-white font-bold text-lg">تأكيد الطلب</Text>
+            )}
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
