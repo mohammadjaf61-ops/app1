@@ -48,7 +48,7 @@ export class IntegrationsService {
         this.logger.warn('SMS send failed', { error: result.error, orderId: payload.orderId });
       }
     } catch (error) {
-      this.logger.error('SMS send error', { error, orderId: payload.orderId });
+      this.logger.error('SMS send error', undefined, { error, orderId: payload.orderId });
     }
   }
 
@@ -75,7 +75,7 @@ export class IntegrationsService {
         });
       }
     } catch (error) {
-      this.logger.error('Notification send error', { error, userId: payload.userId });
+      this.logger.error('Notification send error', undefined, { error, userId: payload.userId });
     }
   }
 
@@ -93,7 +93,7 @@ export class IntegrationsService {
         this.logger.warn('Topic notification failed', { error: result.error, topic });
       }
     } catch (error) {
-      this.logger.error('Topic notification error', { error, topic });
+      this.logger.error('Topic notification error', undefined, { error, topic });
     }
   }
 
@@ -118,7 +118,7 @@ export class IntegrationsService {
         this.logger.warn('Accounting sync failed', { error: result.error, orderId: entry.orderId });
       }
     } catch (error) {
-      this.logger.error('Accounting sync error', { error, orderId: entry.orderId });
+      this.logger.error('Accounting sync error', undefined, { error, orderId: entry.orderId });
     }
   }
 

@@ -1,6 +1,7 @@
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 import { configuration, validationSchema } from './config/configuration';
@@ -17,6 +18,7 @@ import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { DeliveryModule } from './modules/delivery/delivery.module';
 import { HealthModule } from './modules/health/health.module';
+import { MonitoringModule, MetricsInterceptor } from './modules/monitoring';
 import { PaymentsModule } from './modules/payments';
 import { PermissionsModule } from './modules/permissions';
 import { PosModule } from './modules/pos';
@@ -71,6 +73,7 @@ import { PrismaModule } from './prisma/prisma.module';
 
     // Feature modules
     HealthModule,
+    MonitoringModule,
     AuthModule,
     UsersModule,
     CatalogModule,
@@ -84,6 +87,13 @@ import { PrismaModule } from './prisma/prisma.module';
     PosModule,
     PermissionsModule,
     ConsentModule,
+  ],
+  providers: [
+    // Global metrics interceptor (PR#33)
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
+    },
   ],
 })
 export class AppModule {}

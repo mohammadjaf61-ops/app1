@@ -265,6 +265,17 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
 - Cutover plan with rollback procedures (`docs/CUTOVER_PLAN.md`)
 - ADR 0032 documents the migration architecture
 
+### PR#33 - Monitoring, Alerts & Operational Thresholds
+- Extended `/health` endpoint with DB, Redis, Queue connectivity checks
+- Added `/monitoring/metrics` endpoint (requests/min, error rate, latency percentiles)
+- Added `/monitoring/status` endpoint for component health
+- Defined operational thresholds (error rate >2%, queue lag >100, response time >2000ms)
+- Created internal alerts engine with 30-second check interval
+- Alert logging with deduplication and auto-resolution
+- Admin status page at `/dashboard/status`
+- No external dependencies (SaaS-free monitoring)
+- ADR 0033 documents the monitoring architecture
+
 ---
 
 ## Support Contacts
