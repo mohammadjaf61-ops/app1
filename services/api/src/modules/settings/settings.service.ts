@@ -32,6 +32,11 @@ export const SETTINGS_KEYS = {
   ENABLE_BASKET_ANALYSIS: 'feature_basket_analysis',
   ENABLE_ANOMALY_DETECTION: 'feature_anomaly_detection',
   ENABLE_AI_INSIGHTS: 'feature_ai_insights',
+
+  // Integration Flags (PR#31)
+  INTEGRATION_SMS_ENABLED: 'integration_sms_enabled',
+  INTEGRATION_NOTIFICATIONS_ENABLED: 'integration_notifications_enabled',
+  INTEGRATION_ACCOUNTING_ENABLED: 'integration_accounting_enabled',
 } as const;
 
 /**
@@ -60,6 +65,11 @@ const SETTINGS_DEFAULTS: Record<string, number | boolean | string> = {
   [SETTINGS_KEYS.ENABLE_ANOMALY_DETECTION]: true,
   // AI Insights: read-only, explainable decision support (PR#24)
   [SETTINGS_KEYS.ENABLE_AI_INSIGHTS]: true,
+
+  // Integration Flags - all disabled by default (PR#31)
+  [SETTINGS_KEYS.INTEGRATION_SMS_ENABLED]: false,
+  [SETTINGS_KEYS.INTEGRATION_NOTIFICATIONS_ENABLED]: false,
+  [SETTINGS_KEYS.INTEGRATION_ACCOUNTING_ENABLED]: false,
 };
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

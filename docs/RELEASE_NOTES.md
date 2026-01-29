@@ -246,6 +246,14 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
 - Created FINAL_SIGNOFF.md for commercial delivery
 - All quality checks passing
 
+### PR#31 - External Integrations Readiness
+- Added pluggable integration architecture (SMS, Notifications, Accounting)
+- Created provider interfaces with Noop implementations
+- Added feature flags: `integration_sms_enabled`, `integration_notifications_enabled`, `integration_accounting_enabled`
+- All integrations disabled by default (no external calls)
+- Order event hooks ready for future activation
+- ADR 0031 documents the architecture
+
 ---
 
 ## Support Contacts
