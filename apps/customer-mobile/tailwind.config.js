@@ -4,7 +4,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['NotoKufiArabic'],
+        // Arabic fonts with fallback
+        sans: ['DecotypeNaskh', 'AlArabiya', 'NotoKufiArabic'],
+        'arabic-primary': ['DecotypeNaskh'],
+        'arabic-secondary': ['AlArabiya'],
+        naskh: ['DecotypeNaskh'],
+        arabiya: ['AlArabiya'],
       },
       colors: {
         primary: {

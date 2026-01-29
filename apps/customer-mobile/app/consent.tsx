@@ -182,9 +182,7 @@ export default function ConsentScreen() {
                 <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-200">
                   <Pressable onPress={() => toggleDocument(doc.type)}>
                     <Text
-                      className={`font-medium ${
-                        doc.accepted ? 'text-green-600' : 'text-primary'
-                      }`}
+                      className={`font-medium ${doc.accepted ? 'text-green-600' : 'text-primary'}`}
                     >
                       {doc.accepted ? 'تمت الموافقة ✓' : 'الموافقة'}
                     </Text>

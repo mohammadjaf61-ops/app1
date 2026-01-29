@@ -1,9 +1,38 @@
+/* Google Fonts Fallback */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap');
+
+/* Custom Arabic Fonts */
+@font-face {
+  font-family: 'DecotypeNaskh';
+  src: url('/fonts/decotype-naskh-special.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'AlArabiya';
+  src: url('/fonts/ae_AlArabiya.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    /* Arabic Fonts - Custom fonts with Google Fonts fallback */
+    --font-arabic-primary: 'DecotypeNaskh', 'Noto Kufi Arabic', system-ui, sans-serif;
+    --font-arabic-secondary: 'AlArabiya', 'Noto Kufi Arabic', system-ui, sans-serif;
+    --font-noto-kufi: 'DecotypeNaskh', 'AlArabiya', 'Noto Kufi Arabic', system-ui, sans-serif;
+
+    /* Accessibility: Touch Targets (WCAG 2.5.5) */
+    --touch-target: 44px;
+    --touch-target-lg: 48px;
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -53,7 +82,84 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-noto-kufi);
+  }
+
+  /* Skip Link for Keyboard Navigation */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:right-4 focus:z-50;
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-md;
+  }
+
+  /* Enhanced Focus Styles for Accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Remove focus ring for mouse users */
+  :focus:not(:focus-visible) {
+    @apply outline-none ring-0;
+  }
+}
+
+/* Accessibility Utilities */
+@layer utilities {
+  /* Touch Target Minimum Size (WCAG 2.5.5) */
+  .touch-target {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
+
+  .touch-target-lg {
+    min-height: var(--touch-target-lg);
+    min-width: var(--touch-target-lg);
+  }
+
+  /* RTL Icon Flip Utilities */
+  .rtl-flip {
+    transform: scaleX(-1);
+  }
+
+  [dir='rtl'] .rtl-auto-flip {
+    transform: scaleX(-1);
+  }
+
+  /* Currency Formatting for IQD */
+  .currency-iqd::after {
+    content: ' د.ع';
+    font-size: 0.875em;
+  }
+
+  /* High Contrast Mode Support */
+  @media (prefers-contrast: high) {
+    .border {
+      border-width: 2px;
+    }
+
+    :focus-visible {
+      outline: 3px solid currentColor;
+      outline-offset: 2px;
+    }
+  }
+
+  /* Reduced Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Print Styles */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
   }
 }

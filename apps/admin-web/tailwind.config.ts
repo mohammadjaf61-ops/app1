@@ -18,6 +18,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-noto-kufi)', 'system-ui', 'sans-serif'],
+        'arabic-primary': ['var(--font-arabic-primary)', 'system-ui', 'sans-serif'],
+        'arabic-secondary': ['var(--font-arabic-secondary)', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',

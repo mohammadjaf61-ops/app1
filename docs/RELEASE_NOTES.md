@@ -276,6 +276,32 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
 - No external dependencies (SaaS-free monitoring)
 - ADR 0033 documents the monitoring architecture
 
+### PR#34 - UX Polish, Accessibility & Arabic Excellence
+- **Accessibility (WCAG 2.1 AA)**:
+  - Touch targets ≥ 44px (buttons, icon buttons, interactive elements)
+  - Enhanced focus states with visible ring indicators
+  - Skip link for keyboard navigation ("تخطي إلى المحتوى الرئيسي")
+  - Reduced motion support (`prefers-reduced-motion`)
+  - High contrast mode support (`prefers-contrast: high`)
+- **Arabic Fonts**:
+  - Added custom Arabic fonts (DecotypeNaskh, AlArabiya)
+  - Google Fonts fallback (Noto Kufi Arabic)
+  - Font stack: DecotypeNaskh → AlArabiya → Noto Kufi Arabic → system-ui
+  - Customer mobile app font loading with expo-font
+- **Unified UI Components**:
+  - `EmptyState` - Accessible empty list/section states with CTA
+  - `ErrorState` - Error display with severity levels (error/warning/info)
+  - `OfflineBanner` - Network status indicator
+  - `LoadingButton` - Button with loading state and spinner
+  - `ConfirmDialog` - Confirmation dialog with `useConfirmDialog` hook
+- **RTL Support**:
+  - `.rtl-flip` and `.rtl-auto-flip` utilities for icon direction
+  - `.currency-iqd` utility for IQD formatting
+- **Documentation**:
+  - Created `UX_ACCESSIBILITY_NOTES.md` with comprehensive guidelines
+  - Documented keyboard shortcuts and testing checklists
+- ADR 0034 documents the UX architecture
+
 ---
 
 ## Support Contacts

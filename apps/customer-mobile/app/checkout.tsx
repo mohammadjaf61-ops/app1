@@ -329,9 +329,7 @@ export default function CheckoutScreen() {
                       <Text className="text-green-800 font-semibold text-right">
                         تمت الموافقة على الشروط ✓
                       </Text>
-                      <Text className="text-green-600 text-sm text-right">
-                        يمكنك إتمام الطلب
-                      </Text>
+                      <Text className="text-green-600 text-sm text-right">يمكنك إتمام الطلب</Text>
                     </View>
                   </View>
                 ) : hasConsent === false ? (
