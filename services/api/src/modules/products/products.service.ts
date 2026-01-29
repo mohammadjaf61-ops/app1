@@ -1,6 +1,7 @@
 import type { PaginationMeta } from '@hypermarket/shared-types';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { clampPage, clampPageSize } from '@/common/constants';
 import { CacheService, CACHE_KEYS, CACHE_TTL, createCacheKey } from '@/modules/cache';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -50,7 +51,10 @@ export class ProductsService {
   ) {}
 
   async findAll(query: ProductQueryDto) {
-    const { page = 1, limit = 20, categoryId, search, inStock, isFeatured } = query;
+    const { categoryId, search, inStock, isFeatured } = query;
+    // Clamp pagination to prevent unbounded queries (PR#19)
+    const page = clampPage(query.page);
+    const limit = clampPageSize(query.limit);
     const skip = (page - 1) * limit;
 
     const where = {

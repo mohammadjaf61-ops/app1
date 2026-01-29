@@ -101,6 +101,7 @@ export class ReportsService {
   /**
    * Get top selling products by quantity or revenue
    * Includes both DELIVERED (online) and COMPLETED (POS) orders
+   * Performance: Uses DB aggregation instead of in-memory (PR#19)
    */
   async getTopProducts(params: {
     dateFrom?: Date;
@@ -110,78 +111,75 @@ export class ReportsService {
   }) {
     const { dateFrom, dateTo, sortBy = 'revenue', limit = 10 } = params;
 
-    // Build date filter - use createdAt for both order types
-    const dateFilter: { createdAt?: { gte?: Date; lte?: Date } } = {};
-    if (dateFrom || dateTo) {
-      dateFilter.createdAt = {};
-      if (dateFrom) dateFilter.createdAt.gte = dateFrom;
-      if (dateTo) dateFilter.createdAt.lte = dateTo;
-    }
+    // Use DB aggregation with GROUP BY for performance (PR#19)
+    // Use separate queries for different sort orders to avoid dynamic SQL
+    type TopProductRow = {
+      product_id: string;
+      sku: string;
+      name_ar: string;
+      sale_price: number;
+      category_id: string | null;
+      category_name: string | null;
+      total_quantity: bigint;
+      total_revenue: bigint;
+    };
 
-    // Get order items from both DELIVERED and COMPLETED (POS) orders
-    const orderItems = await this.prisma.orderItem.findMany({
-      where: {
-        order: {
-          ...dateFilter,
-          status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
-        },
-      },
-      select: {
-        productId: true,
-        quantity: true,
-        subtotal: true,
-        product: {
-          select: {
-            id: true,
-            sku: true,
-            nameAr: true,
-            salePrice: true,
-            category: { select: { id: true, nameAr: true } },
-          },
-        },
-      },
-    });
+    const results =
+      sortBy === 'quantity'
+        ? await this.prisma.$queryRaw<TopProductRow[]>`
+            SELECT
+              p.id as product_id,
+              p.sku,
+              p.name_ar,
+              p.sale_price,
+              c.id as category_id,
+              c.name_ar as category_name,
+              COALESCE(SUM(oi.quantity), 0)::BIGINT as total_quantity,
+              COALESCE(SUM(oi.quantity * oi.unit_price_iqd), 0)::BIGINT as total_revenue
+            FROM order_item oi
+            JOIN "order" o ON oi.order_id = o.id
+            JOIN product p ON oi.product_id = p.id
+            LEFT JOIN category c ON p.category_id = c.id
+            WHERE o.status IN ('DELIVERED', 'COMPLETED')
+              AND (${dateFrom}::timestamp IS NULL OR o.created_at >= ${dateFrom})
+              AND (${dateTo}::timestamp IS NULL OR o.created_at <= ${dateTo})
+            GROUP BY p.id, p.sku, p.name_ar, p.sale_price, c.id, c.name_ar
+            ORDER BY total_quantity DESC
+            LIMIT ${limit}
+          `
+        : await this.prisma.$queryRaw<TopProductRow[]>`
+            SELECT
+              p.id as product_id,
+              p.sku,
+              p.name_ar,
+              p.sale_price,
+              c.id as category_id,
+              c.name_ar as category_name,
+              COALESCE(SUM(oi.quantity), 0)::BIGINT as total_quantity,
+              COALESCE(SUM(oi.quantity * oi.unit_price_iqd), 0)::BIGINT as total_revenue
+            FROM order_item oi
+            JOIN "order" o ON oi.order_id = o.id
+            JOIN product p ON oi.product_id = p.id
+            LEFT JOIN category c ON p.category_id = c.id
+            WHERE o.status IN ('DELIVERED', 'COMPLETED')
+              AND (${dateFrom}::timestamp IS NULL OR o.created_at >= ${dateFrom})
+              AND (${dateTo}::timestamp IS NULL OR o.created_at <= ${dateTo})
+            GROUP BY p.id, p.sku, p.name_ar, p.sale_price, c.id, c.name_ar
+            ORDER BY total_revenue DESC
+            LIMIT ${limit}
+          `;
 
-    // Aggregate by product
-    const productMap = new Map<
-      string,
-      {
-        product: {
-          id: string;
-          sku: string;
-          nameAr: string;
-          salePrice: number;
-          category: { id: string; nameAr: string } | null;
-        };
-        totalQuantity: number;
-        totalRevenue: number;
-      }
-    >();
-
-    for (const item of orderItems) {
-      const existing = productMap.get(item.productId);
-      if (existing) {
-        existing.totalQuantity += item.quantity;
-        existing.totalRevenue += item.subtotal;
-      } else {
-        productMap.set(item.productId, {
-          product: item.product,
-          totalQuantity: item.quantity,
-          totalRevenue: item.subtotal,
-        });
-      }
-    }
-
-    // Sort and limit
-    const sorted = Array.from(productMap.values()).sort((a, b) =>
-      sortBy === 'quantity' ? b.totalQuantity - a.totalQuantity : b.totalRevenue - a.totalRevenue,
-    );
-
-    return sorted.slice(0, limit).map((item, index) => ({
+    return results.map((row: TopProductRow, index: number) => ({
       rank: index + 1,
-      product: item.product,
-      totalQuantity: item.totalQuantity,
-      totalRevenue: item.totalRevenue,
+      product: {
+        id: row.product_id,
+        sku: row.sku,
+        nameAr: row.name_ar,
+        salePrice: row.sale_price,
+        category: row.category_id ? { id: row.category_id, nameAr: row.category_name || '' } : null,
+      },
+      totalQuantity: Number(row.total_quantity),
+      totalRevenue: Number(row.total_revenue),
     }));
   }
 
@@ -314,40 +312,37 @@ export class ReportsService {
 
   /**
    * Get daily sales report
+   * Performance: Uses DB GROUP BY instead of in-memory aggregation (PR#19)
    */
   async getDailySales(params: { dateFrom: Date; dateTo: Date }) {
     const { dateFrom, dateTo } = params;
 
-    const orders = await this.prisma.order.findMany({
-      where: {
-        status: OrderStatus.DELIVERED,
-        deliveredAt: {
-          gte: dateFrom,
-          lte: dateTo,
-        },
-      },
-      select: {
-        id: true,
-        total: true,
-        deliveredAt: true,
-      },
-    });
+    // Use DB aggregation with GROUP BY for performance (PR#19)
+    const results = await this.prisma.$queryRaw<
+      Array<{
+        sale_date: Date;
+        order_count: bigint;
+        total_revenue: bigint;
+      }>
+    >`
+      SELECT
+        DATE(delivered_at) as sale_date,
+        COUNT(*)::BIGINT as order_count,
+        COALESCE(SUM(total_amount_iqd), 0)::BIGINT as total_revenue
+      FROM "order"
+      WHERE status = 'DELIVERED'
+        AND delivered_at >= ${dateFrom}
+        AND delivered_at <= ${dateTo}
+      GROUP BY DATE(delivered_at)
+      ORDER BY sale_date ASC
+    `;
 
-    // Group by date
-    const dailySales: Record<string, { date: string; orders: number; revenue: number }> = {};
-    for (const order of orders) {
-      if (!order.deliveredAt) {
-        continue;
-      }
-      const dateKey = order.deliveredAt.toISOString().split('T')[0];
-      if (!dailySales[dateKey]) {
-        dailySales[dateKey] = { date: dateKey, orders: 0, revenue: 0 };
-      }
-      dailySales[dateKey].orders += 1;
-      dailySales[dateKey].revenue += order.total;
-    }
-
-    return Object.values(dailySales).sort((a, b) => a.date.localeCompare(b.date));
+    type DailySaleRow = { sale_date: Date; order_count: bigint; total_revenue: bigint };
+    return results.map((row: DailySaleRow) => ({
+      date: row.sale_date.toISOString().split('T')[0],
+      orders: Number(row.order_count),
+      revenue: Number(row.total_revenue),
+    }));
   }
 
   /**
@@ -724,53 +719,52 @@ export class ReportsService {
   /**
    * Get combined sales report with breakdown by order type
    * Provides operational overview for store owner
+   * Performance: Uses DB aggregation instead of loading all orders (PR#19)
    */
   async getSalesReport(params: { dateFrom?: Date; dateTo?: Date }) {
     const { dateFrom, dateTo } = params;
 
-    // Build date filter
-    const dateFilter: { createdAt?: { gte?: Date; lte?: Date } } = {};
-    if (dateFrom || dateTo) {
-      dateFilter.createdAt = {};
-      if (dateFrom) dateFilter.createdAt.gte = dateFrom;
-      if (dateTo) dateFilter.createdAt.lte = dateTo;
-    }
+    // Use DB aggregation with GROUP BY for performance (PR#19)
+    const results = await this.prisma.$queryRaw<
+      Array<{
+        order_type: string;
+        order_count: bigint;
+        total_revenue: bigint;
+      }>
+    >`
+      SELECT
+        order_type,
+        COUNT(*)::BIGINT as order_count,
+        COALESCE(SUM(total_amount_iqd), 0)::BIGINT as total_revenue
+      FROM "order"
+      WHERE status IN ('DELIVERED', 'COMPLETED')
+        AND (${dateFrom}::timestamp IS NULL OR created_at >= ${dateFrom})
+        AND (${dateTo}::timestamp IS NULL OR created_at <= ${dateTo})
+      GROUP BY order_type
+    `;
 
-    // Get completed orders (both delivery and POS)
-    const orders = await this.prisma.order.findMany({
-      where: {
-        ...dateFilter,
-        status: { in: [OrderStatus.DELIVERED, OrderStatus.COMPLETED] },
-      },
-      select: {
-        id: true,
-        orderNumber: true,
-        orderType: true,
-        totalAmountIqd: true,
-        createdAt: true,
-        _count: { select: { items: true } },
-      },
-    });
-
-    // Calculate totals
+    let totalOrders = 0;
     let totalRevenue = 0;
-    let deliveryRevenue = 0;
-    let posRevenue = 0;
     let deliveryOrders = 0;
+    let deliveryRevenue = 0;
     let posOrders = 0;
+    let posRevenue = 0;
 
-    for (const order of orders) {
-      totalRevenue += order.totalAmountIqd;
-      if (order.orderType === 'POS') {
-        posRevenue += order.totalAmountIqd;
-        posOrders += 1;
+    for (const row of results) {
+      const count = Number(row.order_count);
+      const revenue = Number(row.total_revenue);
+      totalOrders += count;
+      totalRevenue += revenue;
+
+      if (row.order_type === 'POS') {
+        posOrders = count;
+        posRevenue = revenue;
       } else {
-        deliveryRevenue += order.totalAmountIqd;
-        deliveryOrders += 1;
+        deliveryOrders = count;
+        deliveryRevenue = revenue;
       }
     }
 
-    const totalOrders = orders.length;
     const averageOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
     return {

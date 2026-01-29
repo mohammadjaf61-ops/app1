@@ -183,6 +183,8 @@ model Product {
   @@index([categoryId], map: "idx_product_category_id")
   @@index([isActive], map: "idx_product_is_active")
   @@index([deletedAt], map: "idx_product_deleted_at")
+  // Composite index for active products (Performance PR#19)
+  @@index([isActive, deletedAt], map: "idx_product_active_not_deleted")
   @@map("product")
 }
 
@@ -283,6 +285,9 @@ model Order {
   @@index([cashierId], map: "idx_order_cashier_id")
   @@index([createdAt], map: "idx_order_created_at")
   @@index([customerPhone], map: "idx_order_customer_phone")
+  // Composite indexes for common query patterns (Performance PR#19)
+  @@index([status, createdAt], map: "idx_order_status_created_at")
+  @@index([status, pickerId], map: "idx_order_status_picker_id")
   @@map("order")
 }
 
@@ -340,6 +345,8 @@ model DeliveryAssignment {
   @@index([driverId], map: "idx_delivery_driver_id")
   @@index([status], map: "idx_delivery_status")
   @@index([assignedAt], map: "idx_delivery_assigned_at")
+  // Composite index for driver performance reports (Performance PR#19)
+  @@index([driverId, status], map: "idx_delivery_driver_status")
   @@map("delivery_assignment")
 }
 

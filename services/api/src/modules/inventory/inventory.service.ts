@@ -101,20 +101,22 @@ export class InventoryService {
 
   /**
    * Set inventory for a product at a location
+   * Performance: Validate product and location in parallel
    */
   async setInventory(dto: UpdateInventoryDto) {
-    // Validate product exists
-    const product = await this.prisma.product.findFirst({
-      where: { id: dto.productId, deletedAt: null },
-    });
+    // Validate product and location in parallel (Performance PR#19)
+    const [product, location] = await Promise.all([
+      this.prisma.product.findFirst({
+        where: { id: dto.productId, deletedAt: null },
+      }),
+      this.prisma.inventoryLocation.findUnique({
+        where: { id: dto.locationId },
+      }),
+    ]);
+
     if (!product) {
       throw new NotFoundException('المنتج غير موجود');
     }
-
-    // Validate location exists
-    const location = await this.prisma.inventoryLocation.findUnique({
-      where: { id: dto.locationId },
-    });
     if (!location) {
       throw new NotFoundException('الموقع غير موجود');
     }

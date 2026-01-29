@@ -31,6 +31,7 @@ export class DemandForecastService {
    * Generate demand forecasts for all active products
    * Phase 1: Simple moving average and trend analysis
    * Phase 2: Would integrate Prophet or similar
+   * Performance: Processes products in parallel batches (PR#19)
    */
   async generateForecasts(forecastDaysOverride?: number): Promise<number> {
     const startTime = Date.now();
@@ -57,14 +58,24 @@ export class DemandForecastService {
 
     let forecastCount = 0;
 
-    for (const product of products) {
-      try {
-        const forecasts = await this.forecastProduct(product.id, product.sku, forecastDays);
-        forecastCount += forecasts.length;
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        this.logger.error(`Forecast failed for ${product.sku}: ${err.message}`);
-      }
+    // Process products in parallel batches for performance (PR#19)
+    type ProductRow = { id: string; sku: string; name_ar: string };
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < products.length; i += BATCH_SIZE) {
+      const batch = products.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(
+        batch.map(async (product: ProductRow) => {
+          try {
+            const forecasts = await this.forecastProduct(product.id, product.sku, forecastDays);
+            return forecasts.length;
+          } catch (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            this.logger.error(`Forecast failed for ${product.sku}: ${err.message}`);
+            return 0;
+          }
+        }),
+      );
+      forecastCount += results.reduce((sum, count) => sum + count, 0);
     }
 
     // Log AI output
@@ -83,6 +94,7 @@ export class DemandForecastService {
 
   /**
    * Forecast demand for a single product
+   * Performance: Uses parallel upserts instead of sequential (PR#19)
    */
   async forecastProduct(
     productId: string,
@@ -103,36 +115,41 @@ export class DemandForecastService {
     // Calculate forecasts using moving average with trend
     const forecasts = this.calculateMovingAverageForecast(history, forecastDays, windowSize);
 
-    // Store forecasts
-    for (const forecast of forecasts) {
-      await this.prisma.demandForecast.upsert({
-        where: {
-          productId_forecastDate_modelType: {
-            productId,
-            forecastDate: forecast.date,
-            modelType: 'moving_avg_trend',
+    // Calculate confidence once (same for all forecasts of this product)
+    const confidence = this.calculateConfidence(history);
+
+    // Store forecasts in parallel (PR#19)
+    await Promise.all(
+      forecasts.map((forecast) =>
+        this.prisma.demandForecast.upsert({
+          where: {
+            productId_forecastDate_modelType: {
+              productId,
+              forecastDate: forecast.date,
+              modelType: 'moving_avg_trend',
+            },
           },
-        },
-        create: {
-          productId,
-          sku,
-          forecastDate: forecast.date,
-          predictedQty: forecast.predicted,
-          lowerBound: forecast.lower,
-          upperBound: forecast.upper,
-          modelType: 'moving_avg_trend',
-          modelVersion: '1.0',
-          confidence: this.calculateConfidence(history),
-        },
-        update: {
-          predictedQty: forecast.predicted,
-          lowerBound: forecast.lower,
-          upperBound: forecast.upper,
-          confidence: this.calculateConfidence(history),
-          generatedAt: new Date(),
-        },
-      });
-    }
+          create: {
+            productId,
+            sku,
+            forecastDate: forecast.date,
+            predictedQty: forecast.predicted,
+            lowerBound: forecast.lower,
+            upperBound: forecast.upper,
+            modelType: 'moving_avg_trend',
+            modelVersion: '1.0',
+            confidence,
+          },
+          update: {
+            predictedQty: forecast.predicted,
+            lowerBound: forecast.lower,
+            upperBound: forecast.upper,
+            confidence,
+            generatedAt: new Date(),
+          },
+        }),
+      ),
+    );
 
     return forecasts;
   }

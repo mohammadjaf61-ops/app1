@@ -2,6 +2,7 @@ import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 
+import { clampPage, clampPageSize } from '@/common/constants';
 import { StructuredLogger, createLogger } from '@/common/observability';
 import { BusinessRulesService } from '@/modules/business-rules';
 import { PaymentsService } from '@/modules/payments';
@@ -24,6 +25,7 @@ export class OrdersService {
 
   /**
    * Get all orders with filters and pagination
+   * Performance: Uses clamped pagination limits (PR#19)
    */
   async findAll(params: {
     status?: OrderStatus;
@@ -35,7 +37,10 @@ export class OrdersService {
     page?: number;
     limit?: number;
   }) {
-    const { status, pickerId, isPaid, search, dateFrom, dateTo, page = 1, limit = 20 } = params;
+    const { status, pickerId, isPaid, search, dateFrom, dateTo } = params;
+    // Clamp pagination to prevent unbounded queries (PR#19)
+    const page = clampPage(params.page);
+    const limit = clampPageSize(params.limit);
     const skip = (page - 1) * limit;
 
     const where: {
