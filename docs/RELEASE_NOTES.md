@@ -302,6 +302,28 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
   - Documented keyboard shortcuts and testing checklists
 - ADR 0034 documents the UX architecture
 
+### PR#35 - Commercial Readiness & Contract Artifacts
+- **Pricing Justification** (`docs/commercial/PRICING_JUSTIFICATION.md`):
+  - Detailed $100,000 breakdown by component
+  - Comparison with alternatives (Shopify, Odoo, local teams)
+  - ROI analysis and value proposition
+- **Scope of Work** (`docs/commercial/SCOPE_OF_WORK.md`):
+  - Complete list of included features
+  - Explicit exclusions to prevent misunderstandings
+  - Client responsibilities and assumptions
+- **Delivery Milestones** (`docs/commercial/DELIVERY_MILESTONES.md`):
+  - 4-phase delivery plan with payment schedule
+  - Acceptance criteria for each phase
+  - Milestone sign-off templates
+- **Support & Maintenance** (`docs/commercial/SUPPORT_MAINTENANCE.md`):
+  - 30-day warranty coverage
+  - Post-warranty support options (Basic/Advanced/Premium)
+  - Escalation procedures
+- **Ownership & IP** (`docs/commercial/OWNERSHIP_IP.md`):
+  - Full code ownership transfer upon payment
+  - Data ownership rights
+  - Confidentiality terms
+
 ---
 
 ## Support Contacts
