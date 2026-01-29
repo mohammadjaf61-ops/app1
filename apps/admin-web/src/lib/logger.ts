@@ -1,11 +1,3 @@
-/**
- * Structured Logger for Admin Web
- *
- * Provides consistent, structured logging for the admin dashboard.
- * Currently outputs to console in structured JSON format.
- * Designed to be easily extended for APM integration (Sentry, etc.) later.
- */
-
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 export interface LogContext {
@@ -21,125 +13,92 @@ export interface LogEntry extends LogContext {
   level: LogLevel;
   message: string;
   timestamp: string;
-  error?: {
-    name: string;
-    message: string;
-    digest?: string;
-    stack?: string;
-  };
+  error?: { name: string; message: string; digest?: string; stack?: string };
 }
 
-interface LoggerOptions {
+interface LoggerConfig {
   scope: string;
   enabled?: boolean;
 }
 
 const isDev = process.env.NODE_ENV === 'development';
 
-/**
- * Creates a scoped logger instance.
- *
- * Usage:
- * ```ts
- * const logger = createLogger({ scope: 'AuthService' });
- * logger.info('User logged in', { userId: '123' });
- * logger.error('Login failed', new Error('Invalid token'), { errorCode: 'AUTH_001' });
- * ```
- */
-export function createLogger(options: LoggerOptions) {
-  const { scope, enabled = true } = options;
+export function createLogger(config: LoggerConfig) {
+  const { scope, enabled = true } = config;
 
   const formatEntry = (
     level: LogLevel,
     message: string,
     error?: Error & { digest?: string },
-    context?: Partial<LogContext>,
-  ): LogEntry => {
-    const entry: LogEntry = {
-      level,
-      scope,
-      message,
-      timestamp: new Date().toISOString(),
-      ...context,
-    };
-
-    if (error) {
-      entry.error = {
+    ctx?: Partial<LogContext>,
+  ): LogEntry => ({
+    level,
+    scope,
+    message,
+    timestamp: new Date().toISOString(),
+    ...ctx,
+    ...(error && {
+      error: {
         name: error.name,
         message: error.message,
         digest: error.digest,
         stack: isDev ? error.stack : undefined,
-      };
-    }
-
-    return entry;
-  };
+      },
+    }),
+  });
 
   const log = (
     level: LogLevel,
     message: string,
-    errorOrContext?: Error | Partial<LogContext>,
-    context?: Partial<LogContext>,
+    errorOrCtx?: Error | Partial<LogContext>,
+    ctx?: Partial<LogContext>,
   ) => {
     if (!enabled) {
       return;
     }
-
-    let error: Error | undefined;
-    let logContext: Partial<LogContext> | undefined;
-
-    if (errorOrContext instanceof Error) {
-      error = errorOrContext;
-      logContext = context;
-    } else {
-      logContext = errorOrContext;
-    }
-
-    const entry = formatEntry(level, message, error, logContext);
-
-    // In production, we only log warn and error levels
     if (!isDev && (level === 'debug' || level === 'info')) {
       return;
     }
 
+    const isError = errorOrCtx instanceof Error;
+    const entry = formatEntry(
+      level,
+      message,
+      isError ? errorOrCtx : undefined,
+      isError ? ctx : errorOrCtx,
+    );
     const output = JSON.stringify(entry);
 
     switch (level) {
       case 'debug':
+        // eslint-disable-next-line no-console
         console.debug(output);
         break;
       case 'info':
+        // eslint-disable-next-line no-console
         console.info(output);
         break;
       case 'warn':
+        // eslint-disable-next-line no-console
         console.warn(output);
         break;
       case 'error':
+        // eslint-disable-next-line no-console
         console.error(output);
         break;
     }
   };
 
   return {
-    debug: (message: string, context?: Partial<LogContext>) => log('debug', message, context),
-
-    info: (message: string, context?: Partial<LogContext>) => log('info', message, context),
-
-    warn: (
-      message: string,
-      errorOrContext?: Error | Partial<LogContext>,
-      context?: Partial<LogContext>,
-    ) => log('warn', message, errorOrContext, context),
-
-    error: (
-      message: string,
-      errorOrContext?: Error | Partial<LogContext>,
-      context?: Partial<LogContext>,
-    ) => log('error', message, errorOrContext, context),
+    debug: (msg: string, ctx?: Partial<LogContext>) => log('debug', msg, ctx),
+    info: (msg: string, ctx?: Partial<LogContext>) => log('info', msg, ctx),
+    warn: (msg: string, errOrCtx?: Error | Partial<LogContext>, ctx?: Partial<LogContext>) =>
+      log('warn', msg, errOrCtx, ctx),
+    error: (msg: string, errOrCtx?: Error | Partial<LogContext>, ctx?: Partial<LogContext>) =>
+      log('error', msg, errOrCtx, ctx),
   };
 }
 
-// Default app-level loggers
 export const appLogger = createLogger({ scope: 'App' });
 export const apiLogger = createLogger({ scope: 'API' });
 export const authLogger = createLogger({ scope: 'Auth' });

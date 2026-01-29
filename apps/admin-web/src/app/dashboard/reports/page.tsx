@@ -20,7 +20,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInventoryStatus, useSalesReport, useTopProducts } from '@/hooks/use-api';
 import { formatCurrency, formatNumber } from '@/lib/formatters';
 
-// CSV export utility
 function exportToCSV(data: Record<string, unknown>[], filename: string) {
   if (!data.length) {
     return;
@@ -33,7 +32,6 @@ function exportToCSV(data: Record<string, unknown>[], filename: string) {
       headers
         .map((header) => {
           const value = row[header];
-          // Escape values with commas or quotes
           const stringValue = String(value ?? '');
           if (stringValue.includes(',') || stringValue.includes('"')) {
             return `"${stringValue.replace(/"/g, '""')}"`;
@@ -44,8 +42,7 @@ function exportToCSV(data: Record<string, unknown>[], filename: string) {
     ),
   ];
 
-  const csvString = csvRows.join('\n');
-  const blob = new Blob([`\uFEFF${csvString}`], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([`\uFEFF${csvRows.join('\n')}`], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
@@ -57,7 +54,6 @@ export default function ReportsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  // Set default dates to current month
   const setThisMonth = () => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);

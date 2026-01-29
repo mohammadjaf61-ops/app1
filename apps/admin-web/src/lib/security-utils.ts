@@ -1,149 +1,84 @@
-/**
- * Security Utilities
- *
- * This module provides security-related utilities for the admin dashboard.
- * It includes input validation, sanitization, and security checks.
- *
- * @module security-utils
- */
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#x27;',
+  '/': '&#x2F;',
+};
 
-/**
- * Sanitize user input to prevent XSS attacks
- * Escapes HTML special characters
- */
 export function sanitizeHTML(input: string): string {
-  const htmlEscapeMap: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#x27;',
-    '/': '&#x2F;',
-  };
-
-  return input.replace(/[&<>"'/]/g, (char) => htmlEscapeMap[char] || char);
+  return input.replace(/[&<>"'/]/g, (char) => HTML_ESCAPE_MAP[char] || char);
 }
 
-/**
- * Validate that a string doesn't contain potential SQL injection patterns
- * Note: This is a client-side check only - server-side validation is essential
- */
 export function containsSQLInjectionPatterns(input: string): boolean {
-  const sqlPatterns = [
+  const patterns = [
     /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE)\b)/i,
     /(\b(UNION|JOIN)\b.*\b(SELECT)\b)/i,
     /(--|\/\*|\*\/|;)/,
     /(\b(OR|AND)\b\s+\d+\s*=\s*\d+)/i,
-    /('|\"|`)\s*(OR|AND)\s*('|\"|`)/i,
+    /(['"`])\s*(OR|AND)\s*(['"`])/i,
   ];
-
-  return sqlPatterns.some((pattern) => pattern.test(input));
+  return patterns.some((p) => p.test(input));
 }
 
-/**
- * Validate URL to prevent open redirect attacks
- * Only allows relative URLs or URLs to allowed domains
- */
-export function isValidRedirectURL(
-  url: string,
-  allowedDomains: string[] = []
-): boolean {
-  // Allow relative URLs
+export function isValidRedirectURL(url: string, allowedDomains: string[] = []): boolean {
   if (url.startsWith('/') && !url.startsWith('//')) {
     return true;
   }
 
   try {
-    const parsedURL = new URL(url);
-    const hostname = parsedURL.hostname.toLowerCase();
-
-    // Check against allowed domains
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase();
     return allowedDomains.some((domain) => {
-      const normalizedDomain = domain.toLowerCase();
-      return (
-        hostname === normalizedDomain ||
-        hostname.endsWith(`.${normalizedDomain}`)
-      );
+      const d = domain.toLowerCase();
+      return hostname === d || hostname.endsWith(`.${d}`);
     });
   } catch {
-    // Invalid URL format
     return false;
   }
 }
 
-/**
- * Validate file upload by checking extension and MIME type
- */
 export interface FileValidationResult {
   valid: boolean;
   error?: string;
 }
 
-const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-const ALLOWED_IMAGE_MIMES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-];
-const MAX_FILE_SIZE_MB = 5;
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const MAX_SIZE_MB = 5;
 
 export function validateImageFile(file: File): FileValidationResult {
-  // Check file size
   const sizeMB = file.size / (1024 * 1024);
-  if (sizeMB > MAX_FILE_SIZE_MB) {
-    return {
-      valid: false,
-      error: `حجم الملف يتجاوز الحد المسموح (${MAX_FILE_SIZE_MB} ميجابايت)`,
-    };
+  if (sizeMB > MAX_SIZE_MB) {
+    return { valid: false, error: `حجم الملف يتجاوز الحد المسموح (${MAX_SIZE_MB} ميجابايت)` };
   }
 
-  // Check extension
-  const fileName = file.name.toLowerCase();
-  const hasValidExtension = ALLOWED_IMAGE_EXTENSIONS.some((ext) =>
-    fileName.endsWith(ext)
-  );
-  if (!hasValidExtension) {
-    return {
-      valid: false,
-      error: 'نوع الملف غير مسموح. الأنواع المسموحة: JPG, PNG, GIF, WebP',
-    };
+  const name = file.name.toLowerCase();
+  if (!ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext))) {
+    return { valid: false, error: 'نوع الملف غير مسموح. الأنواع المسموحة: JPG, PNG, GIF, WebP' };
   }
 
-  // Check MIME type
-  if (!ALLOWED_IMAGE_MIMES.includes(file.type)) {
-    return {
-      valid: false,
-      error: 'نوع الملف غير صالح',
-    };
+  if (!ALLOWED_MIMES.includes(file.type)) {
+    return { valid: false, error: 'نوع الملف غير صالح' };
   }
 
   return { valid: true };
 }
 
-/**
- * Generate a secure random string for CSRF tokens or nonces
- */
-export function generateSecureToken(length: number = 32): string {
+export function generateSecureToken(length = 32): string {
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
-    ''
-  );
+  return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Validate password strength
- */
 export interface PasswordStrengthResult {
   valid: boolean;
-  score: number; // 0-4
+  score: number;
   feedback: string[];
 }
 
-export function validatePasswordStrength(
-  password: string
-): PasswordStrengthResult {
+export function validatePasswordStrength(password: string): PasswordStrengthResult {
   const feedback: string[] = [];
   let score = 0;
 
@@ -163,9 +98,7 @@ export function validatePasswordStrength(
     feedback.push('يجب أن تحتوي على حرف كبير واحد على الأقل');
   }
 
-  if (/[a-z]/.test(password)) {
-    // No score increase, but no feedback either - considered baseline
-  } else {
+  if (!/[a-z]/.test(password)) {
     feedback.push('يجب أن تحتوي على حرف صغير واحد على الأقل');
   }
 
@@ -181,91 +114,62 @@ export function validatePasswordStrength(
     feedback.push('يُفضل إضافة رموز خاصة (!@#$%^&*)');
   }
 
-  // Cap score at 4
-  score = Math.min(score, 4);
-
   return {
     valid: score >= 2 && password.length >= 8,
-    score,
+    score: Math.min(score, 4),
     feedback,
   };
 }
 
-/**
- * Rate limiting helper for client-side actions
- * Returns true if action should be blocked
- */
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
-export function isRateLimited(
-  action: string,
-  maxAttempts: number = 5,
-  windowMs: number = 60000
-): boolean {
+export function isRateLimited(action: string, maxAttempts = 5, windowMs = 60000): boolean {
   const now = Date.now();
-  const existing = rateLimitMap.get(action);
+  const entry = rateLimitStore.get(action);
 
-  if (!existing || now > existing.resetTime) {
-    rateLimitMap.set(action, { count: 1, resetTime: now + windowMs });
+  if (!entry || now > entry.resetAt) {
+    rateLimitStore.set(action, { count: 1, resetAt: now + windowMs });
     return false;
   }
 
-  existing.count++;
-  if (existing.count > maxAttempts) {
-    return true;
-  }
-
-  return false;
+  entry.count++;
+  return entry.count > maxAttempts;
 }
 
-/**
- * Clear rate limit for an action
- */
 export function clearRateLimit(action: string): void {
-  rateLimitMap.delete(action);
+  rateLimitStore.delete(action);
 }
 
-/**
- * Mask sensitive data for display (e.g., phone numbers, emails)
- */
 export function maskPhone(phone: string): string {
-  if (phone.length < 4) return phone;
-  const visibleDigits = 4;
-  return '*'.repeat(phone.length - visibleDigits) + phone.slice(-visibleDigits);
+  if (phone.length < 4) {
+    return phone;
+  }
+  return `${'*'.repeat(phone.length - 4)}${phone.slice(-4)}`;
 }
 
 export function maskEmail(email: string): string {
-  const [localPart, domain] = email.split('@');
-  if (!domain) return email;
-
-  const visibleChars = Math.min(2, localPart.length);
-  const maskedLocal =
-    localPart.slice(0, visibleChars) +
-    '*'.repeat(Math.max(0, localPart.length - visibleChars));
-
-  return `${maskedLocal}@${domain}`;
+  const [local, domain] = email.split('@');
+  if (!domain) {
+    return email;
+  }
+  const visible = Math.min(2, local.length);
+  return `${local.slice(0, visible)}${'*'.repeat(Math.max(0, local.length - visible))}@${domain}`;
 }
 
-/**
- * Check if running in a secure context (HTTPS)
- */
 export function isSecureContext(): boolean {
-  if (typeof window === 'undefined') return true; // SSR
+  if (typeof window === 'undefined') {
+    return true;
+  }
   return window.isSecureContext || window.location.protocol === 'https:';
 }
 
-/**
- * Security headers check - reports missing recommended headers
- */
 export interface SecurityHeadersReport {
   missing: string[];
   present: string[];
 }
 
-export async function checkSecurityHeaders(
-  url?: string
-): Promise<SecurityHeadersReport> {
-  const recommendedHeaders = [
+export async function checkSecurityHeaders(url?: string): Promise<SecurityHeadersReport> {
+  const required = [
     'strict-transport-security',
     'x-content-type-options',
     'x-frame-options',
@@ -277,21 +181,16 @@ export async function checkSecurityHeaders(
   const missing: string[] = [];
 
   try {
-    const response = await fetch(url || window.location.href, {
-      method: 'HEAD',
-    });
-    const headers = response.headers;
-
-    recommendedHeaders.forEach((header) => {
-      if (headers.has(header)) {
-        present.push(header);
+    const res = await fetch(url || window.location.href, { method: 'HEAD' });
+    required.forEach((h) => {
+      if (res.headers.has(h)) {
+        present.push(h);
       } else {
-        missing.push(header);
+        missing.push(h);
       }
     });
   } catch {
-    // If fetch fails, report all as unknown
-    missing.push(...recommendedHeaders);
+    missing.push(...required);
   }
 
   return { present, missing };
