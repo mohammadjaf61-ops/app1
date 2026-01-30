@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.6
 # Build stage
 FROM node:20-alpine AS builder
 
@@ -16,8 +17,10 @@ COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY services/api/package.json ./services/api/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies with cache mount
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile
 
 # Copy source files
 COPY packages/tsconfig/ ./packages/tsconfig/
@@ -27,8 +30,8 @@ COPY packages/shared-utils/ ./packages/shared-utils/
 COPY services/api/ ./services/api/
 
 # Build shared packages first
-RUN pnpm --filter @hypermarket/shared-types build
-RUN pnpm --filter @hypermarket/shared-utils build
+RUN pnpm --filter @hypermarket/shared-types build && \
+    pnpm --filter @hypermarket/shared-utils build
 
 # Generate Prisma client
 RUN pnpm --filter @hypermarket/api prisma:generate
@@ -63,8 +66,10 @@ COPY --from=builder /app/services/api/dist ./services/api/dist
 COPY --from=builder /app/services/api/prisma ./services/api/prisma
 COPY --from=builder /app/services/api/node_modules/.prisma ./services/api/node_modules/.prisma
 
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+# Install production dependencies with cache mount
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --prod --frozen-lockfile
 
 # Change ownership
 RUN chown -R nestjs:nodejs /app
@@ -73,12 +78,9 @@ USER nestjs
 
 WORKDIR /app/services/api
 
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# Start the application
 CMD ["node", "dist/main.js"]

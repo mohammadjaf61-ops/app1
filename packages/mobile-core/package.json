@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hypermarket/contracts": "workspace:*",
+    "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",
     "zod": "^3.23.8"
   },

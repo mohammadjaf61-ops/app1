@@ -20,6 +20,20 @@ export type { UseNetworkStatusResult } from './hooks/useNetworkStatus';
 export { cacheService, CacheKeys } from './services/cache';
 export type { CacheOptions } from './services/cache';
 
+// Theme & Typography
+export {
+  fontFamilies,
+  fontWeights,
+  fontSizes,
+  lineHeights,
+  letterSpacing,
+  typography,
+  fontAssets,
+  fonts,
+  getFontFamily,
+} from './theme';
+export type { FontFamily, FontWeight, FontSize, TypographyVariant } from './theme';
+
 // Utils/Formatters
 export {
   formatCurrency,

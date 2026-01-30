@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.6
 # Build stage
 FROM node:20-alpine AS builder
 
@@ -16,8 +17,10 @@ COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY apps/admin-web/package.json ./apps/admin-web/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies with cache mount
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile
 
 # Copy source files
 COPY packages/tsconfig/ ./packages/tsconfig/
@@ -27,12 +30,13 @@ COPY packages/shared-utils/ ./packages/shared-utils/
 COPY apps/admin-web/ ./apps/admin-web/
 
 # Build shared packages first
-RUN pnpm --filter @hypermarket/shared-types build
-RUN pnpm --filter @hypermarket/shared-utils build
+RUN pnpm --filter @hypermarket/shared-types build && \
+    pnpm --filter @hypermarket/shared-utils build
 
-# Build the admin web app
+# Build the admin web app with Next.js cache
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm --filter @hypermarket/admin-web build
+RUN --mount=type=cache,target=/app/apps/admin-web/.next/cache \
+    pnpm --filter @hypermarket/admin-web build
 
 # Production stage
 FROM node:20-alpine AS production
@@ -53,16 +57,13 @@ RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
-# Expose port
 EXPOSE 3001
 
 ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
 ENV NODE_ENV=production
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3001 || exit 1
 
-# Start the application
 CMD ["node", "apps/admin-web/server.js"]

@@ -324,6 +324,24 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
   - Data ownership rights
   - Confidentiality terms
 
+### PR-A0 - Expo SDK 54 + Fonts + BuildKit
+- **Expo SDK Upgrade**: All 6 mobile apps upgraded from SDK 50 → SDK 54
+  - React Native 0.76.9, React 18.3.1
+  - Updated all expo-* packages to SDK 54 compatible versions
+  - NativeWind upgraded to 4.1.0
+- **Typography System**:
+  - Created `packages/mobile-core/src/theme/typography.ts`
+  - Font families: DecotypeNaskh (primary), AlArabiya (secondary)
+  - Type scale: xs/sm/base/lg/xl/2xl/3xl/4xl
+  - Centralized font loading via `fontAssets`
+- **Fonts Setup**:
+  - Fonts stored in `packages/mobile-ui/assets/fonts/`
+  - Copied to each app's `assets/fonts/` directory
+- **Docker BuildKit Cache**:
+  - Added `# syntax=docker/dockerfile:1.6` header
+  - pnpm store cache mount for faster installs
+  - Next.js build cache mount for admin-web
+
 ---
 
 ## Support Contacts
