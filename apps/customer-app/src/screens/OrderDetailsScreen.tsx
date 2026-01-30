@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import { View, Text, ScrollView, Image, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Image, RefreshControl, Alert } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
+import { Button } from '@/components/ui';
 import { useOrder } from '@/hooks/use-api';
 import {
   formatCurrencyShort,
@@ -13,10 +16,13 @@ import {
   orderStatusColors,
 } from '@/lib/formatters';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
+import { useCartStore } from '@/stores/cart-store';
 
 type Props = {
   route: RouteProp<RootStackParamList, 'OrderDetails'>;
 };
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface OrderItem {
   id: string;
@@ -50,9 +56,47 @@ const statusSteps = ['PENDING', 'PICKING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVER
 
 export function OrderDetailsScreen({ route }: Props) {
   const { orderId } = route.params;
+  const navigation = useNavigation<NavigationProp>();
   const { data, isLoading, refetch } = useOrder(orderId);
+  const { clearCart, addItem } = useCartStore();
 
   const order = data as Order | undefined;
+
+  const handleReorder = () => {
+    if (!order?.items?.length) return;
+
+    Alert.alert(
+      'إعادة الطلب',
+      'سيتم استبدال محتويات السلة الحالية بمنتجات هذا الطلب. متابعة؟',
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'متابعة',
+          onPress: () => {
+            // Clear current cart
+            clearCart();
+
+            // Add all items from this order
+            order.items.forEach((item) => {
+              addItem(
+                {
+                  productId: item.productId,
+                  sku: item.product?.sku || '',
+                  nameAr: item.product?.nameAr || '',
+                  price: item.unitPrice,
+                  imageUrl: item.product?.imageUrl,
+                },
+                item.quantity,
+              );
+            });
+
+            // Navigate to checkout
+            navigation.navigate('Checkout');
+          },
+        },
+      ],
+    );
+  };
 
   if (isLoading || !order) {
     return (
@@ -187,7 +231,7 @@ export function OrderDetailsScreen({ route }: Props) {
           </View>
 
           {/* Price Summary */}
-          <View className="bg-gray-50 rounded-xl p-4">
+          <View className="bg-gray-50 rounded-xl p-4 mb-4">
             <View className="flex-row justify-between mb-2">
               <Text className="text-gray-900">{formatCurrencyShort(order.subtotal)}</Text>
               <Text className="text-gray-500">المجموع الفرعي</Text>
@@ -204,6 +248,15 @@ export function OrderDetailsScreen({ route }: Props) {
               <Text className="text-gray-900 font-bold">المجموع الكلي</Text>
             </View>
           </View>
+
+          {/* Re-order Button */}
+          <Button
+            title="إعادة الطلب"
+            onPress={handleReorder}
+            variant="outline"
+            fullWidth
+            icon={<Ionicons name="refresh-outline" size={20} color="#16a34a" />}
+          />
         </View>
       </ScrollView>
     </ScreenWrapper>

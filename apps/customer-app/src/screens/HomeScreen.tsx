@@ -8,6 +8,7 @@ import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl } fr
 import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard, MiniCartBar } from '@/components/ui';
+import { StoreStatusBadge } from '@/components/ui/StoreStatusBadge';
 import { useCategories, useProducts } from '@/hooks/use-api';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
@@ -67,11 +68,14 @@ export function HomeScreen() {
             </View>
           </View>
 
-          {/* Location */}
-          <TouchableOpacity className="flex-row items-center justify-end mb-4">
-            <Text className="text-white/80 text-sm ml-1">التوصيل إلى:</Text>
-            <Ionicons name="location-outline" size={16} color="white" />
-          </TouchableOpacity>
+          {/* Location + Store Status */}
+          <View className="flex-row items-center justify-between mb-2">
+            <StoreStatusBadge size="sm" />
+            <TouchableOpacity className="flex-row items-center">
+              <Text className="text-white/80 text-sm ml-1">التوصيل إلى:</Text>
+              <Ionicons name="location-outline" size={16} color="white" />
+            </TouchableOpacity>
+          </View>
           <Text className="text-white font-medium text-right">بغداد، المنصور</Text>
 
           {/* Search Bar */}
