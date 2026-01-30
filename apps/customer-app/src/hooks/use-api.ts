@@ -11,13 +11,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/constants';
 import { apiClient } from '@/services/api-client';
 
+const TWENTY_MINUTES = 1000 * 60 * 20;
+
 // ========== Categories ==========
 
 export function useCategories() {
   return useQuery({
     queryKey: QUERY_KEYS.categories,
     queryFn: () => apiClient.get<Category[]>('/catalog/categories'),
-    staleTime: 1000 * 60 * 10, // 10 minutes - categories don't change often
+    staleTime: TWENTY_MINUTES,
+    refetchOnMount: false,
+    refetchOnReconnect: true,
   });
 }
 
@@ -55,7 +59,9 @@ export function useProducts(params?: {
     queryKey: QUERY_KEYS.products(params),
     queryFn: () =>
       apiClient.get<ProductListResponse>(`/catalog/products?${searchParams.toString()}`),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: TWENTY_MINUTES,
+    refetchOnMount: false,
+    refetchOnReconnect: true,
   });
 }
 
@@ -85,7 +91,9 @@ export function useHomeOffers() {
   return useQuery({
     queryKey: QUERY_KEYS.homeOffers,
     queryFn: () => apiClient.get<Product[]>('/catalog/products?hasOffer=true&limit=10'),
-    staleTime: 1000 * 60 * 5,
+    staleTime: TWENTY_MINUTES,
+    refetchOnMount: false,
+    refetchOnReconnect: true,
   });
 }
 
@@ -93,7 +101,9 @@ export function useHomeRecommended() {
   return useQuery({
     queryKey: QUERY_KEYS.homeRecommended,
     queryFn: () => apiClient.get<Product[]>('/catalog/products?featured=true&limit=10'),
-    staleTime: 1000 * 60 * 5,
+    staleTime: TWENTY_MINUTES,
+    refetchOnMount: false,
+    refetchOnReconnect: true,
   });
 }
 

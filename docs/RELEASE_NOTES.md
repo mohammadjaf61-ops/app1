@@ -342,6 +342,21 @@ See `docs/GO_LIVE_CHECKLIST.md` for complete checklist.
   - pnpm store cache mount for faster installs
   - Next.js build cache mount for admin-web
 
+### PR-A - Cache-First Products + Fast Home
+- **TanStack Query Persistence** (customer-app):
+  - Added `@tanstack/react-query-persist-client`
+  - AsyncStorage persister for offline cache
+  - Selective hydration: products, categories, homeOffers
+- **Cache-First Policy**:
+  - staleTime: 20 minutes
+  - refetchOnMount: false (show cached data immediately)
+  - refetchOnReconnect: true (background refresh)
+  - retry: 3 with exponential backoff
+- **Home Screen Optimization**:
+  - Shows cached data instantly (no loading spinner if cache exists)
+  - Background refresh with pull-to-refresh
+  - Dev-only perf metric: `[Perf] Home ready: Xms`
+
 ---
 
 ## Support Contacts

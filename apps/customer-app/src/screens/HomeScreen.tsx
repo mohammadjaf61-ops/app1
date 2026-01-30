@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Product, Category } from '@hypermarket/contracts';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
@@ -14,19 +14,33 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const homeReadyLogged = useRef(false);
+  const mountTime = useRef(Date.now());
+
   const {
     data: categories,
-    isLoading: categoriesLoading,
+    isFetching: categoriesFetching,
     refetch: refetchCategories,
   } = useCategories();
   const {
     data: productsData,
-    isLoading: productsLoading,
+    isFetching: productsFetching,
     refetch: refetchProducts,
   } = useProducts({ limit: 10 });
 
   const products: Product[] = productsData?.data || [];
-  const isLoading = categoriesLoading || productsLoading;
+  const hasData = (categories?.length ?? 0) > 0 || products.length > 0;
+  const isRefreshing = categoriesFetching || productsFetching;
+
+  useEffect(() => {
+    if (hasData && !homeReadyLogged.current) {
+      homeReadyLogged.current = true;
+      if (__DEV__) {
+        const elapsed = Date.now() - mountTime.current;
+        console.debug(`[Perf] Home ready: ${elapsed}ms`);
+      }
+    }
+  }, [hasData]);
 
   const onRefresh = () => {
     refetchCategories();
@@ -37,7 +51,7 @@ export function HomeScreen() {
     <ScreenWrapper>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
         {/* Header */}
         <View className="bg-primary px-4 pt-12 pb-6 rounded-b-3xl">
@@ -123,7 +137,7 @@ export function HomeScreen() {
               data={products}
               horizontal
               showsHorizontalScrollIndicator={false}
-              inverted // For RTL
+              inverted
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ paddingLeft: 8 }}
               ItemSeparatorComponent={() => <View className="w-3" />}

@@ -1,30 +1,19 @@
 import { appLogger } from '@hypermarket/mobile-core';
 import { ErrorBoundary, ErrorFallback } from '@hypermarket/mobile-ui';
 import { NavigationContainer } from '@react-navigation/native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import React, { useEffect, useCallback, type ErrorInfo } from 'react';
 import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-// Initialize i18n (must be imported before components)
 import './src/lib/i18n';
 
+import { queryClient, persistOptions } from './src/lib/query-client';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/stores/auth-store';
 
-// Ignore specific warnings in development
 LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 function AppContent() {
   const initialize = useAuthStore((state) => state.initialize);
@@ -45,7 +34,6 @@ export default function App() {
   }, []);
 
   const handleReset = useCallback(() => {
-    // Reset query cache on error recovery
     queryClient.clear();
   }, []);
 
@@ -59,11 +47,14 @@ export default function App() {
             <ErrorFallback error={error} resetError={resetError} showError={__DEV__} />
           )}
         >
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={persistOptions}
+          >
             <NavigationContainer>
               <AppContent />
             </NavigationContainer>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
