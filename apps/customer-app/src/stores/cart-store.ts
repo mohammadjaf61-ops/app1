@@ -17,14 +17,10 @@ interface CartState {
   items: CartItem[];
   deliveryAddress: string;
   notes: string;
-
-  // Computed
   itemCount: number;
   subtotal: number;
   deliveryFee: number;
   total: number;
-
-  // Actions
   addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -41,7 +37,6 @@ export const useCartStore = create<CartState>()(
       deliveryAddress: '',
       notes: '',
 
-      // Computed values (recalculated on access)
       get itemCount() {
         return get().items.reduce((sum, item) => sum + item.quantity, 0);
       },

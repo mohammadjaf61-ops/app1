@@ -25,7 +25,6 @@ export function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuthStore();
 
   if (isLoading) {
-    // TODO: Add splash screen
     return null;
   }
 
@@ -33,7 +32,7 @@ export function RootNavigator() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-        animation: 'slide_from_left', // RTL animation
+        animation: 'slide_from_left',
       }}
     >
       {!isAuthenticated ? (

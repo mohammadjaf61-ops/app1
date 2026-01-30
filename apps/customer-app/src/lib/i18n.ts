@@ -1,28 +1,17 @@
-/**
- * i18n Configuration for Customer App
- * Arabic-first, with English fallback
- */
-
 import { ar, en, DEFAULT_LOCALE, getLocaleDirection, type Locale } from '@hypermarket/i18n';
 import * as Localization from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { I18nManager } from 'react-native';
 
-/**
- * Get device locale, defaulting to Arabic
- */
 function getDeviceLocale(): Locale {
   const deviceLocale = Localization.locale?.split('-')[0];
   if (deviceLocale === 'en') {
     return 'en';
   }
-  return DEFAULT_LOCALE; // Arabic by default
+  return DEFAULT_LOCALE;
 }
 
-/**
- * Initialize i18n
- */
 i18n.use(initReactI18next).init({
   resources: {
     ar: { translation: ar },
@@ -31,16 +20,13 @@ i18n.use(initReactI18next).init({
   lng: getDeviceLocale(),
   fallbackLng: DEFAULT_LOCALE,
   interpolation: {
-    escapeValue: false, // React already escapes values
+    escapeValue: false,
   },
   react: {
-    useSuspense: false, // Disable suspense for RN compatibility
+    useSuspense: false,
   },
 });
 
-/**
- * Configure RTL based on current language
- */
 export function configureRTL(locale: Locale): void {
   const isRTL = getLocaleDirection(locale) === 'rtl';
   if (I18nManager.isRTL !== isRTL) {
@@ -49,10 +35,8 @@ export function configureRTL(locale: Locale): void {
   }
 }
 
-// Configure RTL on init
 configureRTL(i18n.language as Locale);
 
-// Listen for language changes
 i18n.on('languageChanged', (lng) => {
   configureRTL(lng as Locale);
 });

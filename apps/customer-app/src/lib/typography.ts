@@ -1,16 +1,7 @@
-/**
- * Typography Baseline
- * Font weights and text styles for the app
- */
-
 import { StyleSheet } from 'react-native';
 
 import { fonts } from './fonts';
 
-/**
- * Font weights mapping
- * Using DecotypeNaskh as primary Arabic font
- */
 export const fontWeights = {
   regular: '400' as const,
   medium: '500' as const,
@@ -18,11 +9,7 @@ export const fontWeights = {
   bold: '700' as const,
 };
 
-/**
- * Base text styles
- */
 export const textStyles = StyleSheet.create({
-  // Headings
   h1: {
     fontFamily: fonts.arabic,
     fontSize: 28,
@@ -47,8 +34,6 @@ export const textStyles = StyleSheet.create({
     fontWeight: fontWeights.semiBold,
     lineHeight: 24,
   },
-
-  // Body
   body: {
     fontFamily: fonts.arabic,
     fontSize: 16,
@@ -67,8 +52,6 @@ export const textStyles = StyleSheet.create({
     fontWeight: fontWeights.semiBold,
     lineHeight: 24,
   },
-
-  // Small
   small: {
     fontFamily: fonts.arabic,
     fontSize: 14,
@@ -81,8 +64,6 @@ export const textStyles = StyleSheet.create({
     fontWeight: fontWeights.medium,
     lineHeight: 20,
   },
-
-  // Extra small
   xs: {
     fontFamily: fonts.arabic,
     fontSize: 12,
@@ -95,8 +76,6 @@ export const textStyles = StyleSheet.create({
     fontWeight: fontWeights.medium,
     lineHeight: 16,
   },
-
-  // Labels & buttons
   label: {
     fontFamily: fonts.arabic,
     fontSize: 14,
