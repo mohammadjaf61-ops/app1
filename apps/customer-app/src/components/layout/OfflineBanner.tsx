@@ -1,14 +1,14 @@
 /**
  * OfflineBanner Component
  *
- * Displays a banner when the device is offline.
- * Shows cached data notification and retry button.
+ * Displays a minimal banner when the device is offline.
+ * Shows cached data notification. Non-blocking, non-flashy.
  */
 
 import { Ionicons } from '@expo/vector-icons';
 import { useNetworkStatus } from '@hypermarket/mobile-core';
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Animated } from 'react-native';
 
 interface OfflineBannerProps {
   /** Show cached data message */
@@ -17,43 +17,70 @@ interface OfflineBannerProps {
   onRetry?: () => void;
 }
 
-export function OfflineBanner({ showCacheMessage = true, onRetry }: OfflineBannerProps) {
-  const { isOffline, refresh } = useNetworkStatus();
-  const [isRetrying, setIsRetrying] = React.useState(false);
+export function OfflineBanner({ showCacheMessage = true }: OfflineBannerProps) {
+  const { isOffline, isOnline } = useNetworkStatus();
+  const [showConnected, setShowConnected] = useState(false);
+  const wasOffline = useRef(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const handleRetry = async () => {
-    setIsRetrying(true);
-    await refresh();
-    onRetry?.();
-    setIsRetrying(false);
-  };
+  // Track offline->online transitions
+  useEffect(() => {
+    if (isOffline) {
+      wasOffline.current = true;
+    } else if (wasOffline.current && isOnline) {
+      // Just came back online
+      wasOffline.current = false;
+      setShowConnected(true);
+
+      // Fade in
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      // Auto-dismiss after 2 seconds
+      const timer = setTimeout(() => {
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowConnected(false);
+        });
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOffline, isOnline, fadeAnim]);
+
+  // Show "connected" toast
+  if (showConnected) {
+    return (
+      <Animated.View
+        style={{ opacity: fadeAnim }}
+        className="bg-green-500 px-4 py-2"
+      >
+        <View className="flex-row items-center justify-center">
+          <Text className="text-white font-medium mr-2">تم الاتصال</Text>
+          <Ionicons name="checkmark-circle" size={18} color="white" />
+        </View>
+      </Animated.View>
+    );
+  }
 
   if (!isOffline) {
     return null;
   }
 
   return (
-    <View className="bg-amber-500 px-4 py-3">
-      <View className="flex-row items-center justify-between">
-        <TouchableOpacity
-          onPress={handleRetry}
-          disabled={isRetrying}
-          className="flex-row items-center bg-amber-600/50 px-3 py-1.5 rounded-full"
-          activeOpacity={0.7}
-        >
-          <Text className="text-white text-sm font-medium mr-1">
-            {isRetrying ? 'جارٍ المحاولة...' : 'إعادة المحاولة'}
-          </Text>
-          <Ionicons name={isRetrying ? 'sync' : 'refresh-outline'} size={16} color="white" />
-        </TouchableOpacity>
-
-        <View className="flex-row items-center flex-1 justify-end">
-          {showCacheMessage && (
-            <Text className="text-white/90 text-sm mr-2">عرض بيانات محفوظة</Text>
-          )}
-          <Text className="text-white font-medium mr-2">لا يوجد اتصال</Text>
-          <Ionicons name="cloud-offline-outline" size={20} color="white" />
-        </View>
+    <View className="bg-gray-600 px-4 py-2">
+      <View className="flex-row items-center justify-center">
+        {showCacheMessage && (
+          <Text className="text-white/80 text-sm mr-2">— التصفح متاح</Text>
+        )}
+        <Text className="text-white font-medium mr-2">أنت غير متصل</Text>
+        <Ionicons name="cloud-offline-outline" size={18} color="white" />
       </View>
     </View>
   );

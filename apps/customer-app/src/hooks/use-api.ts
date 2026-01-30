@@ -8,6 +8,7 @@ import type {
 } from '@hypermarket/contracts';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { cacheCategories, cacheProducts } from '@/cache/products-cache';
 import { QUERY_KEYS } from '@/lib/constants';
 import { apiClient } from '@/services/api-client';
 
@@ -18,7 +19,12 @@ const TWENTY_MINUTES = 1000 * 60 * 20;
 export function useCategories() {
   return useQuery({
     queryKey: QUERY_KEYS.categories,
-    queryFn: () => apiClient.get<Category[]>('/catalog/categories'),
+    queryFn: async () => {
+      const data = await apiClient.get<Category[]>('/catalog/categories');
+      // Update simple cache for faster startup
+      cacheCategories(data);
+      return data;
+    },
     staleTime: TWENTY_MINUTES,
     refetchOnMount: false,
     refetchOnReconnect: true,
@@ -57,8 +63,16 @@ export function useProducts(params?: {
 
   return useQuery({
     queryKey: QUERY_KEYS.products(params),
-    queryFn: () =>
-      apiClient.get<ProductListResponse>(`/catalog/products?${searchParams.toString()}`),
+    queryFn: async () => {
+      const data = await apiClient.get<ProductListResponse>(
+        `/catalog/products?${searchParams.toString()}`,
+      );
+      // Update simple cache for faster startup (only for main product list)
+      if (!params?.categoryId && !params?.search) {
+        cacheProducts(data.data);
+      }
+      return data;
+    },
     staleTime: TWENTY_MINUTES,
     refetchOnMount: false,
     refetchOnReconnect: true,

@@ -12,6 +12,7 @@ import { formatCurrencyShort } from '@/lib/formatters';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
+import { useSyncQueue } from '@/stores/sync-queue';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -20,6 +21,7 @@ export function CheckoutScreen() {
   const { user } = useAuthStore();
   const { isOffline } = useNetworkStatus();
   const { items, deliveryAddress, notes, setDeliveryAddress, setNotes, clearCart } = useCartStore();
+  const { saveDraftOrder, draftOrders } = useSyncQueue();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFee = 5000;
@@ -33,16 +35,6 @@ export function CheckoutScreen() {
   const createOrder = useCreateOrder();
 
   const handleConfirmOrder = async () => {
-    // Check if offline
-    if (isOffline) {
-      Alert.alert(
-        'لا يوجد اتصال',
-        'لا يمكن إتمام الطلب بدون اتصال بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.',
-        [{ text: 'حسناً' }],
-      );
-      return;
-    }
-
     // Validation
     if (!customerName.trim()) {
       Alert.alert('خطأ', 'يرجى إدخال الاسم');
@@ -54,6 +46,42 @@ export function CheckoutScreen() {
     }
     if (!address.trim()) {
       Alert.alert('خطأ', 'يرجى إدخال عنوان التوصيل');
+      return;
+    }
+
+    // Handle offline: save draft order
+    if (isOffline) {
+      saveDraftOrder({
+        items: items.map((item) => ({
+          productId: item.productId,
+          sku: item.sku,
+          nameAr: item.nameAr,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        deliveryAddress: address.trim(),
+        notes: orderNotes.trim(),
+        total,
+      });
+
+      // Clear cart after saving draft
+      clearCart();
+
+      Alert.alert(
+        'تم حفظ الطلب',
+        'لا يوجد اتصال. تم حفظ الطلب وسيُرسل تلقائيًا عند عودة الشبكة.',
+        [
+          {
+            text: 'حسناً',
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Main' }],
+              });
+            },
+          },
+        ],
+      );
       return;
     }
 
@@ -100,19 +128,33 @@ export function CheckoutScreen() {
       >
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="p-4">
-            {/* Offline Warning */}
+            {/* Offline Notice */}
             {isOffline && (
+              <View className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 flex-row items-center">
+                <View className="flex-1 mr-3">
+                  <Text className="text-blue-800 font-bold text-right mb-1">
+                    أنت غير متصل بالإنترنت
+                  </Text>
+                  <Text className="text-blue-700 text-sm text-right">
+                    يمكنك إتمام الطلب وسيتم حفظه تلقائيًا. سيُرسل الطلب فور عودة الاتصال.
+                  </Text>
+                </View>
+                <Ionicons name="cloud-offline-outline" size={32} color="#1d4ed8" />
+              </View>
+            )}
+
+            {/* Pending Draft Orders Notice */}
+            {draftOrders.length > 0 && (
               <View className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex-row items-center">
                 <View className="flex-1 mr-3">
                   <Text className="text-amber-800 font-bold text-right mb-1">
-                    لا يمكن إتمام الطلب حالياً
+                    لديك {draftOrders.length} طلب محفوظ
                   </Text>
                   <Text className="text-amber-700 text-sm text-right">
-                    أنت غير متصل بالإنترنت. يمكنك تصفح المنتجات ولكن إتمام الطلب يتطلب اتصالاً
-                    بالإنترنت.
+                    سيتم إرسال الطلبات المحفوظة تلقائيًا عند عودة الاتصال.
                   </Text>
                 </View>
-                <Ionicons name="warning-outline" size={32} color="#b45309" />
+                <Ionicons name="time-outline" size={32} color="#b45309" />
               </View>
             )}
 
@@ -214,17 +256,16 @@ export function CheckoutScreen() {
         {/* Confirm Button */}
         <View className="p-4 bg-white border-t border-gray-100">
           <Button
-            title={isOffline ? 'غير متصل - لا يمكن إتمام الطلب' : 'تأكيد الطلب'}
+            title={isOffline ? 'حفظ الطلب (سيُرسل عند الاتصال)' : 'تأكيد الطلب'}
             onPress={handleConfirmOrder}
             loading={createOrder.isPending}
-            disabled={isOffline}
             fullWidth
             size="lg"
             icon={
               <Ionicons
-                name={isOffline ? 'cloud-offline-outline' : 'checkmark-circle-outline'}
+                name={isOffline ? 'save-outline' : 'checkmark-circle-outline'}
                 size={20}
-                color={isOffline ? '#9ca3af' : 'white'}
+                color="white"
               />
             }
           />

@@ -5,6 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 
+import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { ProductCard, MiniCartBar } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
@@ -49,6 +50,7 @@ export function HomeScreen() {
 
   return (
     <ScreenWrapper>
+      <OfflineBanner />
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}

@@ -9,9 +9,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './src/lib/i18n';
 
+import { initNetworkMonitoring } from './src/lib/network';
 import { queryClient, persistOptions } from './src/lib/query-client';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useAuthStore } from './src/stores/auth-store';
+import { initSyncQueue } from './src/stores/sync-queue';
+
+// Initialize network monitoring and sync queue early
+initNetworkMonitoring();
+initSyncQueue();
 
 LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
