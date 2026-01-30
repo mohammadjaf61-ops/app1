@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './src/lib/i18n';
 
 import { useAppFonts } from './src/lib/fonts';
+import { initMotionPreference } from './src/lib/motion';
 import { initNetworkMonitoring } from './src/lib/network';
 import { queryClient, persistOptions } from './src/lib/query-client';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -20,7 +21,8 @@ import { initSyncQueue } from './src/stores/sync-queue';
 // Keep splash visible until fonts loaded
 SplashScreen.preventAutoHideAsync();
 
-// Initialize network monitoring and sync queue early
+// Initialize early
+initMotionPreference();
 initNetworkMonitoring();
 initSyncQueue();
 

@@ -1,6 +1,6 @@
-import React from 'react';
-import type { TouchableOpacityProps } from 'react-native';
-import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
+import React, { useRef, useCallback } from 'react';
+import type { PressableProps, ViewStyle, StyleProp } from 'react-native';
+import { Pressable, Text, ActivityIndicator, View, Animated, AccessibilityInfo } from 'react-native';
 
 export type ButtonVariant =
   | 'primary'
@@ -13,7 +13,7 @@ export type ButtonVariant =
 
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
-export interface ButtonProps extends TouchableOpacityProps {
+export interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -22,6 +22,7 @@ export interface ButtonProps extends TouchableOpacityProps {
   fullWidth?: boolean;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
+  style?: StyleProp<ViewStyle>;
 }
 
 const variantStyles: Record<ButtonVariant, { bg: string; text: string; border: string }> = {
@@ -85,6 +86,10 @@ const sizeStyles: Record<ButtonSize, { padding: string; text: string; minHeight:
   },
 };
 
+const SCALE_PRESSED = 0.98;
+const SCALE_NORMAL = 1;
+const DURATION_FAST = 100;
+
 export function Button({
   title,
   variant = 'primary',
@@ -95,11 +100,50 @@ export function Button({
   icon,
   iconPosition = 'right',
   style,
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) {
   const variantStyle = variantStyles[variant];
   const sizeStyle = sizeStyles[size];
   const isDisabled = disabled || loading;
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const reduceMotionRef = useRef(false);
+
+  React.useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      reduceMotionRef.current = enabled;
+    });
+  }, []);
+
+  const handlePressIn = useCallback(
+    (e: any) => {
+      if (!reduceMotionRef.current) {
+        Animated.timing(scaleAnim, {
+          toValue: SCALE_PRESSED,
+          duration: DURATION_FAST,
+          useNativeDriver: true,
+        }).start();
+      }
+      onPressIn?.(e);
+    },
+    [scaleAnim, onPressIn]
+  );
+
+  const handlePressOut = useCallback(
+    (e: any) => {
+      if (!reduceMotionRef.current) {
+        Animated.timing(scaleAnim, {
+          toValue: SCALE_NORMAL,
+          duration: DURATION_FAST,
+          useNativeDriver: true,
+        }).start();
+      }
+      onPressOut?.(e);
+    },
+    [scaleAnim, onPressOut]
+  );
 
   const getIndicatorColor = () => {
     if (variant === 'outline' || variant === 'secondary' || variant === 'ghost') {
@@ -109,42 +153,44 @@ export function Button({
   };
 
   return (
-    <TouchableOpacity
-      className={`
-        ${variantStyle.bg}
-        ${variantStyle.border}
-        ${sizeStyle.padding}
-        ${sizeStyle.minHeight}
-        ${fullWidth ? 'w-full' : ''}
-        rounded-xl
-        flex-row
-        items-center
-        justify-center
-        ${isDisabled ? 'opacity-50' : ''}
-      `}
-      disabled={isDisabled}
-      activeOpacity={0.7}
-      style={style}
-      {...props}
-    >
-      {loading ? (
-        <ActivityIndicator color={getIndicatorColor()} size="small" />
-      ) : (
-        <View className="flex-row items-center justify-center">
-          {icon && iconPosition === 'left' && <View className="ml-2">{icon}</View>}
-          <Text
-            className={`
-              ${variantStyle.text}
-              ${sizeStyle.text}
-              font-bold
-              text-center
-            `}
-          >
-            {title}
-          </Text>
-          {icon && iconPosition === 'right' && <View className="mr-2">{icon}</View>}
-        </View>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+      <Pressable
+        className={`
+          ${variantStyle.bg}
+          ${variantStyle.border}
+          ${sizeStyle.padding}
+          ${sizeStyle.minHeight}
+          ${fullWidth ? 'w-full' : ''}
+          rounded-xl
+          flex-row
+          items-center
+          justify-center
+          ${isDisabled ? 'opacity-50' : ''}
+        `}
+        disabled={isDisabled}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        {...props}
+      >
+        {loading ? (
+          <ActivityIndicator color={getIndicatorColor()} size="small" />
+        ) : (
+          <View className="flex-row items-center justify-center">
+            {icon && iconPosition === 'left' && <View className="ml-2">{icon}</View>}
+            <Text
+              className={`
+                ${variantStyle.text}
+                ${sizeStyle.text}
+                font-bold
+                text-center
+              `}
+            >
+              {title}
+            </Text>
+            {icon && iconPosition === 'right' && <View className="mr-2">{icon}</View>}
+          </View>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }

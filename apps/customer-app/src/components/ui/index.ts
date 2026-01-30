@@ -4,4 +4,5 @@ export type { ButtonProps, BadgeProps, InputProps } from '@hypermarket/mobile-ui
 
 // App-specific components
 export { ProductCard, QuantityControl } from './ProductCard';
+export { ProductCardSkeleton } from './ProductCardSkeleton';
 export { MiniCartBar } from './MiniCartBar';

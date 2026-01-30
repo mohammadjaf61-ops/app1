@@ -57,6 +57,8 @@ export function RootNavigator() {
               headerShown: true,
               headerTitle: 'إتمام الطلب',
               headerBackTitle: 'رجوع',
+              animation: 'fade_from_bottom',
+              animationDuration: 200,
             }}
           />
           <Stack.Screen
