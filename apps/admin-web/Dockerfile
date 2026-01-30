@@ -13,6 +13,7 @@ COPY package.json pnpm-lock.yaml* ./
 # Copy package.json files for workspace packages
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/shared-utils/package.json ./packages/shared-utils/
+COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/tsconfig/package.json ./packages/tsconfig/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY apps/admin-web/package.json ./apps/admin-web/
@@ -27,11 +28,13 @@ COPY packages/tsconfig/ ./packages/tsconfig/
 COPY packages/eslint-config/ ./packages/eslint-config/
 COPY packages/shared-types/ ./packages/shared-types/
 COPY packages/shared-utils/ ./packages/shared-utils/
+COPY packages/contracts/ ./packages/contracts/
 COPY apps/admin-web/ ./apps/admin-web/
 
 # Build shared packages first
 RUN pnpm --filter @hypermarket/shared-types build && \
-    pnpm --filter @hypermarket/shared-utils build
+    pnpm --filter @hypermarket/shared-utils build && \
+    pnpm --filter @hypermarket/contracts build
 
 # Build the admin web app with Next.js cache
 ENV NEXT_TELEMETRY_DISABLED=1
