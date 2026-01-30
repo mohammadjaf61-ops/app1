@@ -148,7 +148,8 @@
     "proceedToCheckout": "المتابعة للدفع",
     "itemAdded": "تمت إضافة المنتج للسلة",
     "itemRemoved": "تمت إزالة المنتج من السلة",
-    "quantityUpdated": "تم تحديث الكمية"
+    "quantityUpdated": "تم تحديث الكمية",
+    "viewCart": "عرض السلة"
   },
   "checkout": {
     "title": "إتمام الطلب",

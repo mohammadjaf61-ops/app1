@@ -148,7 +148,8 @@
     "proceedToCheckout": "Proceed to Checkout",
     "itemAdded": "Item added to cart",
     "itemRemoved": "Item removed from cart",
-    "quantityUpdated": "Quantity updated"
+    "quantityUpdated": "Quantity updated",
+    "viewCart": "View Cart"
   },
   "checkout": {
     "title": "Checkout",

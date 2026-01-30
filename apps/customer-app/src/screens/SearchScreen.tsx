@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, Keyboard } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
-import { ProductCard } from '@/components/ui';
+import { ProductCard, MiniCartBar } from '@/components/ui';
 import { useSearchProducts } from '@/hooks/use-api';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
@@ -119,6 +119,9 @@ export function SearchScreen() {
           <Text className="text-gray-500 text-center mt-2">جرب البحث بكلمات مختلفة</Text>
         </View>
       )}
+
+      {/* Mini Cart Bar */}
+      <MiniCartBar />
     </ScreenWrapper>
   );
 }

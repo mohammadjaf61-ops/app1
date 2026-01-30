@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
-import { ProductCard } from '@/components/ui';
+import { ProductCard, MiniCartBar } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
@@ -130,6 +130,9 @@ export function CategoriesScreen() {
           )}
         </View>
       </View>
+
+      {/* Mini Cart Bar */}
+      <MiniCartBar />
     </ScreenWrapper>
   );
 }

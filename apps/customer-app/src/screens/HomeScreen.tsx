@@ -6,7 +6,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
-import { ProductCard } from '@/components/ui';
+import { ProductCard, MiniCartBar } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks/use-api';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 
@@ -169,6 +169,9 @@ export function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Mini Cart Bar */}
+      <MiniCartBar />
     </ScreenWrapper>
   );
 }
