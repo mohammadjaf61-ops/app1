@@ -16,6 +16,7 @@ import {
 import { useToast } from '../components/Toast';
 import { formatCurrencyShort } from '../lib/formatters';
 import { useCartStore } from '../stores/cart-store';
+import { useSettingsStore } from '../stores/settings-store';
 
 // API base URL - in production, use environment variable
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
@@ -93,10 +94,26 @@ export default function CheckoutScreen() {
     clearCart,
   } = useCartStore();
 
+  const { defaultAddress, savedName, savedPhone, setDefaultAddress, setSavedName, setSavedPhone } =
+    useSettingsStore();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasConsent, setHasConsent] = useState<boolean | null>(null);
   const [isCheckingConsent, setIsCheckingConsent] = useState(false);
+
+  // Initialize with saved/default values
+  useEffect(() => {
+    if (!deliveryAddress && defaultAddress) {
+      setDeliveryAddress(defaultAddress);
+    }
+    if (!customerName && savedName) {
+      setCustomerName(savedName);
+    }
+    if (!customerPhone && savedPhone) {
+      setCustomerPhone(savedPhone);
+    }
+  }, []);
 
   // Check consent status when phone number changes
   const checkConsentStatus = useCallback(async (phone: string) => {
@@ -205,6 +222,11 @@ export default function CheckoutScreen() {
         total,
         itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
       };
+
+      // Save customer info for future orders
+      setSavedName(customerName.trim());
+      setSavedPhone(customerPhone.trim());
+      setDefaultAddress(deliveryAddress.trim());
 
       // Clear cart after successful order
       clearCart();
