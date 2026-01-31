@@ -34,8 +34,9 @@
     "scheme": "hypermarket-customer",
     "extra": {
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "9f36e003-3dda-475b-a621-3bebdca76401"
       }
-    }
+    },
+    "owner": "mohjaf"
   }
 }
