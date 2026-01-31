@@ -69,7 +69,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Send OTP to phone',
-    description: 'إرسال رمز التحقق للعميل عبر SMS (mock في MVP)',
+    description: 'إرسال رمز التحقق للعميل عبر SMS',
   })
   @ApiBody({
     type: SendOtpDto,
@@ -112,7 +112,7 @@ export class AuthController {
     examples: {
       verify: {
         summary: 'Verify OTP',
-        value: { phone: '07712345678', otp: '123456' },
+        value: { phone: '07712345678', otp: '******' },
       },
     },
   })

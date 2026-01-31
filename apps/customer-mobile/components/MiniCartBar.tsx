@@ -15,12 +15,13 @@ export function MiniCartBar() {
   const storeOpen = isStoreOpen();
   const eta = getDeliveryEta();
 
-  const { itemCount, total } = useMemo(() => {
-    const count = items.reduce((sum, item) => sum + item.quantity, 0);
-    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const deliveryFee = items.length > 0 ? 5000 : 0;
-    return { itemCount: count, total: subtotal + deliveryFee };
+  const getTotal = useCartStore((state) => state.getTotal);
+
+  const itemCount = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.quantity, 0);
   }, [items]);
+
+  const total = getTotal();
 
   if (itemCount === 0) {
     return null;

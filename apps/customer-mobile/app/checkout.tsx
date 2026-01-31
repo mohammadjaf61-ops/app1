@@ -15,24 +15,12 @@ import {
 
 import { useToast } from '../components/Toast';
 import { useNetworkStatus } from '../hooks/use-network';
+import { API_BASE_URL } from '../lib/constants';
 import { formatCurrencyShort } from '../lib/formatters';
 import { isStoreOpen, getDeliveryEta, getNextOpenTime } from '../lib/store-config';
 import { useCartStore } from '../stores/cart-store';
 import { useOrderQueueStore } from '../stores/order-queue-store';
 import { useSettingsStore } from '../stores/settings-store';
-
-// API base URL - in production, use environment variable
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
-
-// Error codes from API
-const ERROR_MESSAGES: Record<string, string> = {
-  'errors.productNotAvailable': 'بعض المنتجات غير متوفرة حالياً',
-  'errors.productNotFound': 'منتج غير موجود',
-  'errors.outOfStock': 'المنتج نفذ من المخزون',
-  'errors.priceChanged': 'تغير سعر المنتج، يرجى مراجعة السلة',
-  'errors.minimumOrderNotMet': 'الحد الأدنى للطلب غير مستوفى',
-  'errors.storeClosedForOrders': 'المتجر مغلق حالياً',
-};
 
 function InputField({
   label,

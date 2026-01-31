@@ -12,13 +12,11 @@ import {
 } from 'react-native';
 
 import { useToast } from '../components/Toast';
+import { API_BASE_URL } from '../lib/constants';
 import { useCartStore } from '../stores/cart-store';
 
 // Document version - should match backend
 const DOCUMENT_VERSION = '1.0';
-
-// API base URL - in production, use environment variable
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 interface ConsentDocument {
   type: 'TERMS_OF_SERVICE' | 'PRIVACY_POLICY' | 'RETURN_REFUND';

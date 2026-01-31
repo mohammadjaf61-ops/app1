@@ -84,6 +84,36 @@ export function useAdminKPIs() {
   });
 }
 
+export interface WeeklyStatsDay {
+  day: string;
+  orders: number;
+  revenue: number;
+}
+
+export function useWeeklyStats() {
+  const today = new Date();
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const from = weekAgo.toISOString().split('T')[0];
+  const to = today.toISOString().split('T')[0];
+
+  return useQuery<WeeklyStatsDay[]>({
+    queryKey: queryKeys.dailySales(from, to),
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get<WeeklyStatsDay[]>(
+          `/reports/sales/daily?from=${from}&to=${to}`,
+        );
+        return response;
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
 // Order hooks
 export function useOrders(filters?: { status?: string; page?: number; limit?: number }) {
   const params = new URLSearchParams();

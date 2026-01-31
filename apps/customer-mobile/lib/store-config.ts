@@ -1,3 +1,5 @@
+// Store configuration - these defaults can be overridden via admin settings API
+// In production, consider fetching these from the backend settings service
 export const STORE_CONFIG = {
   // Opening hours (24h format, Iraq timezone)
   openingHour: 8, // 8 AM

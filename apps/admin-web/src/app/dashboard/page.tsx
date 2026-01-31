@@ -8,6 +8,7 @@ import {
   TrendingUp,
   TrendingDown,
   Package,
+  BarChart3,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import {
@@ -24,19 +25,8 @@ import {
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAdminKPIs, useOrders, useLowStockItems } from '@/hooks/use-api';
+import { useAdminKPIs, useOrders, useLowStockItems, useWeeklyStats } from '@/hooks/use-api';
 import { formatCurrency, formatNumber, orderStatusLabels } from '@/lib/formatters';
-
-// Mock data for charts (in production, this would come from API)
-const weeklyData = [
-  { day: 'السبت', orders: 24, revenue: 2400000 },
-  { day: 'الأحد', orders: 18, revenue: 1800000 },
-  { day: 'الإثنين', orders: 32, revenue: 3200000 },
-  { day: 'الثلاثاء', orders: 28, revenue: 2800000 },
-  { day: 'الأربعاء', orders: 35, revenue: 3500000 },
-  { day: 'الخميس', orders: 42, revenue: 4200000 },
-  { day: 'الجمعة', orders: 38, revenue: 3800000 },
-];
 
 interface StatCardProps {
   title: string;
@@ -103,6 +93,7 @@ function StatCard({ title, value, description, icon: Icon, trend, isLoading }: S
 export default function DashboardPage() {
   const { data: kpis, isLoading: kpisLoading } = useAdminKPIs();
   const { data: ordersData, isLoading: ordersLoading } = useOrders({ status: 'OUT_FOR_DELIVERY' });
+  const { data: weeklyData, isLoading: weeklyLoading } = useWeeklyStats();
 
   const stats = useMemo(() => {
     return {
@@ -117,6 +108,7 @@ export default function DashboardPage() {
   }, [kpis, ordersData]);
 
   const isLoading = kpisLoading || ordersLoading;
+  const hasChartData = weeklyData && weeklyData.length > 0;
 
   return (
     <div className="space-y-6">
@@ -168,29 +160,41 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="day" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload?.length) {
-                        return (
-                          <div className="rounded-lg border bg-background p-2 shadow-sm">
-                            <div className="grid grid-cols-2 gap-2">
-                              <span className="text-muted-foreground">الطلبات:</span>
-                              <span className="font-bold">{payload[0].value}</span>
+              {weeklyLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Skeleton className="h-full w-full" />
+                </div>
+              ) : hasChartData ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="day" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload?.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-muted-foreground">الطلبات:</span>
+                                <span className="font-bold">{payload[0].value}</span>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="orders" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="orders" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                  <BarChart3 className="h-12 w-12 mb-2" />
+                  <p className="text-sm">لا توجد بيانات بعد</p>
+                  <p className="text-xs">ستظهر البيانات بعد تسجيل الطلبات</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -203,40 +207,52 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="day" className="text-xs" />
-                  <YAxis
-                    className="text-xs"
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload?.length) {
-                        return (
-                          <div className="rounded-lg border bg-background p-2 shadow-sm">
-                            <div className="grid grid-cols-2 gap-2">
-                              <span className="text-muted-foreground">الإيرادات:</span>
-                              <span className="font-bold">
-                                {formatCurrency(payload[0].value as number)}
-                              </span>
+              {weeklyLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <Skeleton className="h-full w-full" />
+                </div>
+              ) : hasChartData ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="day" className="text-xs" />
+                    <YAxis
+                      className="text-xs"
+                      tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload?.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-muted-foreground">الإيرادات:</span>
+                                <span className="font-bold">
+                                  {formatCurrency(payload[0].value as number)}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))' }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                  <DollarSign className="h-12 w-12 mb-2" />
+                  <p className="text-sm">لا توجد بيانات بعد</p>
+                  <p className="text-xs">ستظهر الإيرادات بعد تسجيل المبيعات</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

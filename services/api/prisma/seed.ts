@@ -1,11 +1,15 @@
 /**
  * Hypermarket Platform - Database Seed Script
+ * ⚠️ DEVELOPMENT USE ONLY - Do not run in production
  *
- * Seeds the database with initial data:
- * - User roles (Admin, Manager, etc.)
+ * Seeds the database with initial data for development/testing:
+ * - System settings and configuration
  * - Base categories for product catalog
  * - Initial inventory locations
- * - System settings
+ * - Permissions and roles
+ * - Test admin user (for development only)
+ *
+ * For production: Use the admin panel to add real data
  *
  * Usage: pnpm --filter @hypermarket/api prisma:seed
  */

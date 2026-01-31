@@ -1,5 +1,6 @@
 import { UserRole, JwtPayload } from '@hypermarket/shared-types';
 import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -10,9 +11,9 @@ import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 /**
- * Mock OTP for MVP - always use this code
+ * Development-only OTP for testing (only used when USE_MOCK_OTP=true)
  */
-const MOCK_OTP = '123456';
+const DEV_OTP = '123456';
 
 /**
  * Access token response (no refresh tokens in MVP)
@@ -32,11 +33,18 @@ export interface AccessTokenResponse {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private readonly useMockOtp: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.useMockOtp = this.configService.get<string>('USE_MOCK_OTP') === 'true';
+    if (this.useMockOtp) {
+      this.logger.warn('⚠️ Mock OTP mode enabled - DO NOT use in production!');
+    }
+  }
 
   /**
    * Login with phone and password (staff login)
@@ -66,7 +74,9 @@ export class AuthService {
   }
 
   /**
-   * Send OTP to phone (mock implementation for MVP)
+   * Send OTP to phone
+   * In development: Uses mock OTP when USE_MOCK_OTP=true
+   * In production: Should integrate with SMS provider
    */
   async sendOtp(dto: SendOtpDto): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
@@ -81,20 +91,34 @@ export class AuthService {
       throw new BadRequestException('الحساب معطل');
     }
 
-    // Mock OTP - In production, send SMS here
-    // Security: Never log actual OTP values (PR#20)
-    this.logger.log(`[MOCK OTP] Sending OTP to phone ending in ...${dto.phone.slice(-4)}`);
+    if (this.useMockOtp) {
+      // Development mode - use fixed OTP
+      this.logger.log(`[DEV] OTP requested for phone ending in ...${dto.phone.slice(-4)}`);
+    } else {
+      // Production mode - integrate with SMS provider here
+      // TODO: Implement SMS provider integration
+      this.logger.log(`Sending OTP to phone ending in ...${dto.phone.slice(-4)}`);
+    }
 
     return { message: 'تم إرسال رمز التحقق' };
   }
 
   /**
    * Verify OTP and return access token
+   * In development: Uses DEV_OTP when USE_MOCK_OTP=true
+   * In production: Should verify against stored OTP from SMS provider
    */
   async verifyOtp(dto: VerifyOtpDto): Promise<AccessTokenResponse> {
-    // Verify mock OTP
-    if (dto.otp !== MOCK_OTP) {
-      throw new BadRequestException('رمز التحقق غير صحيح');
+    // Verify OTP based on mode
+    if (this.useMockOtp) {
+      // Development mode - accept fixed OTP
+      if (dto.otp !== DEV_OTP) {
+        throw new BadRequestException('رمز التحقق غير صحيح');
+      }
+    } else {
+      // Production mode - verify against stored OTP
+      // TODO: Implement real OTP verification with SMS provider
+      throw new BadRequestException('نظام التحقق غير متوفر حالياً');
     }
 
     const user = await this.prisma.user.findUnique({
