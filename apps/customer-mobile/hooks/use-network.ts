@@ -76,7 +76,7 @@ export function useOrderQueueProcessor() {
       } else {
         // Wait before next attempt
         const delay = RETRY_DELAYS[Math.min(order.attemptCount, RETRY_DELAYS.length - 1)];
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await new Promise<void>((resolve) => setTimeout(() => resolve(), delay));
         updateStatus(order.id, 'pending');
       }
     }
