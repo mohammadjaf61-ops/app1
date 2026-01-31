@@ -3,17 +3,29 @@
     "version": ">= 5.0.0"
   },
   "build": {
+    "base": {
+      "node": "20.18.0",
+      "pnpm": "9.15.0",
+      "env": {
+        "EXPO_USE_MONOREPO_WORKSPACES": "1",
+        "CI": "1"
+      },
+      "prebuildCommand": "cd ../.. && pnpm --filter @hypermarket/shared-types build && pnpm --filter @hypermarket/shared-utils build"
+    },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal"
     },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "extends": "base",
       "autoIncrement": true
     }
   },
