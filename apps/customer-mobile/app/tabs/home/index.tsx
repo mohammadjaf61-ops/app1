@@ -1,6 +1,7 @@
 import { Search, Plus, Package } from 'lucide-react-native';
 import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
 
+import { MiniCartBar } from '../../../components/MiniCartBar';
 import { ProductCardSkeleton } from '../../../components/ProductCardSkeleton';
 import { useToast } from '../../../components/Toast';
 import { useFeaturedProducts, useCategories, usePrefetchOnMount } from '../../../hooks/use-products';
@@ -118,13 +119,15 @@ export default function HomeScreen() {
         </View>
 
         {/* Info Banner */}
-        <View className="mx-4 mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <View className="mx-4 mb-24 bg-blue-50 border border-blue-200 rounded-xl p-4">
           <Text className="text-blue-800 font-semibold text-right mb-1">توصيل سريع</Text>
           <Text className="text-blue-700 text-sm text-right">
             اطلب الآن واحصل على طلبك خلال ساعات. الدفع عند الاستلام.
           </Text>
         </View>
       </ScrollView>
+
+      <MiniCartBar />
     </SafeAreaView>
   );
 }
