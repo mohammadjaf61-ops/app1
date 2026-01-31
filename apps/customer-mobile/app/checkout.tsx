@@ -16,6 +16,7 @@ import {
 import { useToast } from '../components/Toast';
 import { useNetworkStatus } from '../hooks/use-network';
 import { formatCurrencyShort } from '../lib/formatters';
+import { isStoreOpen, getDeliveryEta, getNextOpenTime } from '../lib/store-config';
 import { useCartStore } from '../stores/cart-store';
 import { useOrderQueueStore } from '../stores/order-queue-store';
 import { useSettingsStore } from '../stores/settings-store';
@@ -400,6 +401,19 @@ export default function CheckoutScreen() {
               </View>
             )}
 
+            {/* Delivery ETA */}
+            <View className="mb-6">
+              <Text className="text-lg font-bold text-gray-900 text-right mb-4">وقت التوصيل</Text>
+              <View className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                <Text className="text-blue-800 font-semibold text-right">
+                  وقت التوصيل المتوقع: {getDeliveryEta().text}
+                </Text>
+                <Text className="text-blue-600 text-sm text-right mt-1">
+                  بعد تأكيد الطلب مباشرة
+                </Text>
+              </View>
+            </View>
+
             {/* Order Summary */}
             <View className="mb-6">
               <Text className="text-lg font-bold text-gray-900 text-right mb-4">ملخص الطلب</Text>
@@ -460,11 +474,18 @@ export default function CheckoutScreen() {
 
         {/* Submit Button */}
         <View className="p-4 bg-white border-t border-gray-100 shadow-lg">
+          {!isStoreOpen() && (
+            <View className="bg-amber-50 border border-amber-200 p-3 rounded-xl mb-3">
+              <Text className="text-amber-700 text-center font-medium">
+                المتجر مغلق حالياً • يفتح {getNextOpenTime()}
+              </Text>
+            </View>
+          )}
           <Pressable
             onPress={handleSubmitOrder}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isStoreOpen()}
             className={`py-4 rounded-xl flex-row items-center justify-center ${
-              isSubmitting ? 'bg-gray-400' : 'bg-primary'
+              isSubmitting || !isStoreOpen() ? 'bg-gray-400' : 'bg-primary'
             }`}
           >
             {isSubmitting ? (
@@ -473,7 +494,9 @@ export default function CheckoutScreen() {
                 <Text className="text-white font-bold text-lg mr-2">جاري إرسال الطلب...</Text>
               </>
             ) : (
-              <Text className="text-white font-bold text-lg">تأكيد الطلب</Text>
+              <Text className="text-white font-bold text-lg">
+                {isStoreOpen() ? 'تأكيد الطلب' : 'المتجر مغلق'}
+              </Text>
             )}
           </Pressable>
         </View>

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } fro
 
 import { MiniCartBar } from '../../../components/MiniCartBar';
 import { ProductCardSkeleton } from '../../../components/ProductCardSkeleton';
+import { StoreStatus } from '../../../components/StoreStatus';
 import { useToast } from '../../../components/Toast';
 import { useFeaturedProducts, useCategories, usePrefetchOnMount } from '../../../hooks/use-products';
 import { Product } from '../../../lib/api';
@@ -67,7 +68,10 @@ export default function HomeScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="bg-white px-4 pt-4 pb-2">
-          <Text style={{ fontFamily: fontHeading }} className="text-2xl font-bold text-gray-900 text-right">مرحباً</Text>
+          <View className="flex-row items-center justify-between">
+            <StoreStatus />
+            <Text style={{ fontFamily: fontHeading }} className="text-2xl font-bold text-gray-900">مرحباً</Text>
+          </View>
           <Text style={{ fontFamily: fontBody }} className="text-gray-500 text-right">ماذا تريد أن تشتري اليوم؟</Text>
         </View>
 

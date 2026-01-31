@@ -1,15 +1,19 @@
 import { router } from 'expo-router';
-import { ShoppingBag } from 'lucide-react-native';
+import { ShoppingBag, Clock } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatCurrencyShort } from '../lib/formatters';
+import { isStoreOpen, getDeliveryEta, getNextOpenTime } from '../lib/store-config';
 import { useCartStore } from '../stores/cart-store';
 
 export function MiniCartBar() {
   const insets = useSafeAreaInsets();
   const items = useCartStore((state) => state.items);
+
+  const storeOpen = isStoreOpen();
+  const eta = getDeliveryEta();
 
   const { itemCount, total } = useMemo(() => {
     const count = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -23,7 +27,9 @@ export function MiniCartBar() {
   }
 
   const handlePress = () => {
-    router.push('/checkout');
+    if (storeOpen) {
+      router.push('/checkout');
+    }
   };
 
   return (
@@ -31,17 +37,37 @@ export function MiniCartBar() {
       className="absolute left-4 right-4 bg-white rounded-2xl shadow-lg border border-gray-200"
       style={{ bottom: 90 + insets.bottom }}
     >
+      {/* ETA Banner */}
+      {storeOpen && (
+        <View className="flex-row items-center justify-center py-2 border-b border-gray-100">
+          <Text className="text-gray-600 text-sm">وقت التوصيل المتوقع: {eta.text}</Text>
+          <Clock size={14} color="#6b7280" className="mr-1" />
+        </View>
+      )}
+
+      {/* Store Closed Banner */}
+      {!storeOpen && (
+        <View className="flex-row items-center justify-center py-2 border-b border-gray-100 bg-amber-50">
+          <Text className="text-amber-700 text-sm font-medium">
+            المتجر مغلق • يفتح {getNextOpenTime()}
+          </Text>
+        </View>
+      )}
+
       <TouchableOpacity
         onPress={handlePress}
-        activeOpacity={0.9}
+        activeOpacity={storeOpen ? 0.9 : 1}
         className="flex-row items-center justify-between p-4"
       >
         <TouchableOpacity
           onPress={handlePress}
-          className="bg-indigo-600 px-5 py-2.5 rounded-xl"
-          activeOpacity={0.8}
+          disabled={!storeOpen}
+          className={`px-5 py-2.5 rounded-xl ${storeOpen ? 'bg-indigo-600' : 'bg-gray-300'}`}
+          activeOpacity={storeOpen ? 0.8 : 1}
         >
-          <Text className="text-white font-bold">إتمام الطلب</Text>
+          <Text className={`font-bold ${storeOpen ? 'text-white' : 'text-gray-500'}`}>
+            {storeOpen ? 'إتمام الطلب' : 'المتجر مغلق'}
+          </Text>
         </TouchableOpacity>
 
         <View className="flex-row items-center">
