@@ -4,6 +4,7 @@ import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } fro
 import { useToast } from '../../../components/Toast';
 import { formatCurrencyShort } from '../../../lib/formatters';
 import { useCartStore } from '../../../stores/cart-store';
+import { fontHeading, fontBody } from '../../../theme/typography';
 
 // Mock products for demonstration
 const MOCK_PRODUCTS = [
@@ -41,7 +42,7 @@ function ProductCard({
       <View className="h-24 bg-gray-100 rounded-lg mb-2 items-center justify-center">
         <Package size={32} color="#d1d5db" />
       </View>
-      <Text className="text-gray-900 font-medium text-right" numberOfLines={1}>
+      <Text style={{ fontFamily: fontBody }} className="text-gray-900 font-medium text-right" numberOfLines={1}>
         {product.nameAr}
       </Text>
       <View className="flex-row items-center justify-between mt-2">
@@ -69,8 +70,8 @@ export default function HomeScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="bg-white px-4 pt-4 pb-2">
-          <Text className="text-2xl font-bold text-gray-900 text-right">مرحباً</Text>
-          <Text className="text-gray-500 text-right">ماذا تريد أن تشتري اليوم؟</Text>
+          <Text style={{ fontFamily: fontHeading }} className="text-2xl font-bold text-gray-900 text-right">مرحباً</Text>
+          <Text style={{ fontFamily: fontBody }} className="text-gray-500 text-right">ماذا تريد أن تشتري اليوم؟</Text>
         </View>
 
         {/* Search Bar */}
@@ -87,7 +88,7 @@ export default function HomeScreen() {
 
         {/* Categories */}
         <View className="bg-white px-4 py-4 mb-2">
-          <Text className="text-lg font-bold text-gray-900 mb-3 text-right">التصنيفات</Text>
+          <Text style={{ fontFamily: fontHeading }} className="text-lg font-bold text-gray-900 mb-3 text-right">التصنيفات</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {['فواكه', 'خضروات', 'ألبان', 'مشروبات', 'معلبات', 'مخبوزات'].map((category, index) => (
               <TouchableOpacity
@@ -103,7 +104,7 @@ export default function HomeScreen() {
 
         {/* Featured Products */}
         <View className="px-4 py-4">
-          <Text className="text-lg font-bold text-gray-900 mb-3 text-right">منتجات مميزة</Text>
+          <Text style={{ fontFamily: fontHeading }} className="text-lg font-bold text-gray-900 mb-3 text-right">منتجات مميزة</Text>
           <View className="flex-row flex-wrap justify-between">
             {MOCK_PRODUCTS.map((product) => (
               <ProductCard key={product.id} product={product} />
