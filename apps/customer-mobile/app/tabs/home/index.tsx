@@ -1,26 +1,15 @@
 import { Search, Plus, Package } from 'lucide-react-native';
 import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
 
+import { ProductCardSkeleton } from '../../../components/ProductCardSkeleton';
 import { useToast } from '../../../components/Toast';
+import { useFeaturedProducts, useCategories, usePrefetchOnMount } from '../../../hooks/use-products';
+import { Product } from '../../../lib/api';
 import { formatCurrencyShort } from '../../../lib/formatters';
 import { useCartStore } from '../../../stores/cart-store';
 import { fontHeading, fontBody } from '../../../theme/typography';
 
-// Mock products for demonstration
-const MOCK_PRODUCTS = [
-  { id: 'p1', sku: 'APL-001', nameAr: 'تفاح أحمر', price: 2500 },
-  { id: 'p2', sku: 'BNN-002', nameAr: 'موز', price: 1500 },
-  { id: 'p3', sku: 'MLK-003', nameAr: 'حليب طازج', price: 3000 },
-  { id: 'p4', sku: 'BRD-004', nameAr: 'خبز صمون', price: 1000 },
-  { id: 'p5', sku: 'EGG-005', nameAr: 'بيض طازج', price: 5000 },
-  { id: 'p6', sku: 'CHZ-006', nameAr: 'جبن أبيض', price: 4500 },
-];
-
-function ProductCard({
-  product,
-}: {
-  product: { id: string; sku: string; nameAr: string; price: number };
-}) {
+function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((state) => state.addItem);
   const getItemQuantity = useCartStore((state) => state.getItemQuantity);
   const { showToast } = useToast();
@@ -65,6 +54,13 @@ function ProductCard({
 }
 
 export default function HomeScreen() {
+  usePrefetchOnMount();
+
+  const { data: products, isLoading: productsLoading } = useFeaturedProducts();
+  const { data: categories } = useCategories();
+
+  const showSkeleton = productsLoading && !products;
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -90,13 +86,13 @@ export default function HomeScreen() {
         <View className="bg-white px-4 py-4 mb-2">
           <Text style={{ fontFamily: fontHeading }} className="text-lg font-bold text-gray-900 mb-3 text-right">التصنيفات</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {['فواكه', 'خضروات', 'ألبان', 'مشروبات', 'معلبات', 'مخبوزات'].map((category, index) => (
+            {(categories || []).map((category) => (
               <TouchableOpacity
-                key={index}
+                key={category.id}
                 className="bg-primary/10 rounded-xl px-4 py-3 ml-3"
                 activeOpacity={0.7}
               >
-                <Text className="text-primary font-medium">{category}</Text>
+                <Text className="text-primary font-medium">{category.nameAr}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -106,9 +102,18 @@ export default function HomeScreen() {
         <View className="px-4 py-4">
           <Text style={{ fontFamily: fontHeading }} className="text-lg font-bold text-gray-900 mb-3 text-right">منتجات مميزة</Text>
           <View className="flex-row flex-wrap justify-between">
-            {MOCK_PRODUCTS.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {showSkeleton ? (
+              <>
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+                <ProductCardSkeleton />
+              </>
+            ) : (
+              (products || []).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            )}
           </View>
         </View>
 

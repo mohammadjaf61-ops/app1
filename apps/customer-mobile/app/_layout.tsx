@@ -1,27 +1,17 @@
 import { useFonts } from 'expo-font';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useEffect } from 'react';
 import { I18nManager } from 'react-native';
 
 import { ToastProvider } from '../components/Toast';
+import { queryClient, persistOptions } from '../lib/query-client';
 
-// Prevent auto hiding splash screen until fonts are loaded
 SplashScreen.preventAutoHideAsync();
 
-// Enable RTL for Arabic
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -50,7 +40,7 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <ToastProvider>
         <StatusBar style="auto" />
         <Stack
@@ -87,6 +77,6 @@ export default function RootLayout() {
           />
         </Stack>
       </ToastProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
