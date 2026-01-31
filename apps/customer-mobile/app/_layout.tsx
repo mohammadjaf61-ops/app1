@@ -6,7 +6,13 @@ import { useEffect } from 'react';
 import { I18nManager } from 'react-native';
 
 import { ToastProvider } from '../components/Toast';
+import { useOrderQueueProcessor } from '../hooks/use-network';
 import { queryClient, persistOptions } from '../lib/query-client';
+
+function OrderQueueProcessor() {
+  useOrderQueueProcessor();
+  return null;
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,6 +48,7 @@ export default function RootLayout() {
   return (
     <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <ToastProvider>
+        <OrderQueueProcessor />
         <StatusBar style="auto" />
         <Stack
           screenOptions={{

@@ -14,8 +14,10 @@ import {
 } from 'react-native';
 
 import { useToast } from '../components/Toast';
+import { useNetworkStatus } from '../hooks/use-network';
 import { formatCurrencyShort } from '../lib/formatters';
 import { useCartStore } from '../stores/cart-store';
+import { useOrderQueueStore } from '../stores/order-queue-store';
 import { useSettingsStore } from '../stores/settings-store';
 
 // API base URL - in production, use environment variable
@@ -96,6 +98,9 @@ export default function CheckoutScreen() {
 
   const { defaultAddress, savedName, savedPhone, setDefaultAddress, setSavedName, setSavedPhone } =
     useSettingsStore();
+
+  const isConnected = useNetworkStatus();
+  const addOrder = useOrderQueueStore((state) => state.addOrder);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -198,30 +203,48 @@ export default function CheckoutScreen() {
 
     setIsSubmitting(true);
 
+    const orderPayload = {
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
+      deliveryAddress: deliveryAddress.trim(),
+      notes: notes.trim() || undefined,
+      items: items.map((item) => ({
+        productId: item.productId,
+        sku: item.sku,
+        nameAr: item.nameAr,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      total,
+    };
+
+    // If offline, queue the order
+    if (isConnected === false) {
+      addOrder(orderPayload);
+      setSavedName(customerName.trim());
+      setSavedPhone(customerPhone.trim());
+      setDefaultAddress(deliveryAddress.trim());
+      clearCart();
+
+      showToast('تم حفظ الطلب وسيُرسل تلقائياً عند توفر الإنترنت', 'info');
+      router.replace('/tabs/orders');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      // Simulate API call - in production, this would be a real API call
-      // const response = await createOrder({
-      //   customerName: customerName.trim(),
-      //   customerPhone: customerPhone.trim(),
-      //   deliveryAddressText: deliveryAddress.trim(),
-      //   notes: notes.trim() || undefined,
-      //   items: items.map((item) => ({
-      //     productId: item.productId,
-      //     quantity: item.quantity,
-      //   })),
-      // });
+      // Try to submit the order
+      const response = await fetch(`${API_BASE_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      });
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!response.ok) {
+        throw new Error('API_ERROR');
+      }
 
-      // Mock successful order
-      const mockOrder = {
-        id: `order-${Date.now()}`,
-        orderNumber: `ORD-${Math.floor(Math.random() * 100000)}`,
-        status: 'PENDING',
-        total,
-        itemCount: items.reduce((sum, i) => sum + i.quantity, 0),
-      };
+      const data = await response.json();
 
       // Save customer info for future orders
       setSavedName(customerName.trim());
@@ -235,23 +258,22 @@ export default function CheckoutScreen() {
       router.replace({
         pathname: '/order-confirmation',
         params: {
-          orderId: mockOrder.id,
-          orderNumber: mockOrder.orderNumber,
+          orderId: data.id || `order-${Date.now()}`,
+          orderNumber: data.orderNumber || `ORD-${Math.floor(Math.random() * 100000)}`,
           total: total.toString(),
-          itemCount: mockOrder.itemCount.toString(),
+          itemCount: items.reduce((sum, i) => sum + i.quantity, 0).toString(),
         },
       });
-    } catch (error: any) {
-      const errorCode = error?.errorCode || error?.message;
-      const message = ERROR_MESSAGES[errorCode] || error?.message || 'فشل في إنشاء الطلب';
+    } catch {
+      // Network error - queue the order for retry
+      addOrder(orderPayload);
+      setSavedName(customerName.trim());
+      setSavedPhone(customerPhone.trim());
+      setDefaultAddress(deliveryAddress.trim());
+      clearCart();
 
-      showToast(message, 'error');
-
-      // Handle specific errors
-      if (errorCode === 'errors.productNotAvailable' || errorCode === 'errors.outOfStock') {
-        // Could navigate back to cart to review items
-        showToast('يرجى مراجعة السلة وإزالة المنتجات غير المتوفرة', 'warning');
-      }
+      showToast('سيتم إعادة المحاولة تلقائياً عند توفر الإنترنت', 'info');
+      router.replace('/tabs/orders');
     } finally {
       setIsSubmitting(false);
     }
