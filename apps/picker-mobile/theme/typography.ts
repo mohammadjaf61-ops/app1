@@ -2,35 +2,23 @@ export const fontHeading = 'AlArabiya';
 export const fontBody = 'DecotypeNaskh';
 export const fontUI = 'AlArabiya';
 
+const baseScale = {
+  h1: { fontSize: 30, lineHeight: 42 },
+  h2: { fontSize: 24, lineHeight: 34 },
+  h3: { fontSize: 20, lineHeight: 30 },
+  body: { fontSize: 16, lineHeight: 26 },
+  caption: { fontSize: 12, lineHeight: 18 },
+} as const;
+
 export const typeScale = {
-  xs: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  sm: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  base: {
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  lg: {
-    fontSize: 18,
-    lineHeight: 28,
-  },
-  xl: {
-    fontSize: 20,
-    lineHeight: 28,
-  },
-  '2xl': {
-    fontSize: 24,
-    lineHeight: 32,
-  },
-  '3xl': {
-    fontSize: 30,
-    lineHeight: 36,
-  },
+  ...baseScale,
+  xs: baseScale.caption,
+  sm: baseScale.caption,
+  base: baseScale.body,
+  lg: baseScale.body,
+  xl: baseScale.h3,
+  '2xl': baseScale.h2,
+  '3xl': baseScale.h1,
 } as const;
 
 export const fontWeights = {

@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 type EmptyStateVariant =
   | 'products'
@@ -43,7 +44,7 @@ const EMPTY_STATE_CONFIG: Record<
 > = {
   products: {
     icon: Package,
-    iconColor: '#9ca3af',
+    iconColor: colors.text.tertiary,
     bgColor: 'bg-gray-100',
     defaultTitle: 'لا توجد منتجات',
     defaultDescription: 'لم نجد منتجات في هذا التصنيف حالياً',
@@ -51,14 +52,14 @@ const EMPTY_STATE_CONFIG: Record<
   },
   categories: {
     icon: Package,
-    iconColor: '#9ca3af',
+    iconColor: colors.text.tertiary,
     bgColor: 'bg-gray-100',
     defaultTitle: 'لا توجد تصنيفات',
     defaultDescription: 'التصنيفات غير متوفرة حالياً',
   },
   search: {
     icon: Search,
-    iconColor: '#9ca3af',
+    iconColor: colors.text.tertiary,
     bgColor: 'bg-gray-100',
     defaultTitle: 'لا توجد نتائج',
     defaultDescription: 'جرّب كلمات بحث مختلفة أو تصفح التصنيفات',
@@ -66,7 +67,7 @@ const EMPTY_STATE_CONFIG: Record<
   },
   cart: {
     icon: ShoppingCart,
-    iconColor: '#9ca3af',
+    iconColor: colors.text.tertiary,
     bgColor: 'bg-gray-100',
     defaultTitle: 'سلتك فارغة',
     defaultDescription: 'أضف منتجات من المتجر لتبدأ التسوق',
@@ -74,7 +75,7 @@ const EMPTY_STATE_CONFIG: Record<
   },
   orders: {
     icon: ClipboardList,
-    iconColor: '#d1d5db',
+    iconColor: colors.text.disabled,
     bgColor: 'bg-gray-100',
     defaultTitle: 'لا توجد طلبات بعد',
     defaultDescription: 'طلباتك ستظهر هنا بعد إتمام أول طلب',
@@ -82,14 +83,14 @@ const EMPTY_STATE_CONFIG: Record<
   },
   offline: {
     icon: WifiOff,
-    iconColor: '#f59e0b',
+    iconColor: colors.status.warning.main,
     bgColor: 'bg-amber-100',
     defaultTitle: 'لا يوجد اتصال',
     defaultDescription: 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى',
   },
   error: {
     icon: AlertCircle,
-    iconColor: '#ef4444',
+    iconColor: colors.status.error.main,
     bgColor: 'bg-red-100',
     defaultTitle: 'حدث خطأ',
     defaultDescription: 'تعذر تحميل البيانات، حاول مرة أخرى',
@@ -147,9 +148,9 @@ export function EmptyState({
           }`}
         >
           {isRetrying ? (
-            <ActivityIndicator size="small" color="#4f46e5" />
+            <ActivityIndicator size="small" color={colors.primary[500]} />
           ) : (
-            <RefreshCw size={18} color="#4f46e5" />
+            <RefreshCw size={18} color={colors.primary[500]} />
           )}
           <Text className="text-primary font-medium mr-2">
             {isRetrying ? 'جاري المحاولة...' : 'إعادة المحاولة'}

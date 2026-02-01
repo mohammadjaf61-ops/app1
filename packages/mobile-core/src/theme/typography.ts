@@ -4,8 +4,9 @@
  */
 
 export const fontFamilies = {
-  primary: 'DecotypeNaskh',
-  secondary: 'AlArabiya',
+  heading: 'AlArabiya',
+  body: 'DecotypeNaskh',
+  ui: 'AlArabiya',
   system: 'System',
 } as const;
 
@@ -28,9 +29,9 @@ export const fontSizes = {
 } as const;
 
 export const lineHeights = {
-  tight: 1.25,
-  normal: 1.5,
-  relaxed: 1.75,
+  tight: 1.35,
+  normal: 1.6,
+  relaxed: 1.8,
 } as const;
 
 export const letterSpacing = {
@@ -41,55 +42,55 @@ export const letterSpacing = {
 
 export const typography = {
   h1: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.heading,
     fontSize: fontSizes['3xl'],
     fontWeight: fontWeights.bold,
     lineHeight: fontSizes['3xl'] * lineHeights.tight,
   },
   h2: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.heading,
     fontSize: fontSizes['2xl'],
-    fontWeight: fontWeights.bold,
+    fontWeight: fontWeights.semibold,
     lineHeight: fontSizes['2xl'] * lineHeights.tight,
   },
   h3: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.heading,
     fontSize: fontSizes.xl,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.xl * lineHeights.tight,
   },
   h4: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.heading,
     fontSize: fontSizes.lg,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.lg * lineHeights.tight,
   },
   body: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.base,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.base * lineHeights.normal,
   },
   bodySmall: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
   caption: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.regular,
     lineHeight: fontSizes.xs * lineHeights.normal,
   },
   button: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.ui,
     fontSize: fontSizes.base,
     fontWeight: fontWeights.semibold,
     lineHeight: fontSizes.base * lineHeights.tight,
   },
   label: {
-    fontFamily: fontFamilies.primary,
+    fontFamily: fontFamilies.ui,
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.medium,
     lineHeight: fontSizes.sm * lineHeights.tight,

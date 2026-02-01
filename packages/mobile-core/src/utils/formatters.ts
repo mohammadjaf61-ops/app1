@@ -1,3 +1,5 @@
+import { colors } from '@hypermarket/design-tokens';
+
 /**
  * Format IQD currency
  */
@@ -176,13 +178,13 @@ export const orderStatusLabels: Record<string, string> = {
  * Order status colors for styling
  */
 export const orderStatusColors: Record<string, { bg: string; text: string }> = {
-  PENDING: { bg: '#fef3c7', text: '#d97706' },
-  PICKING: { bg: '#dbeafe', text: '#2563eb' },
-  READY: { bg: '#d1fae5', text: '#059669' },
-  OUT_FOR_DELIVERY: { bg: '#e0e7ff', text: '#4f46e5' },
-  DELIVERED: { bg: '#dcfce7', text: '#16a34a' },
-  FAILED: { bg: '#fee2e2', text: '#dc2626' },
-  CANCELLED: { bg: '#f3f4f6', text: '#6b7280' },
+  PENDING: { bg: colors.status.warning.light, text: colors.status.warning.dark },
+  PICKING: { bg: colors.status.info.light, text: colors.primary[600] },
+  READY: { bg: colors.status.success.light, text: colors.status.success.dark },
+  OUT_FOR_DELIVERY: { bg: colors.primary[100], text: colors.primary[600] },
+  DELIVERED: { bg: colors.status.success.light, text: colors.status.success.dark },
+  FAILED: { bg: colors.status.error.light, text: colors.status.error.dark },
+  CANCELLED: { bg: colors.neutral[100], text: colors.neutral[600] },
 };
 
 /**

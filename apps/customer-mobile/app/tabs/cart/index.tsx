@@ -11,6 +11,7 @@ import {
   Alert,
   Pressable,
 } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 import { EmptyState } from '../../../components/EmptyState';
 import { useToast } from '../../../components/Toast';
@@ -34,7 +35,7 @@ function QuantityControl({
         className="w-8 h-8 items-center justify-center"
         activeOpacity={0.7}
       >
-        <Plus size={16} color="#1a56db" />
+        <Plus size={16} color={colors.primary[500]} />
       </TouchableOpacity>
       <Text className="w-8 text-center font-semibold text-gray-900">{quantity}</Text>
       <TouchableOpacity
@@ -42,7 +43,10 @@ function QuantityControl({
         className="w-8 h-8 items-center justify-center"
         activeOpacity={0.7}
       >
-        <Minus size={16} color={quantity <= 1 ? '#9ca3af' : '#1a56db'} />
+        <Minus
+          size={16}
+          color={quantity <= 1 ? colors.text.disabled : colors.primary[500]}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -85,7 +89,7 @@ function CartItemRow({ item, onRemove }: { item: CartItem; onRemove: () => void 
         {item.imageUrl ? (
           <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
         ) : (
-          <Package size={32} color="#9ca3af" />
+          <Package size={32} color={colors.text.tertiary} />
         )}
       </View>
 
@@ -93,7 +97,7 @@ function CartItemRow({ item, onRemove }: { item: CartItem; onRemove: () => void 
       <View className="flex-1 mr-3">
         <View className="flex-row items-start justify-between">
           <TouchableOpacity onPress={handleRemove} className="p-1" activeOpacity={0.7}>
-            <Trash2 size={18} color="#ef4444" />
+            <Trash2 size={18} color={colors.status.error.main} />
           </TouchableOpacity>
           <Text className="flex-1 text-gray-900 font-medium text-right" numberOfLines={2}>
             {item.nameAr}

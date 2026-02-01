@@ -1,5 +1,6 @@
 import { Clock, Wifi } from 'lucide-react-native';
 import { View, Text, SafeAreaView, ScrollView } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 import { EmptyState } from '../../../components/EmptyState';
 import { useNetworkStatus, useOrderQueueStore } from '@hypermarket/mobile-core';
@@ -22,9 +23,9 @@ export default function OrdersScreen() {
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
               {!isOnline ? (
-                <Wifi size={20} color="#d97706" />
+                <Wifi size={20} color={colors.status.warning.main} />
               ) : (
-                <Clock size={20} color="#d97706" />
+                <Clock size={20} color={colors.status.warning.main} />
               )}
             </View>
             <View className="flex-1 mr-3">

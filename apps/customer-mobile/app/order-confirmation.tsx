@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, Package, Clock, Home, ClipboardList } from 'lucide-react-native';
 import { View, Text, SafeAreaView, Pressable } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 import { ORDER_STATUS_LABELS } from '../lib/constants';
 import { formatCurrencyShort } from '../lib/formatters';
@@ -28,7 +29,7 @@ export default function OrderConfirmationScreen() {
       <View className="flex-1 justify-center items-center px-6">
         {/* Success Icon */}
         <View className="bg-green-100 w-24 h-24 rounded-full items-center justify-center mb-6">
-          <CheckCircle size={56} color="#16a34a" />
+          <CheckCircle size={56} color={colors.status.success.main} />
         </View>
 
         {/* Success Message */}
@@ -42,7 +43,7 @@ export default function OrderConfirmationScreen() {
             <Text className="text-primary font-bold text-lg">{orderNumber}</Text>
             <View className="flex-row items-center">
               <Text className="text-gray-500 ml-2">رقم الطلب</Text>
-              <Package size={20} color="#6b7280" />
+              <Package size={20} color={colors.text.secondary} />
             </View>
           </View>
 
@@ -53,7 +54,7 @@ export default function OrderConfirmationScreen() {
             </View>
             <View className="flex-row items-center">
               <Text className="text-gray-500 ml-2">حالة الطلب</Text>
-              <Clock size={20} color="#6b7280" />
+              <Clock size={20} color={colors.text.secondary} />
             </View>
           </View>
 
@@ -114,7 +115,7 @@ export default function OrderConfirmationScreen() {
             className="bg-gray-100 py-4 rounded-xl flex-row items-center justify-center"
           >
             <Text className="text-gray-700 font-semibold text-lg ml-2">العودة للرئيسية</Text>
-            <Home size={20} color="#374151" />
+            <Home size={20} color={colors.text.secondary} />
           </Pressable>
         </View>
       </View>

@@ -1,3 +1,4 @@
+import { colors } from '@hypermarket/design-tokens';
 import { CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react-native';
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
@@ -67,39 +68,39 @@ function ToastItem({ toast, onHide }: { toast: ToastMessage; onHide: () => void 
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle size={20} color="#16a34a" />;
+        return <CheckCircle size={20} color={colors.status.success.main} />;
       case 'error':
-        return <XCircle size={20} color="#dc2626" />;
+        return <XCircle size={20} color={colors.status.error.main} />;
       case 'warning':
-        return <AlertCircle size={20} color="#d97706" />;
+        return <AlertCircle size={20} color={colors.status.warning.main} />;
       default:
-        return <Info size={20} color="#2563eb" />;
+        return <Info size={20} color={colors.status.info.main} />;
     }
   };
 
   const getBackgroundColor = () => {
     switch (toast.type) {
       case 'success':
-        return '#f0fdf4';
+        return colors.status.success.light;
       case 'error':
-        return '#fef2f2';
+        return colors.status.error.light;
       case 'warning':
-        return '#fffbeb';
+        return colors.status.warning.light;
       default:
-        return '#eff6ff';
+        return colors.status.info.light;
     }
   };
 
   const getBorderColor = () => {
     switch (toast.type) {
       case 'success':
-        return '#bbf7d0';
+        return colors.status.success.main;
       case 'error':
-        return '#fecaca';
+        return colors.status.error.main;
       case 'warning':
-        return '#fde68a';
+        return colors.status.warning.main;
       default:
-        return '#bfdbfe';
+        return colors.status.info.main;
     }
   };
 
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 8,
-    shadowColor: '#000',
+    shadowColor: colors.neutral[1000],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
     fontSize: 14,
-    color: '#374151',
+    color: colors.text.secondary,
     textAlign: 'right',
   },
 });

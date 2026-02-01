@@ -2,6 +2,7 @@ import { useCartSyncStore, useNetworkStatus } from '@hypermarket/mobile-core';
 import { Search, Plus, Package } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 import { EmptyState } from '../../../components/EmptyState';
 import { MiniCartBar } from '../../../components/MiniCartBar';
@@ -41,7 +42,7 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <View className="w-[48%] bg-white rounded-xl p-3 mb-3 border border-gray-100 shadow-sm">
       <View className="h-24 bg-gray-100 rounded-lg mb-2 items-center justify-center">
-        <Package size={32} color="#d1d5db" />
+        <Package size={32} color={colors.text.disabled} />
       </View>
       <Text style={{ fontFamily: fontBody }} className="text-gray-900 font-medium text-right" numberOfLines={1}>
         {product.nameAr}
@@ -105,11 +106,11 @@ export default function HomeScreen() {
         {/* Search Bar */}
         <View className="bg-white px-4 py-3">
           <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3">
-            <Search size={20} color="#6b7280" />
+            <Search size={20} color={colors.text.secondary} />
             <TextInput
               className="flex-1 mr-3 text-right"
               placeholder="ابحث عن منتجات..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.text.tertiary}
             />
           </View>
         </View>

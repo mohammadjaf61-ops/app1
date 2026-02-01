@@ -1,6 +1,8 @@
-import React, { useRef, useCallback } from 'react';
-import type { PressableProps, ViewStyle, StyleProp } from 'react-native';
-import { Pressable, Text, ActivityIndicator, View, Animated, AccessibilityInfo } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Animated, Pressable, Text, View } from 'react-native';
+
+import { colors } from '@hypermarket/design-tokens';
 
 export type ButtonVariant =
   | 'primary'
@@ -147,9 +149,9 @@ export function Button({
 
   const getIndicatorColor = () => {
     if (variant === 'outline' || variant === 'secondary' || variant === 'ghost') {
-      return '#16a34a';
+      return colors.primary[600];
     }
-    return 'white';
+    return colors.neutral[0];
   };
 
   return (
@@ -181,7 +183,7 @@ export function Button({
               className={`
                 ${variantStyle.text}
                 ${sizeStyle.text}
-                font-bold
+                font-semibold
                 text-center
               `}
             >

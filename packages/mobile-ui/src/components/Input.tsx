@@ -1,6 +1,8 @@
 import React from 'react';
 import type { TextInputProps, ViewStyle } from 'react-native';
-import { View, Text, TextInput } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
+
+import { colors } from '@hypermarket/design-tokens';
 
 export type InputSize = 'md' | 'lg' | 'xl';
 
@@ -60,7 +62,7 @@ export function Input({
           {rightIcon && <View className="ml-2">{rightIcon}</View>}
           <TextInput
             className={`flex-1 ${sizeStyle.text} text-right text-gray-900`}
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={colors.neutral[400]}
             style={style}
             {...props}
           />
@@ -77,7 +79,7 @@ export function Input({
             text-gray-900
             ${error ? 'border-2 border-red-500' : ''}
           `}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.neutral[400]}
           style={style}
           {...props}
         />

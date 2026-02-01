@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 import { useToast } from '../components/Toast';
 import { API_BASE_URL } from '../lib/constants';
@@ -37,21 +38,21 @@ export default function ConsentScreen() {
       type: 'TERMS_OF_SERVICE',
       titleAr: 'شروط الخدمة',
       descriptionAr: 'الشروط والأحكام العامة لاستخدام التطبيق والخدمة',
-      icon: <FileText size={24} color="#3b82f6" />,
+      icon: <FileText size={24} color={colors.status.info.main} />,
       accepted: false,
     },
     {
       type: 'PRIVACY_POLICY',
       titleAr: 'سياسة الخصوصية',
       descriptionAr: 'كيفية جمع واستخدام وحماية بياناتك الشخصية',
-      icon: <Shield size={24} color="#22c55e" />,
+      icon: <Shield size={24} color={colors.status.success.main} />,
       accepted: false,
     },
     {
       type: 'RETURN_REFUND',
       titleAr: 'سياسة الإرجاع والاسترداد',
       descriptionAr: 'شروط إرجاع المنتجات واسترداد المبالغ',
-      icon: <RefreshCw size={24} color="#f59e0b" />,
+      icon: <RefreshCw size={24} color={colors.status.warning.main} />,
       accepted: false,
     },
   ]);

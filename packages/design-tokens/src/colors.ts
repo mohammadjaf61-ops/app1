@@ -10,34 +10,34 @@
  * - Web: Tailwind config or CSS variables
  */
 
-// Primary palette - Blue (professional, trustworthy)
+// Primary palette - Deep Warm Indigo
 export const primary = {
-  50: '#EFF6FF',
-  100: '#DBEAFE',
-  200: '#BFDBFE',
-  300: '#93C5FD',
-  400: '#60A5FA',
-  500: '#3B82F6', // Main primary
-  600: '#2563EB',
-  700: '#1D4ED8',
-  800: '#1E40AF',
-  900: '#1E3A8A',
+  50: '#F2F3FB',
+  100: '#E3E7F6',
+  200: '#C6CEF0',
+  300: '#A1AEE3',
+  400: '#6F80CC',
+  500: '#2E3A8C', // Main primary (Light)
+  600: '#2A3280',
+  700: '#242B72',
+  800: '#1F255E', // Dark
+  900: '#191E4B',
 } as const;
 
 // Neutral palette - Slate (balanced, readable)
 export const neutral = {
   0: '#FFFFFF',
-  50: '#F8FAFC',
-  100: '#F1F5F9',
-  200: '#E2E8F0',
-  300: '#CBD5E1',
-  400: '#94A3B8',
-  500: '#64748B',
-  600: '#475569',
-  700: '#334155',
-  800: '#1E293B',
-  900: '#0F172A',
-  1000: '#020617',
+  50: '#F9F7F3',
+  100: '#F2EFE8',
+  200: '#E6E1D8',
+  300: '#D2CBBE',
+  400: '#A9A091',
+  500: '#857C6F',
+  600: '#5F594F',
+  700: '#47413A',
+  800: '#2F2B26',
+  900: '#1E1B17',
+  1000: '#141110',
 } as const;
 
 // Status colors - Semantic feedback
@@ -61,7 +61,7 @@ export const status = {
     light: '#FEF3C7',
     main: '#F59E0B',
     dark: '#B45309',
-    contrast: '#000000',
+    contrast: '#FFFFFF',
   },
   // Info - Blue
   info: {
@@ -74,18 +74,18 @@ export const status = {
 
 // Background colors
 export const background = {
-  primary: neutral[0],
-  secondary: neutral[50],
-  tertiary: neutral[100],
-  inverse: neutral[900],
+  primary: neutral[50],
+  secondary: neutral[100],
+  tertiary: neutral[200],
+  inverse: '#2A2F55',
 } as const;
 
 // Text colors
 export const text = {
-  primary: neutral[900],
+  primary: primary[800],
   secondary: neutral[600],
   tertiary: neutral[400],
-  inverse: neutral[0],
+  inverse: neutral[50],
   disabled: neutral[300],
 } as const;
 

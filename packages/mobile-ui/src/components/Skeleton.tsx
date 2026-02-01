@@ -1,3 +1,4 @@
+import { colors } from '@hypermarket/design-tokens';
 import React, { useEffect, useRef } from 'react';
 import type { ViewStyle, DimensionValue } from 'react-native';
 import { View, Animated, StyleSheet } from 'react-native';
@@ -126,12 +127,12 @@ export function SkeletonProductGrid() {
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: '#E2E8F0', // neutral.200
+    backgroundColor: colors.neutral[200],
   },
   card: {
     flexDirection: 'row-reverse', // RTL
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral[0],
     borderRadius: 12,
     marginBottom: 12,
   },
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
   productItem: {
     width: '48%',
     padding: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.neutral[0],
     borderRadius: 12,
   },
 });

@@ -9,6 +9,9 @@
     ".": "./src/index.ts",
     "./assets/fonts/*": "./assets/fonts/*"
   },
+  "dependencies": {
+    "@hypermarket/design-tokens": "workspace:*"
+  },
   "scripts": {
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",

@@ -12,9 +12,10 @@
 // Font families
 // Note: Arabic fonts should be configured in app entry points
 export const fontFamily = {
-  // System fonts with Arabic support
-  sans: 'System', // Maps to SF Pro (iOS) / Roboto (Android)
-  // For web, use: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Arabic", sans-serif'
+  heading: 'AlArabiya',
+  body: 'DecotypeNaskh',
+  ui: 'AlArabiya',
+  system: 'System',
   mono: 'monospace',
 } as const;
 
@@ -33,9 +34,9 @@ export const fontSize = {
 
 // Line heights (multipliers)
 export const lineHeight = {
-  tight: 1.25,
-  normal: 1.5,
-  relaxed: 1.75,
+  tight: 1.35,
+  normal: 1.6,
+  relaxed: 1.8,
 } as const;
 
 // Font weights
@@ -55,93 +56,53 @@ export const letterSpacing = {
 
 // Pre-composed text styles
 export const textStyles = {
-  // Headings
   heading: {
-    '2xl': {
-      fontSize: fontSize['4xl'],
-      lineHeight: lineHeight.tight,
-      fontWeight: fontWeight.bold,
-      letterSpacing: letterSpacing.tight,
-    },
-    xl: {
+    h1: {
+      fontFamily: fontFamily.heading,
       fontSize: fontSize['3xl'],
       lineHeight: lineHeight.tight,
       fontWeight: fontWeight.bold,
-      letterSpacing: letterSpacing.tight,
     },
-    lg: {
+    h2: {
+      fontFamily: fontFamily.heading,
       fontSize: fontSize['2xl'],
       lineHeight: lineHeight.tight,
       fontWeight: fontWeight.semibold,
     },
-    md: {
+    h3: {
+      fontFamily: fontFamily.heading,
       fontSize: fontSize.xl,
       lineHeight: lineHeight.tight,
       fontWeight: fontWeight.semibold,
     },
-    sm: {
-      fontSize: fontSize.lg,
-      lineHeight: lineHeight.normal,
-      fontWeight: fontWeight.semibold,
-    },
   },
-
-  // Body text
   body: {
-    lg: {
-      fontSize: fontSize.lg,
-      lineHeight: lineHeight.relaxed,
-      fontWeight: fontWeight.normal,
-    },
     md: {
+      fontFamily: fontFamily.body,
       fontSize: fontSize.base,
       lineHeight: lineHeight.normal,
       fontWeight: fontWeight.normal,
     },
+  },
+  caption: {
     sm: {
-      fontSize: fontSize.sm,
-      lineHeight: lineHeight.normal,
-      fontWeight: fontWeight.normal,
-    },
-    xs: {
+      fontFamily: fontFamily.body,
       fontSize: fontSize.xs,
       lineHeight: lineHeight.normal,
       fontWeight: fontWeight.normal,
     },
   },
-
-  // Labels
-  label: {
-    lg: {
-      fontSize: fontSize.base,
-      lineHeight: lineHeight.tight,
-      fontWeight: fontWeight.medium,
-    },
-    md: {
-      fontSize: fontSize.sm,
-      lineHeight: lineHeight.tight,
-      fontWeight: fontWeight.medium,
-    },
-    sm: {
-      fontSize: fontSize.xs,
-      lineHeight: lineHeight.tight,
-      fontWeight: fontWeight.medium,
-    },
-  },
-
-  // Buttons
   button: {
-    lg: {
-      fontSize: fontSize.lg,
-      lineHeight: lineHeight.tight,
-      fontWeight: fontWeight.semibold,
-    },
     md: {
+      fontFamily: fontFamily.ui,
       fontSize: fontSize.base,
       lineHeight: lineHeight.tight,
       fontWeight: fontWeight.semibold,
     },
-    sm: {
+  },
+  label: {
+    md: {
+      fontFamily: fontFamily.ui,
       fontSize: fontSize.sm,
       lineHeight: lineHeight.tight,
       fontWeight: fontWeight.medium,

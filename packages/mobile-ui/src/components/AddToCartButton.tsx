@@ -1,6 +1,8 @@
-import React, { useRef, useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { View, Text, Animated, StyleSheet, Platform } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
+
+import { colors } from '@hypermarket/design-tokens';
 
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -121,7 +123,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   button: {
-    backgroundColor: '#3B82F6', // primary.500
+    backgroundColor: colors.primary[500],
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -130,7 +132,7 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   buttonSuccess: {
-    backgroundColor: '#22C55E', // success.main
+    backgroundColor: colors.status.success.main,
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -142,16 +144,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   label: {
-    color: '#FFFFFF',
+    color: colors.neutral[0],
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
   },
   labelSuccess: {
-    color: '#FFFFFF',
+    color: colors.neutral[0],
   },
   price: {
-    color: '#FFFFFF',
+    color: colors.neutral[0],
     fontSize: 16,
     fontWeight: '500',
     opacity: 0.9,

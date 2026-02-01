@@ -3,6 +3,7 @@ import { ShoppingBag, Clock } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors } from '@hypermarket/design-tokens';
 
 import { formatCurrencyShort } from '../lib/formatters';
 import { isStoreOpen, getDeliveryEta, getNextOpenTime } from '../lib/store-config';
@@ -42,7 +43,7 @@ export function MiniCartBar() {
       {storeOpen && (
         <View className="flex-row items-center justify-center py-2 border-b border-gray-100">
           <Text className="text-gray-600 text-sm">وقت التوصيل المتوقع: {eta.text}</Text>
-          <Clock size={14} color="#6b7280" className="mr-1" />
+          <Clock size={14} color={colors.text.secondary} className="mr-1" />
         </View>
       )}
 
@@ -81,7 +82,7 @@ export function MiniCartBar() {
             </Text>
           </View>
           <View className="bg-indigo-100 w-12 h-12 rounded-full items-center justify-center">
-            <ShoppingBag size={24} color="#4f46e5" />
+            <ShoppingBag size={24} color={colors.primary[500]} />
           </View>
         </View>
       </TouchableOpacity>

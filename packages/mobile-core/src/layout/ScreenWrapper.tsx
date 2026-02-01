@@ -3,6 +3,8 @@ import type { ViewStyle, StatusBarStyle } from 'react-native';
 import { View, StatusBar, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { colors } from '@hypermarket/design-tokens';
+
 export type SafeAreaEdge = 'top' | 'bottom' | 'left' | 'right';
 
 export interface ScreenWrapperProps {
@@ -17,7 +19,7 @@ export interface ScreenWrapperProps {
 
 export function ScreenWrapper({
   children,
-  bgColor = '#f9fafb',
+  bgColor = colors.background.primary,
   edges = ['top'],
   scrollable = false,
   contentStyle,

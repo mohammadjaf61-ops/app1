@@ -1,5 +1,6 @@
 import { User, MapPin, Settings, LogOut, ChevronLeft } from 'lucide-react-native';
 import { View, Text, SafeAreaView, TouchableOpacity } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 export default function ProfileScreen() {
   return (
@@ -12,7 +13,7 @@ export default function ProfileScreen() {
       <View className="px-4 py-6">
         <View className="flex-row items-center">
           <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center">
-            <User size={32} color="#1a56db" />
+            <User size={32} color={colors.primary[500]} />
           </View>
           <View className="mr-4 flex-1">
             <Text className="text-lg font-semibold text-gray-900">اسم المستخدم</Text>
@@ -23,9 +24,9 @@ export default function ProfileScreen() {
 
       {/* Menu Items */}
       <View className="px-4">
-        <MenuItem icon={<MapPin size={20} color="#6b7280" />} label="عناوين التوصيل" />
-        <MenuItem icon={<Settings size={20} color="#6b7280" />} label="الإعدادات" />
-        <MenuItem icon={<LogOut size={20} color="#ef4444" />} label="تسجيل الخروج" danger />
+        <MenuItem icon={<MapPin size={20} color={colors.text.secondary} />} label="عناوين التوصيل" />
+        <MenuItem icon={<Settings size={20} color={colors.text.secondary} />} label="الإعدادات" />
+        <MenuItem icon={<LogOut size={20} color={colors.status.error.main} />} label="تسجيل الخروج" danger />
       </View>
     </SafeAreaView>
   );
@@ -44,7 +45,7 @@ function MenuItem({
     <TouchableOpacity className="flex-row items-center py-4 border-b border-gray-100">
       {icon}
       <Text className={`flex-1 mr-3 ${danger ? 'text-red-500' : 'text-gray-900'}`}>{label}</Text>
-      <ChevronLeft size={20} color="#d1d5db" />
+      <ChevronLeft size={20} color={colors.text.disabled} />
     </TouchableOpacity>
   );
 }

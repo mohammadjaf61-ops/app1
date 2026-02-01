@@ -11,6 +11,7 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },
   "dependencies": {
+    "@hypermarket/design-tokens": "workspace:*",
     "@hypermarket/contracts": "workspace:*",
     "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",

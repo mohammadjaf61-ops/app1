@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import { colors } from '@hypermarket/design-tokens';
 
 import { useToast } from '../components/Toast';
 import { fetchDeliveryZones } from '../lib/api';
@@ -65,7 +66,7 @@ function InputField({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor={colors.text.tertiary}
           keyboardType={keyboardType}
           multiline={multiline}
           numberOfLines={multiline ? 3 : 1}
@@ -347,7 +348,7 @@ export default function CheckoutScreen() {
                 value={customerName}
                 onChangeText={setCustomerName}
                 placeholder="أدخل اسمك الكامل"
-                icon={<User size={20} color="#6b7280" />}
+                icon={<User size={20} color={colors.text.secondary} />}
                 error={errors.customerName}
               />
               <InputField
@@ -355,7 +356,7 @@ export default function CheckoutScreen() {
                 value={customerPhone}
                 onChangeText={setCustomerPhone}
                 placeholder="07XX XXX XXXX"
-                icon={<Phone size={20} color="#6b7280" />}
+                icon={<Phone size={20} color={colors.text.secondary} />}
                 keyboardType="phone-pad"
                 error={errors.customerPhone}
               />
@@ -370,7 +371,7 @@ export default function CheckoutScreen() {
                 <Text className="text-gray-700 font-medium text-right mb-2">منطقة التوصيل</Text>
                 {isLoadingZones ? (
                   <View className="bg-gray-50 rounded-xl px-4 py-4 border border-gray-200 flex-row items-center justify-center">
-                    <ActivityIndicator size="small" color="#6b7280" />
+                    <ActivityIndicator size="small" color={colors.text.secondary} />
                     <Text className="text-gray-600 mr-2">جاري التحميل...</Text>
                   </View>
                 ) : (
@@ -381,7 +382,7 @@ export default function CheckoutScreen() {
                     } flex-row items-center`}
                     activeOpacity={0.7}
                   >
-                    <ChevronDown size={20} color="#6b7280" />
+                    <ChevronDown size={20} color={colors.text.secondary} />
                     <View className="flex-1 mr-3">
                       {selectedZone ? (
                         <View className="flex-row items-center justify-end">
@@ -394,7 +395,7 @@ export default function CheckoutScreen() {
                         <Text className="text-gray-400 text-right">اختر منطقة التوصيل</Text>
                       )}
                     </View>
-                    <MapPin size={20} color="#6b7280" />
+                    <MapPin size={20} color={colors.text.secondary} />
                   </TouchableOpacity>
                 )}
                 {errors.deliveryZone && (
@@ -407,7 +408,7 @@ export default function CheckoutScreen() {
                 value={deliveryAddress}
                 onChangeText={setDeliveryAddress}
                 placeholder="المنطقة، الشارع، أقرب نقطة دالة..."
-                icon={<MapPin size={20} color="#6b7280" />}
+                icon={<MapPin size={20} color={colors.text.secondary} />}
                 multiline
                 error={errors.deliveryAddress}
               />
@@ -476,7 +477,7 @@ export default function CheckoutScreen() {
                 value={notes}
                 onChangeText={setNotes}
                 placeholder="أي تعليمات خاصة للطلب..."
-                icon={<FileText size={20} color="#6b7280" />}
+                icon={<FileText size={20} color={colors.text.secondary} />}
                 multiline
               />
             </View>
@@ -492,7 +493,7 @@ export default function CheckoutScreen() {
                   </Text>
                 </View>
                 <View className="bg-green-100 w-12 h-12 rounded-full items-center justify-center">
-                  <Banknote size={24} color="#16a34a" />
+                  <Banknote size={24} color={colors.status.success.main} />
                 </View>
               </View>
             </View>
@@ -505,7 +506,7 @@ export default function CheckoutScreen() {
                 </Text>
                 {isCheckingConsent ? (
                   <View className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex-row items-center justify-center">
-                    <ActivityIndicator size="small" color="#6b7280" />
+                    <ActivityIndicator size="small" color={colors.text.secondary} />
                     <Text className="text-gray-600 mr-2">جاري التحقق...</Text>
                   </View>
                 ) : hasConsent === true ? (
@@ -535,7 +536,7 @@ export default function CheckoutScreen() {
                         اضغط هنا للموافقة قبل إتمام الطلب
                       </Text>
                     </View>
-                    <AlertTriangle size={24} color="#d97706" />
+                    <AlertTriangle size={24} color={colors.status.warning.main} />
                   </Pressable>
                 ) : null}
               </View>
@@ -606,7 +607,7 @@ export default function CheckoutScreen() {
                     طلبك يحتوي على {items.length} منتج. قد يستغرق التجهيز وقتاً أطول.
                   </Text>
                 </View>
-                <AlertTriangle size={24} color="#d97706" />
+                <AlertTriangle size={24} color={colors.status.warning.main} />
               </View>
             )}
           </View>
