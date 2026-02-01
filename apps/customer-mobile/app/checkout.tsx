@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Banknote, MapPin, User, Phone, FileText, AlertTriangle } from 'lucide-react-native';
+import { Banknote, MapPin, User, Phone, FileText, AlertTriangle, ChevronDown } from 'lucide-react-native';
 import { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -11,10 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  TouchableOpacity,
+  Modal,
 } from 'react-native';
 
 import { useToast } from '../components/Toast';
 import { useNetworkStatus } from '../hooks/use-network';
+import { fetchDeliveryZones, DeliveryZone } from '../lib/api';
 import { API_BASE_URL } from '../lib/constants';
 import { formatCurrencyShort } from '../lib/formatters';
 import { isStoreOpen, getDeliveryEta, getNextOpenTime } from '../lib/store-config';
@@ -81,7 +84,6 @@ export default function CheckoutScreen() {
     setNotes,
     getSubtotal,
     getDeliveryFee,
-    getTotal,
     clearCart,
   } = useCartStore();
 
@@ -96,6 +98,12 @@ export default function CheckoutScreen() {
   const [hasConsent, setHasConsent] = useState<boolean | null>(null);
   const [isCheckingConsent, setIsCheckingConsent] = useState(false);
 
+  // Delivery zone state
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [selectedZone, setSelectedZone] = useState<DeliveryZone | null>(null);
+  const [isLoadingZones, setIsLoadingZones] = useState(true);
+  const [showZonePicker, setShowZonePicker] = useState(false);
+
   // Initialize with saved/default values
   useEffect(() => {
     if (!deliveryAddress && defaultAddress) {
@@ -107,6 +115,34 @@ export default function CheckoutScreen() {
     if (!customerPhone && savedPhone) {
       setCustomerPhone(savedPhone);
     }
+  }, []);
+
+  // Fetch delivery zones
+  useEffect(() => {
+    async function loadZones() {
+      try {
+        const zones = await fetchDeliveryZones();
+        setDeliveryZones(zones);
+        // Auto-select first zone if only one exists
+        if (zones.length === 1) {
+          setSelectedZone(zones[0]);
+        }
+      } catch {
+        // If API fails, use a fallback default zone for offline support
+        const defaultZone: DeliveryZone = {
+          id: 'default-zone',
+          nameAr: 'المنطقة الافتراضية',
+          feeIqd: 3000,
+          minOrderIqd: 10000,
+          isActive: true,
+        };
+        setDeliveryZones([defaultZone]);
+        setSelectedZone(defaultZone);
+      } finally {
+        setIsLoadingZones(false);
+      }
+    }
+    loadZones();
   }, []);
 
   // Check consent status when phone number changes
@@ -142,8 +178,9 @@ export default function CheckoutScreen() {
   }, [customerPhone, checkConsentStatus]);
 
   const subtotal = getSubtotal();
-  const deliveryFee = getDeliveryFee();
-  const total = getTotal();
+  // Use zone-based delivery fee if zone is selected, otherwise use store default
+  const deliveryFee = selectedZone ? selectedZone.feeIqd : getDeliveryFee();
+  const total = subtotal + deliveryFee;
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -162,6 +199,12 @@ export default function CheckoutScreen() {
       newErrors.deliveryAddress = 'يرجى إدخال عنوان التوصيل';
     } else if (deliveryAddress.trim().length < 10) {
       newErrors.deliveryAddress = 'يرجى إدخال عنوان تفصيلي أكثر';
+    }
+
+    if (!selectedZone) {
+      newErrors.deliveryZone = 'يرجى اختيار منطقة التوصيل';
+    } else if (subtotal < selectedZone.minOrderIqd) {
+      newErrors.deliveryZone = `الحد الأدنى للطلب ${formatCurrencyShort(selectedZone.minOrderIqd)}`;
     }
 
     setErrors(newErrors);
@@ -195,16 +238,13 @@ export default function CheckoutScreen() {
     const orderPayload = {
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
-      deliveryAddress: deliveryAddress.trim(),
+      deliveryAddressText: deliveryAddress.trim(),
+      deliveryZoneId: selectedZone!.id,
       notes: notes.trim() || undefined,
       items: items.map((item) => ({
         productId: item.productId,
-        sku: item.sku,
-        nameAr: item.nameAr,
-        price: item.price,
         quantity: item.quantity,
       })),
-      total,
     };
 
     // If offline, queue the order
@@ -303,6 +343,44 @@ export default function CheckoutScreen() {
             {/* Delivery Address Section */}
             <View className="mb-6">
               <Text className="text-lg font-bold text-gray-900 text-right mb-4">عنوان التوصيل</Text>
+
+              {/* Delivery Zone Picker */}
+              <View className="mb-4">
+                <Text className="text-gray-700 font-medium text-right mb-2">منطقة التوصيل</Text>
+                {isLoadingZones ? (
+                  <View className="bg-gray-50 rounded-xl px-4 py-4 border border-gray-200 flex-row items-center justify-center">
+                    <ActivityIndicator size="small" color="#6b7280" />
+                    <Text className="text-gray-600 mr-2">جاري التحميل...</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => setShowZonePicker(true)}
+                    className={`bg-gray-50 rounded-xl px-4 py-4 border ${
+                      errors.deliveryZone ? 'border-red-300' : 'border-gray-200'
+                    } flex-row items-center`}
+                    activeOpacity={0.7}
+                  >
+                    <ChevronDown size={20} color="#6b7280" />
+                    <View className="flex-1 mr-3">
+                      {selectedZone ? (
+                        <View className="flex-row items-center justify-end">
+                          <Text className="text-gray-500 text-sm mr-2">
+                            ({formatCurrencyShort(selectedZone.feeIqd)} توصيل)
+                          </Text>
+                          <Text className="text-gray-900 font-medium">{selectedZone.nameAr}</Text>
+                        </View>
+                      ) : (
+                        <Text className="text-gray-400 text-right">اختر منطقة التوصيل</Text>
+                      )}
+                    </View>
+                    <MapPin size={20} color="#6b7280" />
+                  </TouchableOpacity>
+                )}
+                {errors.deliveryZone && (
+                  <Text className="text-red-500 text-sm text-right mt-1">{errors.deliveryZone}</Text>
+                )}
+              </View>
+
               <InputField
                 label="العنوان التفصيلي"
                 value={deliveryAddress}
@@ -313,6 +391,59 @@ export default function CheckoutScreen() {
                 error={errors.deliveryAddress}
               />
             </View>
+
+            {/* Zone Picker Modal */}
+            <Modal
+              visible={showZonePicker}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setShowZonePicker(false)}
+            >
+              <View className="flex-1 bg-black/50 justify-end">
+                <View className="bg-white rounded-t-3xl p-4 max-h-[70%]">
+                  <View className="flex-row items-center justify-between mb-4">
+                    <TouchableOpacity onPress={() => setShowZonePicker(false)}>
+                      <Text className="text-primary font-medium">إغلاق</Text>
+                    </TouchableOpacity>
+                    <Text className="text-lg font-bold text-gray-900">اختر منطقة التوصيل</Text>
+                  </View>
+                  <ScrollView showsVerticalScrollIndicator={false}>
+                    {deliveryZones.map((zone) => (
+                      <TouchableOpacity
+                        key={zone.id}
+                        onPress={() => {
+                          setSelectedZone(zone);
+                          setShowZonePicker(false);
+                        }}
+                        className={`p-4 rounded-xl mb-2 border ${
+                          selectedZone?.id === zone.id
+                            ? 'bg-primary/10 border-primary'
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                        activeOpacity={0.7}
+                      >
+                        <View className="flex-row items-center justify-between">
+                          <Text className="text-primary font-bold">
+                            {formatCurrencyShort(zone.feeIqd)}
+                          </Text>
+                          <Text className="text-gray-900 font-medium">{zone.nameAr}</Text>
+                        </View>
+                        <View className="flex-row items-center justify-between mt-1">
+                          {zone.estimatedMinutes && (
+                            <Text className="text-gray-500 text-sm">
+                              ~{zone.estimatedMinutes} دقيقة
+                            </Text>
+                          )}
+                          <Text className="text-gray-500 text-sm">
+                            الحد الأدنى: {formatCurrencyShort(zone.minOrderIqd)}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+            </Modal>
 
             {/* Notes Section */}
             <View className="mb-6">

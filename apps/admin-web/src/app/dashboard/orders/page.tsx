@@ -323,25 +323,13 @@ function OrderDetailsSheet({ orderId, onClose }: { orderId: string | null; onClo
   const activePickers = pickers.filter((p) => p.isActive);
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!orderId) {
-      return;
-    }
-    try {
-      await updateStatus.mutateAsync({ id: orderId, status: newStatus });
-    } catch (error) {
-      console.error('Failed to update status:', error);
-    }
+    if (!orderId) return;
+    await updateStatus.mutateAsync({ id: orderId, status: newStatus });
   };
 
   const handleAssignPicker = async (pickerId: string) => {
-    if (!orderId) {
-      return;
-    }
-    try {
-      await assignPicker.mutateAsync({ orderId, pickerId });
-    } catch (error) {
-      console.error('Failed to assign picker:', error);
-    }
+    if (!orderId) return;
+    await assignPicker.mutateAsync({ orderId, pickerId });
   };
 
   return (

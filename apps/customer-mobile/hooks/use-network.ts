@@ -38,11 +38,8 @@ export function useOrderQueueProcessor() {
         return true;
       }
 
-      // Handle specific error codes
-      const data = await response.json().catch(() => ({}));
+      // Handle specific error codes - client errors (4xx) should not be retried
       if (response.status >= 400 && response.status < 500) {
-        // Client error - don't retry
-        console.log('Order rejected by server:', data);
         return true; // Mark as complete to stop retrying
       }
 

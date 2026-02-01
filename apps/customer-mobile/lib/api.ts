@@ -39,3 +39,17 @@ export async function fetchFeaturedProducts(): Promise<Product[]> {
 export async function fetchCategories(): Promise<Category[]> {
   return fetchApi<Category[]>('/categories');
 }
+
+export interface DeliveryZone {
+  id: string;
+  nameAr: string;
+  nameEn?: string;
+  feeIqd: number;
+  minOrderIqd: number;
+  estimatedMinutes?: number;
+  isActive: boolean;
+}
+
+export async function fetchDeliveryZones(): Promise<DeliveryZone[]> {
+  return fetchApi<DeliveryZone[]>('/business-rules/delivery-zones');
+}

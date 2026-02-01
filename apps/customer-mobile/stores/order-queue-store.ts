@@ -7,16 +7,13 @@ export interface PendingOrder {
   payload: {
     customerName: string;
     customerPhone: string;
-    deliveryAddress: string;
+    deliveryAddressText: string;
+    deliveryZoneId: string;
     notes?: string;
     items: Array<{
       productId: string;
-      sku: string;
-      nameAr: string;
-      price: number;
       quantity: number;
     }>;
-    total: number;
   };
   createdAt: number;
   attemptCount: number;

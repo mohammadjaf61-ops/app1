@@ -3,7 +3,6 @@ import { View, Text, SafeAreaView, ScrollView } from 'react-native';
 
 import { EmptyState } from '../../../components/EmptyState';
 import { useNetworkStatus } from '../../../hooks/use-network';
-import { formatCurrencyShort } from '../../../lib/formatters';
 import { useOrderQueueStore } from '../../../stores/order-queue-store';
 
 export default function OrdersScreen() {
@@ -81,10 +80,10 @@ export default function OrdersScreen() {
                 </Text>
               </View>
               <Text className="text-gray-900 font-medium text-right">
-                {order.payload.items.length} منتج
+                {order.payload.items.length} منتج • {order.payload.items.reduce((sum, i) => sum + i.quantity, 0)} قطعة
               </Text>
-              <Text className="text-primary font-bold text-right">
-                {formatCurrencyShort(order.payload.total)}
+              <Text className="text-gray-500 text-sm text-right">
+                {order.payload.deliveryAddressText.slice(0, 40)}...
               </Text>
             </View>
           ))}
