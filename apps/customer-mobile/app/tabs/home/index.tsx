@@ -1,4 +1,6 @@
+import { useCartSyncStore, useNetworkStatus } from '@hypermarket/mobile-core';
 import { Search, Plus, Package } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
 
 import { EmptyState } from '../../../components/EmptyState';
@@ -6,16 +8,17 @@ import { MiniCartBar } from '../../../components/MiniCartBar';
 import { ProductCardSkeleton } from '../../../components/ProductCardSkeleton';
 import { StoreStatus } from '../../../components/StoreStatus';
 import { useToast } from '../../../components/Toast';
-import { useNetworkStatus } from '../../../hooks/use-network';
 import { useFeaturedProducts, useCategories, usePrefetchOnMount } from '../../../hooks/use-products';
 import { Product } from '../../../lib/api';
 import { formatCurrencyShort } from '../../../lib/formatters';
+import { markHomeFirstRender } from '../../../lib/performance';
 import { useCartStore } from '../../../stores/cart-store';
 import { fontHeading, fontBody } from '../../../theme/typography';
 
 function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((state) => state.addItem);
   const getItemQuantity = useCartStore((state) => state.getItemQuantity);
+  const enqueueAdd = useCartSyncStore((state) => state.enqueueAdd);
   const { showToast } = useToast();
 
   const quantityInCart = getItemQuantity(product.id);
@@ -26,6 +29,11 @@ function ProductCard({ product }: { product: Product }) {
       sku: product.sku,
       nameAr: product.nameAr,
       price: product.price,
+    });
+    enqueueAdd({
+      productId: product.id,
+      sku: product.sku,
+      quantity: 1,
     });
     showToast(`تمت إضافة "${product.nameAr}" إلى السلة`, 'success');
   };
@@ -59,20 +67,27 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function HomeScreen() {
   usePrefetchOnMount();
-  const isConnected = useNetworkStatus();
+  const { isOffline } = useNetworkStatus();
+
+  useEffect(() => {
+    markHomeFirstRender();
+  }, []);
 
   const {
     data: products,
     isLoading: productsLoading,
+    isHydrating: productsHydrating,
     isError: productsError,
     refetch: refetchProducts,
     isRefetching,
   } = useFeaturedProducts();
-  const { data: categories } = useCategories();
+  const { data: categories, isHydrating: categoriesHydrating } = useCategories();
 
-  const showSkeleton = productsLoading && !products;
-  const showEmptyProducts = !productsLoading && (!products || products.length === 0);
-  const showOffline = isConnected === false && !products;
+  const isProductsLoading = (productsLoading || productsHydrating) && !products;
+  const isCategoriesLoading = categoriesHydrating && !(categories && categories.length > 0);
+  const showSkeleton = isProductsLoading;
+  const showEmptyProducts = !isProductsLoading && (!products || products.length === 0);
+  const showOffline = isOffline && !products;
   const showError = productsError && !products;
 
   return (
@@ -112,6 +127,9 @@ export default function HomeScreen() {
                 <Text className="text-primary font-medium">{category.nameAr}</Text>
               </TouchableOpacity>
             ))}
+            {isCategoriesLoading && (
+              <View className="bg-gray-100 rounded-xl px-8 py-3 ml-3" />
+            )}
           </ScrollView>
         </View>
 

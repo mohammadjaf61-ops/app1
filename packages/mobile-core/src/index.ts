@@ -15,6 +15,14 @@ export { networkService } from './services/network';
 export type { NetworkStatus } from './services/network';
 export { useNetworkStatus } from './hooks/useNetworkStatus';
 export type { UseNetworkStatusResult } from './hooks/useNetworkStatus';
+export { useOrderQueueProcessor } from './hooks/useOrderQueueProcessor';
+export { useCartSyncProcessor } from './hooks/useCartSyncProcessor';
+
+// Stores
+export { useOrderQueueStore, createOrderId } from './stores/orderQueueStore';
+export type { PendingOrder, OrderErrorType } from './stores/orderQueueStore';
+export { useCartSyncStore } from './stores/cartSyncStore';
+export type { CartMutation, CartMutationPayload } from './stores/cartSyncStore';
 
 // Cache
 export { cacheService, CacheKeys } from './services/cache';

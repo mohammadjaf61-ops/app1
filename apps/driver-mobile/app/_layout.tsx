@@ -1,6 +1,8 @@
 import { useFonts } from 'expo-font';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { NetworkBanner } from '@hypermarket/mobile-ui';
+import { useNetworkStatus } from '@hypermarket/mobile-core';
 import { useEffect } from 'react';
 import { I18nManager } from 'react-native';
 
@@ -14,6 +16,7 @@ export default function RootLayout() {
     DecotypeNaskh: require('../assets/fonts/decotype-naskh-special.ttf'),
     AlArabiya: require('../assets/fonts/ae_AlArabiya.ttf'),
   });
+  const { isOnline } = useNetworkStatus();
 
   useEffect(() => {
     if (!I18nManager.isRTL) {
@@ -34,6 +37,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="auto" />
+      <NetworkBanner isOnline={isOnline} />
       <Stack
         screenOptions={{
           headerShown: false,

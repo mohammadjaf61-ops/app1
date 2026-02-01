@@ -1,16 +1,29 @@
+import {
+  useCartSyncProcessor,
+  useNetworkStatus,
+  useOrderQueueProcessor,
+  useOrderQueueStore,
+} from '@hypermarket/mobile-core';
+import { NetworkBanner } from '@hypermarket/mobile-ui';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useEffect } from 'react';
-import { I18nManager } from 'react-native';
+import { I18nManager, InteractionManager } from 'react-native';
 
 import { ToastProvider } from '../components/Toast';
-import { useOrderQueueProcessor } from '../hooks/use-network';
+import { API_BASE_URL } from '../lib/constants';
+import { markTTI } from '../lib/performance';
 import { queryClient, persistOptions } from '../lib/query-client';
 
 function OrderQueueProcessor() {
-  useOrderQueueProcessor();
+  useOrderQueueProcessor({ baseUrl: API_BASE_URL });
+  return null;
+}
+
+function CartSyncProcessor() {
+  useCartSyncProcessor({ baseUrl: API_BASE_URL });
   return null;
 }
 
@@ -20,7 +33,7 @@ I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
+  const [, fontError] = useFonts({
     // Custom Arabic fonts - place .ttf files in assets/fonts/
     DecotypeNaskh: require('../assets/fonts/decotype-naskh-special.ttf'),
     AlArabiya: require('../assets/fonts/ae_AlArabiya.ttf'),
@@ -34,22 +47,32 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    // Hide splash screen once fonts are loaded
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
+    if (fontError) {
+      console.warn('Font load error', fontError);
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontError]);
 
-  // Wait for fonts to load before rendering
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      markTTI();
+    });
+    return () => task.cancel();
+  }, []);
+
+  const { isOnline } = useNetworkStatus();
+  const pendingCount = useOrderQueueStore((state) => state.getPendingCount());
 
   return (
     <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <ToastProvider>
         <OrderQueueProcessor />
+        <CartSyncProcessor />
         <StatusBar style="auto" />
+        <NetworkBanner isOnline={isOnline} isSyncing={pendingCount > 0} />
         <Stack
           screenOptions={{
             headerShown: false,

@@ -1,6 +1,7 @@
 import { OrderStatus, PaymentMethod } from '@hypermarket/shared-types';
 import { generateOrderNumber } from '@hypermarket/shared-utils';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 import { clampPage, clampPageSize } from '@/common/constants';
 import { StructuredLogger, createLogger } from '@/common/observability';
@@ -208,7 +209,31 @@ export class OrdersService {
    * Create a new order
    * Validates business rules before creation
    */
-  async create(dto: CreateOrderDto) {
+  async create(dto: CreateOrderDto, idempotencyKey?: string) {
+    if (idempotencyKey) {
+      const existing = await this.prisma.order.findUnique({
+        where: { idempotencyKey },
+        include: {
+          items: true,
+          payment: true,
+        },
+      });
+
+      if (existing) {
+        return {
+          ...existing,
+          payment: existing.payment
+            ? {
+              id: existing.payment.id,
+              status: existing.payment.status,
+              method: existing.payment.method,
+              redirectUrl: undefined,
+            }
+            : undefined,
+        };
+      }
+    }
+
     // Get products and calculate subtotal first
     const productIds = dto.items.map((item) => item.productId);
     const products = await this.prisma.product.findMany({
@@ -259,28 +284,59 @@ export class OrdersService {
     const paymentMethod = dto.paymentMethod || PaymentMethod.COD;
 
     // Create order
-    const order = await this.prisma.order.create({
-      data: {
-        orderNumber: generateOrderNumber(),
-        status: OrderStatus.PENDING,
-        customerName: dto.customerName,
-        customerPhone: dto.customerPhone,
-        deliveryAddressText: dto.deliveryAddressText,
-        deliveryZoneId: dto.deliveryZoneId,
-        subtotal,
-        deliveryFee: deliveryFeeIqd,
-        total: totalAmountIqd,
-        paymentMethod,
-        isPaid: false,
-        notes: dto.notes || null,
-        items: {
-          create: orderItems,
+    let order;
+
+    try {
+      order = await this.prisma.order.create({
+        data: {
+          orderNumber: generateOrderNumber(),
+          idempotencyKey: idempotencyKey ?? null,
+          status: OrderStatus.PENDING,
+          customerName: dto.customerName,
+          customerPhone: dto.customerPhone,
+          deliveryAddressText: dto.deliveryAddressText,
+          deliveryZoneId: dto.deliveryZoneId,
+          subtotal,
+          deliveryFee: deliveryFeeIqd,
+          total: totalAmountIqd,
+          paymentMethod,
+          isPaid: false,
+          notes: dto.notes || null,
+          items: {
+            create: orderItems,
+          },
         },
-      },
-      include: {
-        items: true,
-      },
-    });
+        include: {
+          items: true,
+        },
+      });
+    } catch (error) {
+      if (idempotencyKey && error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
+        const existing = await this.prisma.order.findUnique({
+          where: { idempotencyKey },
+          include: {
+            items: true,
+            payment: true,
+          },
+        });
+
+        if (existing) {
+          return {
+            ...existing,
+            payment: existing.payment
+              ? {
+                id: existing.payment.id,
+                status: existing.payment.status,
+                method: existing.payment.method,
+                redirectUrl: undefined,
+              }
+              : undefined,
+          };
+        }
+      }
+
+      throw error;
+    }
 
     // Create payment record for the order
     const paymentResult = await this.paymentsService.createPayment({

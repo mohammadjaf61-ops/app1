@@ -2,12 +2,12 @@ import { Clock, Wifi } from 'lucide-react-native';
 import { View, Text, SafeAreaView, ScrollView } from 'react-native';
 
 import { EmptyState } from '../../../components/EmptyState';
-import { useNetworkStatus } from '../../../hooks/use-network';
-import { useOrderQueueStore } from '../../../stores/order-queue-store';
+import { useNetworkStatus, useOrderQueueStore } from '@hypermarket/mobile-core';
 
 export default function OrdersScreen() {
-  const isConnected = useNetworkStatus();
+  const { isOnline } = useNetworkStatus();
   const pendingOrders = useOrderQueueStore((state) => state.pendingOrders);
+  const retryOrder = useOrderQueueStore((state) => state.retryOrder);
   const pendingCount = pendingOrders.filter((o) => o.status !== 'sent').length;
 
   return (
@@ -21,7 +21,7 @@ export default function OrdersScreen() {
         <View className="mx-4 mb-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              {isConnected === false ? (
+              {!isOnline ? (
                 <Wifi size={20} color="#d97706" />
               ) : (
                 <Clock size={20} color="#d97706" />
@@ -32,7 +32,7 @@ export default function OrdersScreen() {
                 طلبات قيد الإرسال: {pendingCount}
               </Text>
               <Text className="text-amber-600 text-sm text-right">
-                {isConnected === false
+                {!isOnline
                   ? 'سيتم إرسالها عند توفر الإنترنت'
                   : 'جاري إرسال الطلبات...'}
               </Text>
@@ -85,6 +85,17 @@ export default function OrdersScreen() {
               <Text className="text-gray-500 text-sm text-right">
                 {order.payload.deliveryAddressText.slice(0, 40)}...
               </Text>
+              {order.lastErrorType === 'validation' && order.lastErrorMessage && (
+                <Text className="text-red-600 text-xs text-right mt-2">{order.lastErrorMessage}</Text>
+              )}
+              {order.status === 'failed' && order.lastErrorType !== 'validation' && (
+                <Text
+                  className="text-blue-600 text-xs text-right mt-2"
+                  onPress={() => retryOrder(order.id)}
+                >
+                  حدث خطأ في الإرسال. اضغط لإعادة المحاولة
+                </Text>
+              )}
             </View>
           ))}
         </ScrollView>

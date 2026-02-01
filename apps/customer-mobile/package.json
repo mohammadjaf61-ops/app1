@@ -14,6 +14,8 @@
     "type-check": "echo 'Skipped - NativeWind types issue'"
   },
   "dependencies": {
+    "@hypermarket/mobile-core": "workspace:*",
+    "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",
     "@hypermarket/shared-utils": "workspace:*",
     "@react-native-async-storage/async-storage": "^1.23.0",

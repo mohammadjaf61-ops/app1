@@ -1,5 +1,15 @@
 import { UserRole, OrderStatus, JwtPayload } from '@hypermarket/shared-types';
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Headers,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -188,8 +198,11 @@ export class OrdersController {
     description: 'Out of stock - المنتج غير متوفر',
     type: ApiErrorResponse,
   })
-  async create(@Body() dto: CreateOrderDto) {
-    return this.ordersService.create(dto);
+  async create(
+    @Body() dto: CreateOrderDto,
+    @Headers('x-idempotency-key') idempotencyKey?: string,
+  ) {
+    return this.ordersService.create(dto, idempotencyKey);
   }
 
   @Patch(':id/status')

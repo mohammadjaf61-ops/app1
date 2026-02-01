@@ -14,8 +14,12 @@
     "type-check": "echo 'No source files yet'"
   },
   "dependencies": {
+    "@hypermarket/mobile-core": "workspace:*",
+    "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",
     "@hypermarket/shared-utils": "workspace:*",
+    "@react-native-async-storage/async-storage": "^1.23.0",
+    "@react-native-community/netinfo": "^11.3.0",
     "@react-navigation/native": "^6.1.0",
     "@tanstack/react-query": "^5.28.0",
     "expo": "~54.0.0",

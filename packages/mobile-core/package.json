@@ -14,7 +14,8 @@
     "@hypermarket/contracts": "workspace:*",
     "@hypermarket/mobile-ui": "workspace:*",
     "@hypermarket/shared-types": "workspace:*",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^4.5.0"
   },
   "peerDependencies": {
     "@react-native-async-storage/async-storage": ">=1.18.0",

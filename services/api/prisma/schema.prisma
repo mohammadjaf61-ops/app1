@@ -254,6 +254,8 @@ model Order {
   id                  String        @id @default(uuid())
   /// Human-readable order number (e.g., "HM-20250126-ABC12" or "POS-20250128-XYZ")
   orderNumber         String        @unique @map("order_number")
+  /// Idempotency key for safe retries (optional)
+  idempotencyKey      String?       @unique @map("idempotency_key")
   /// Order type: DELIVERY or POS
   orderType           OrderType     @default(DELIVERY) @map("order_type")
   /// Customer name in Arabic - اسم الزبون (optional for POS walk-in)

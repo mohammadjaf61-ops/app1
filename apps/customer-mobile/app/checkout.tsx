@@ -1,5 +1,14 @@
+import { createOrderId, useNetworkStatus, useOrderQueueStore } from '@hypermarket/mobile-core';
 import { router } from 'expo-router';
-import { Banknote, MapPin, User, Phone, FileText, AlertTriangle, ChevronDown } from 'lucide-react-native';
+import {
+  Banknote,
+  MapPin,
+  User,
+  Phone,
+  FileText,
+  AlertTriangle,
+  ChevronDown,
+} from 'lucide-react-native';
 import { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -16,13 +25,12 @@ import {
 } from 'react-native';
 
 import { useToast } from '../components/Toast';
-import { useNetworkStatus } from '../hooks/use-network';
-import { fetchDeliveryZones, DeliveryZone } from '../lib/api';
+import { fetchDeliveryZones } from '../lib/api';
+import type { DeliveryZone } from '../lib/api';
 import { API_BASE_URL } from '../lib/constants';
 import { formatCurrencyShort } from '../lib/formatters';
 import { isStoreOpen, getDeliveryEta, getNextOpenTime } from '../lib/store-config';
 import { useCartStore } from '../stores/cart-store';
-import { useOrderQueueStore } from '../stores/order-queue-store';
 import { useSettingsStore } from '../stores/settings-store';
 
 function InputField({
@@ -90,7 +98,7 @@ export default function CheckoutScreen() {
   const { defaultAddress, savedName, savedPhone, setDefaultAddress, setSavedName, setSavedPhone } =
     useSettingsStore();
 
-  const isConnected = useNetworkStatus();
+  const { isOnline } = useNetworkStatus();
   const addOrder = useOrderQueueStore((state) => state.addOrder);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -247,9 +255,11 @@ export default function CheckoutScreen() {
       })),
     };
 
+    const requestId = createOrderId();
+
     // If offline, queue the order
-    if (isConnected === false) {
-      addOrder(orderPayload);
+    if (!isOnline) {
+      addOrder(orderPayload, { id: requestId });
       setSavedName(customerName.trim());
       setSavedPhone(customerPhone.trim());
       setDefaultAddress(deliveryAddress.trim());
@@ -265,11 +275,22 @@ export default function CheckoutScreen() {
       // Try to submit the order
       const response = await fetch(`${API_BASE_URL}/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': requestId,
+          'X-Client-Request-Id': requestId,
+        },
         body: JSON.stringify(orderPayload),
       });
 
       if (!response.ok) {
+        if (response.status === 400 || response.status === 422) {
+          const payload = await response.json().catch(() => null);
+          const message = payload?.message ?? 'تعذر إرسال الطلب. يرجى التحقق من البيانات.';
+          showToast(message, 'warning');
+          setIsSubmitting(false);
+          return;
+        }
         throw new Error('API_ERROR');
       }
 
@@ -295,7 +316,7 @@ export default function CheckoutScreen() {
       });
     } catch {
       // Network error - queue the order for retry
-      addOrder(orderPayload);
+      addOrder(orderPayload, { id: requestId });
       setSavedName(customerName.trim());
       setSavedPhone(customerPhone.trim());
       setDefaultAddress(deliveryAddress.trim());

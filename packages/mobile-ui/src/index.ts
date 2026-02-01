@@ -8,6 +8,8 @@ export type { BadgeProps, BadgeVariant, BadgeSize } from './components/Badge';
 export { Input } from './components/Input';
 export type { InputProps, InputSize } from './components/Input';
 
+export { NetworkBanner } from './components/NetworkBanner';
+
 // Loading States (Micro-interaction #3)
 export {
   Skeleton,
