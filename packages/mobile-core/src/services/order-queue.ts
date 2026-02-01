@@ -56,6 +56,7 @@ export async function processOrderQueue({
     if (nextAttempt > maxRetryAttempts) {
       actions.updateStatus(order.id, 'failed');
       actions.setError(order.id, 'server', 'Max retry attempts reached');
+      logger?.warn('Order failed', { requestId: order.id, errorCode: 'server' });
       continue;
     }
 
@@ -73,12 +74,14 @@ export async function processOrderQueue({
     if (result.ok) {
       logger?.info('Order sent', { requestId: order.id });
       actions.removeOrder(order.id);
+      logger?.info('Order synced/removed', { requestId: order.id });
       continue;
     }
 
     if (result.errorType === 'validation') {
       actions.updateStatus(order.id, 'failed');
       actions.setError(order.id, 'validation', result.message);
+      logger?.warn('Order failed', { requestId: order.id, errorCode: 'validation' });
       logger?.warn('Order validation failed', {
         requestId: order.id,
         errorCode: 'validation',
@@ -90,6 +93,7 @@ export async function processOrderQueue({
       actions.setError(order.id, 'server', result.message);
       if (nextAttempt >= maxRetryAttempts) {
         actions.updateStatus(order.id, 'failed');
+        logger?.warn('Order failed', { requestId: order.id, errorCode: 'server' });
         logger?.warn('Order retry exhausted', { requestId: order.id, errorCode: 'server' });
         continue;
       }
