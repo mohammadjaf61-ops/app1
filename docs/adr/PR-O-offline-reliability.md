@@ -10,7 +10,9 @@ Offline-first behavior is required for customer orders: cart edits must work off
 
 2. **Order queue + retry**
    - Store pending orders locally with a client-generated `id`.
+   - Lifecycle: `pending` → `sending` → (`sent` + removed) or `failed` with error metadata.
    - Queue is retried automatically when the network is available.
+   - Retry uses a simple backoff delay between attempts.
    - Error classification:
      - **Network**: silent retry when online.
      - **Server (>=500)**: retry with capped attempts; if max reached, mark `failed` and allow manual retry.
