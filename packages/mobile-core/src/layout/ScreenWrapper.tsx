@@ -1,9 +1,8 @@
+import { colors } from '@hypermarket/design-tokens';
 import React from 'react';
 import type { ViewStyle, StatusBarStyle } from 'react-native';
 import { View, StatusBar, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { colors } from '@hypermarket/design-tokens';
 
 export type SafeAreaEdge = 'top' | 'bottom' | 'left' | 'right';
 

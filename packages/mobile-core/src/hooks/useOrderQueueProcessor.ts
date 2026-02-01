@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import type { OrderErrorType, PendingOrder } from '../stores/orderQueueStore';
 import { processOrderQueue } from '../services/order-queue';
 import { useOrderQueueStore } from '../stores/orderQueueStore';
+import type { OrderErrorType, PendingOrder } from '../stores/orderQueueStore';
 import { createLogger } from '../utils/logger';
 
 import { useNetworkStatus } from './useNetworkStatus';
@@ -12,6 +12,7 @@ interface OrderQueueProcessorOptions {
 }
 
 const logger = createLogger({ scope: 'OrderQueue', enabled: __DEV__ });
+const REQUEST_TIMEOUT_MS = 10000;
 
 function getErrorMessage(payload: unknown): string | undefined {
   if (!payload || typeof payload !== 'object') {
@@ -48,6 +49,9 @@ async function classifyOrderResponse(response: Response): Promise<{
 }
 
 async function submitOrder(baseUrl: string, order: PendingOrder) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${baseUrl}/orders`, {
       method: 'POST',
@@ -57,6 +61,7 @@ async function submitOrder(baseUrl: string, order: PendingOrder) {
         'X-Client-Request-Id': order.id,
       },
       body: JSON.stringify(order.payload),
+      signal: controller.signal,
     });
 
     return classifyOrderResponse(response);
@@ -66,6 +71,8 @@ async function submitOrder(baseUrl: string, order: PendingOrder) {
       errorType: 'network' as const,
       message: 'Network error',
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
