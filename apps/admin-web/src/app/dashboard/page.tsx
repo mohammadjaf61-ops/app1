@@ -23,6 +23,7 @@ import {
   Bar,
 } from 'recharts';
 
+import { OnboardingChecklist } from '@/components/onboarding/OnboardingChecklist';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminKPIs, useOrders, useLowStockItems, useWeeklyStats } from '@/hooks/use-api';
@@ -117,6 +118,9 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">لوحة التحكم</h1>
         <p className="text-muted-foreground">مرحباً بك في نظام إدارة الهايبرماركت</p>
       </div>
+
+      {/* Onboarding Checklist */}
+      <OnboardingChecklist />
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
