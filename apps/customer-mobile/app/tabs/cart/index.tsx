@@ -12,6 +12,7 @@ import {
   Pressable,
 } from 'react-native';
 
+import { EmptyState } from '../../../components/EmptyState';
 import { useToast } from '../../../components/Toast';
 import { formatCurrencyShort } from '../../../lib/formatters';
 import type { CartItem } from '../../../stores/cart-store';
@@ -153,19 +154,7 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <SafeAreaView className="flex-1 bg-white">
-        <View className="flex-1 justify-center items-center px-6">
-          <View className="bg-gray-100 w-24 h-24 rounded-full items-center justify-center mb-4">
-            <ShoppingCart size={48} color="#9ca3af" />
-          </View>
-          <Text className="text-xl font-bold text-gray-900 mb-2">سلتك فارغة</Text>
-          <Text className="text-gray-500 text-center mb-6">ابدأ بإضافة منتجات إلى سلتك</Text>
-          <Pressable
-            onPress={() => router.push('/tabs/home')}
-            className="bg-primary px-6 py-3 rounded-xl"
-          >
-            <Text className="text-white font-semibold">تصفح المنتجات</Text>
-          </Pressable>
-        </View>
+        <EmptyState variant="cart" />
       </SafeAreaView>
     );
   }

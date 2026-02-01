@@ -1,10 +1,12 @@
 import { Search, Plus, Package } from 'lucide-react-native';
 import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
 
+import { EmptyState } from '../../../components/EmptyState';
 import { MiniCartBar } from '../../../components/MiniCartBar';
 import { ProductCardSkeleton } from '../../../components/ProductCardSkeleton';
 import { StoreStatus } from '../../../components/StoreStatus';
 import { useToast } from '../../../components/Toast';
+import { useNetworkStatus } from '../../../hooks/use-network';
 import { useFeaturedProducts, useCategories, usePrefetchOnMount } from '../../../hooks/use-products';
 import { Product } from '../../../lib/api';
 import { formatCurrencyShort } from '../../../lib/formatters';
@@ -57,11 +59,21 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function HomeScreen() {
   usePrefetchOnMount();
+  const isConnected = useNetworkStatus();
 
-  const { data: products, isLoading: productsLoading } = useFeaturedProducts();
+  const {
+    data: products,
+    isLoading: productsLoading,
+    isError: productsError,
+    refetch: refetchProducts,
+    isRefetching,
+  } = useFeaturedProducts();
   const { data: categories } = useCategories();
 
   const showSkeleton = productsLoading && !products;
+  const showEmptyProducts = !productsLoading && (!products || products.length === 0);
+  const showOffline = isConnected === false && !products;
+  const showError = productsError && !products;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -106,20 +118,53 @@ export default function HomeScreen() {
         {/* Featured Products */}
         <View className="px-4 py-4">
           <Text style={{ fontFamily: fontHeading }} className="text-lg font-bold text-gray-900 mb-3 text-right">منتجات مميزة</Text>
-          <View className="flex-row flex-wrap justify-between">
-            {showSkeleton ? (
-              <>
-                <ProductCardSkeleton />
-                <ProductCardSkeleton />
-                <ProductCardSkeleton />
-                <ProductCardSkeleton />
-              </>
-            ) : (
-              (products || []).map((product) => (
+
+          {/* Offline State */}
+          {showOffline && (
+            <EmptyState
+              variant="offline"
+              onRetry={() => refetchProducts()}
+              isRetrying={isRefetching}
+            />
+          )}
+
+          {/* Error State */}
+          {showError && !showOffline && (
+            <EmptyState
+              variant="error"
+              onRetry={() => refetchProducts()}
+              isRetrying={isRefetching}
+            />
+          )}
+
+          {/* Empty Products State */}
+          {showEmptyProducts && !showOffline && !showError && (
+            <View className="py-8">
+              <EmptyState
+                variant="products"
+                description="لا توجد منتجات متوفرة حالياً، يرجى المحاولة لاحقاً"
+              />
+            </View>
+          )}
+
+          {/* Loading Skeleton */}
+          {showSkeleton && (
+            <View className="flex-row flex-wrap justify-between">
+              <ProductCardSkeleton />
+              <ProductCardSkeleton />
+              <ProductCardSkeleton />
+              <ProductCardSkeleton />
+            </View>
+          )}
+
+          {/* Products Grid */}
+          {!showSkeleton && !showEmptyProducts && !showOffline && !showError && products && (
+            <View className="flex-row flex-wrap justify-between">
+              {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
-              ))
-            )}
-          </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Info Banner */}

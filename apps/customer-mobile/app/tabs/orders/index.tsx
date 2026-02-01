@@ -1,6 +1,7 @@
-import { ClipboardList, Clock, Wifi } from 'lucide-react-native';
+import { Clock, Wifi } from 'lucide-react-native';
 import { View, Text, SafeAreaView, ScrollView } from 'react-native';
 
+import { EmptyState } from '../../../components/EmptyState';
 import { useNetworkStatus } from '../../../hooks/use-network';
 import { formatCurrencyShort } from '../../../lib/formatters';
 import { useOrderQueueStore } from '../../../stores/order-queue-store';
@@ -89,11 +90,7 @@ export default function OrdersScreen() {
           ))}
         </ScrollView>
       ) : (
-        <View className="flex-1 justify-center items-center px-4">
-          <ClipboardList size={64} color="#d1d5db" />
-          <Text className="text-xl font-semibold text-gray-900 mt-4">لا توجد طلبات</Text>
-          <Text className="text-gray-500 text-center mt-2">عند إتمام طلبك سيظهر هنا</Text>
-        </View>
+        <EmptyState variant="orders" />
       )}
     </SafeAreaView>
   );
