@@ -1,5 +1,7 @@
 import { API_BASE_URL } from './constants';
 
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
 export interface Product {
   id: string;
   sku: string;
@@ -20,11 +22,25 @@ export interface Category {
 }
 
 async function fetchApi<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`);
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status}`);
+  const url = `${API_BASE_URL}${endpoint}`;
+  const existingRequest = inFlightRequests.get(url);
+  if (existingRequest) {
+    return existingRequest as Promise<T>;
   }
-  return response.json();
+
+  const request = fetch(url)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      return response.json() as Promise<T>;
+    })
+    .finally(() => {
+      inFlightRequests.delete(url);
+    });
+
+  inFlightRequests.set(url, request);
+  return request;
 }
 
 export async function fetchProducts(categoryId?: string): Promise<Product[]> {
