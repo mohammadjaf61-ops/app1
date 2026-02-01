@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import type { OrderErrorType, PendingOrder } from '../stores/orderQueueStore';
+import { processOrderQueue } from '../services/order-queue';
 import { useOrderQueueStore } from '../stores/orderQueueStore';
 import { createLogger } from '../utils/logger';
 
 import { useNetworkStatus } from './useNetworkStatus';
-
-const MAX_RETRY_ATTEMPTS = 5;
-const RETRY_DELAYS = [2000, 4000, 8000, 16000, 32000];
 
 interface OrderQueueProcessorOptions {
   baseUrl: string;
@@ -82,69 +80,21 @@ export function useOrderQueueProcessor({ baseUrl }: OrderQueueProcessorOptions) 
       return;
     }
 
-    const pending = pendingOrders.filter((order) => order.status === 'pending');
-    if (pending.length === 0) {
-      return;
-    }
-
     isProcessing.current = true;
 
-    for (const order of pending) {
-      const nextAttempt = order.attemptCount + 1;
-      if (nextAttempt > MAX_RETRY_ATTEMPTS) {
-        updateStatus(order.id, 'failed');
-        setError(order.id, 'server', 'Max retry attempts reached');
-        continue;
-      }
-
-      updateStatus(order.id, 'sending');
-      clearError(order.id);
-      incrementAttempt(order.id);
-
-      logger.info('Order retry', {
-        requestId: order.id,
-        metadata: { attempt: nextAttempt },
-      });
-
-      const result = await submitOrder(baseUrl, order);
-
-      if (result.ok) {
-        logger.info('Order sent', { requestId: order.id });
-        removeOrder(order.id);
-        continue;
-      }
-
-      if (result.errorType === 'validation') {
-        updateStatus(order.id, 'failed');
-        setError(order.id, 'validation', result.message);
-        logger.warn('Order validation failed', {
-          requestId: order.id,
-          errorCode: 'validation',
-        });
-        continue;
-      }
-
-      if (result.errorType === 'server') {
-        setError(order.id, 'server', result.message);
-        if (nextAttempt >= MAX_RETRY_ATTEMPTS) {
-          updateStatus(order.id, 'failed');
-          logger.warn('Order retry exhausted', { requestId: order.id, errorCode: 'server' });
-          continue;
-        }
-      }
-
-      if (result.errorType === 'network') {
-        setError(order.id, 'network', result.message);
-        logger.warn('Order retry deferred (network)', {
-          requestId: order.id,
-          errorCode: 'network',
-        });
-      }
-
-      updateStatus(order.id, 'pending');
-      const delay = RETRY_DELAYS[Math.min(order.attemptCount, RETRY_DELAYS.length - 1)];
-      await new Promise<void>((resolve) => setTimeout(() => resolve(), delay));
-    }
+    await processOrderQueue({
+      isOnline,
+      pendingOrders,
+      submitOrder: (order) => submitOrder(baseUrl, order),
+      actions: {
+        updateStatus,
+        incrementAttempt,
+        removeOrder,
+        setError,
+        clearError,
+      },
+      logger,
+    });
 
     isProcessing.current = false;
   }, [

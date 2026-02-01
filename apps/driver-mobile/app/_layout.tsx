@@ -2,7 +2,7 @@ import { useFonts } from 'expo-font';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { NetworkBanner } from '@hypermarket/mobile-ui';
-import { useNetworkStatus } from '@hypermarket/mobile-core';
+import { useNetworkStatus, useOrderQueueStore } from '@hypermarket/mobile-core';
 import { useEffect } from 'react';
 import { I18nManager } from 'react-native';
 
@@ -17,6 +17,7 @@ export default function RootLayout() {
     AlArabiya: require('../assets/fonts/ae_AlArabiya.ttf'),
   });
   const { isOnline } = useNetworkStatus();
+  const pendingCount = useOrderQueueStore((state) => state.getPendingCount());
 
   useEffect(() => {
     if (!I18nManager.isRTL) {
@@ -37,7 +38,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="auto" />
-      <NetworkBanner isOnline={isOnline} />
+      <NetworkBanner isOnline={isOnline} isSyncing={pendingCount > 0} />
       <Stack
         screenOptions={{
           headerShown: false,

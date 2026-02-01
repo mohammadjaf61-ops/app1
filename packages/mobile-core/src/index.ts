@@ -13,6 +13,7 @@ export type { LogLevel, LogContext, LogEntry } from './utils/logger';
 // Network & Offline
 export { networkService } from './services/network';
 export type { NetworkStatus } from './services/network';
+export { processOrderQueue } from './services/order-queue';
 export { useNetworkStatus } from './hooks/useNetworkStatus';
 export type { UseNetworkStatusResult } from './hooks/useNetworkStatus';
 export { useOrderQueueProcessor } from './hooks/useOrderQueueProcessor';

@@ -8,7 +8,10 @@ interface NetworkBannerProps {
 export function NetworkBanner({ isOnline, isSyncing = false }: NetworkBannerProps) {
   if (!isOnline) {
     return (
-      <View className="mx-4 mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2">
+      <View
+        className="absolute top-0 left-0 right-0 z-50 border-b border-amber-200 bg-amber-50 px-4 py-2"
+        pointerEvents="none"
+      >
         <Text className="text-amber-800 text-sm text-right">أنت غير متصل بالإنترنت</Text>
       </View>
     );
@@ -16,7 +19,10 @@ export function NetworkBanner({ isOnline, isSyncing = false }: NetworkBannerProp
 
   if (isSyncing) {
     return (
-      <View className="mx-4 mt-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2">
+      <View
+        className="absolute top-0 left-0 right-0 z-50 border-b border-blue-200 bg-blue-50 px-4 py-2"
+        pointerEvents="none"
+      >
         <Text className="text-blue-800 text-sm text-right">جاري مزامنة الطلبات...</Text>
       </View>
     );
