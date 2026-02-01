@@ -1,8 +1,14 @@
+import { colors } from '@hypermarket/design-tokens';
 import React, { useCallback, useRef } from 'react';
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
-import { AccessibilityInfo, ActivityIndicator, Animated, Pressable, Text, View } from 'react-native';
-
-import { colors } from '@hypermarket/design-tokens';
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
 
 export type ButtonVariant =
   | 'primary'
@@ -130,7 +136,7 @@ export function Button({
       }
       onPressIn?.(e);
     },
-    [scaleAnim, onPressIn]
+    [scaleAnim, onPressIn],
   );
 
   const handlePressOut = useCallback(
@@ -144,7 +150,7 @@ export function Button({
       }
       onPressOut?.(e);
     },
-    [scaleAnim, onPressOut]
+    [scaleAnim, onPressOut],
   );
 
   const getIndicatorColor = () => {

@@ -1,8 +1,7 @@
+import { colors } from '@hypermarket/design-tokens';
 import React, { useCallback, useRef, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
-
-import { colors } from '@hypermarket/design-tokens';
 
 import { AnimatedPressable } from './AnimatedPressable';
 

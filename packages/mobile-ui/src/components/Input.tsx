@@ -1,8 +1,7 @@
+import { colors } from '@hypermarket/design-tokens';
 import React from 'react';
 import type { TextInputProps, ViewStyle } from 'react-native';
 import { Text, TextInput, View } from 'react-native';
-
-import { colors } from '@hypermarket/design-tokens';
 
 export type InputSize = 'md' | 'lg' | 'xl';
 
