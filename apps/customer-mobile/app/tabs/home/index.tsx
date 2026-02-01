@@ -1,5 +1,6 @@
 import { Search, Plus, Package } from 'lucide-react-native';
 import { View, Text, ScrollView, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
 
 import { EmptyState } from '../../../components/EmptyState';
 import { MiniCartBar } from '../../../components/MiniCartBar';
@@ -10,12 +11,15 @@ import { useNetworkStatus } from '../../../hooks/use-network';
 import { useFeaturedProducts, useCategories, usePrefetchOnMount } from '../../../hooks/use-products';
 import { Product } from '../../../lib/api';
 import { formatCurrencyShort } from '../../../lib/formatters';
+import { markHomeFirstRender } from '../../../lib/performance';
 import { useCartStore } from '../../../stores/cart-store';
+import { useCartSyncStore } from '../../../stores/cart-sync-store';
 import { fontHeading, fontBody } from '../../../theme/typography';
 
 function ProductCard({ product }: { product: Product }) {
   const addItem = useCartStore((state) => state.addItem);
   const getItemQuantity = useCartStore((state) => state.getItemQuantity);
+  const enqueueAdd = useCartSyncStore((state) => state.enqueueAdd);
   const { showToast } = useToast();
 
   const quantityInCart = getItemQuantity(product.id);
@@ -26,6 +30,11 @@ function ProductCard({ product }: { product: Product }) {
       sku: product.sku,
       nameAr: product.nameAr,
       price: product.price,
+    });
+    enqueueAdd({
+      productId: product.id,
+      sku: product.sku,
+      quantity: 1,
     });
     showToast(`تمت إضافة "${product.nameAr}" إلى السلة`, 'success');
   };
@@ -60,6 +69,10 @@ function ProductCard({ product }: { product: Product }) {
 export default function HomeScreen() {
   usePrefetchOnMount();
   const isConnected = useNetworkStatus();
+
+  useEffect(() => {
+    markHomeFirstRender();
+  }, []);
 
   const {
     data: products,
