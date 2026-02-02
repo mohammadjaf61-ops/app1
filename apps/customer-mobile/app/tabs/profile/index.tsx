@@ -4,9 +4,9 @@ import { colors } from '@hypermarket/design-tokens';
 
 export default function ProfileScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white dark:bg-primary-900">
       <View className="px-4 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-gray-900">حسابي</Text>
+        <Text className="text-2xl font-bold text-gray-900 dark:text-gray-100">حسابي</Text>
       </View>
 
       {/* User Info */}
@@ -16,8 +16,10 @@ export default function ProfileScreen() {
             <User size={32} color={colors.primary[500]} />
           </View>
           <View className="mr-4 flex-1">
-            <Text className="text-lg font-semibold text-gray-900">اسم المستخدم</Text>
-            <Text className="text-gray-500">07XXXXXXXXX</Text>
+            <Text className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              اسم المستخدم
+            </Text>
+            <Text className="text-gray-500 dark:text-gray-300">07XXXXXXXXX</Text>
           </View>
         </View>
       </View>

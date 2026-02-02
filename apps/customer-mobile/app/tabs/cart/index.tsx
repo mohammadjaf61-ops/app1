@@ -83,9 +83,9 @@ function CartItemRow({ item, onRemove }: { item: CartItem; onRemove: () => void 
   };
 
   return (
-    <View className="flex-row bg-white rounded-xl p-3 mb-3 shadow-sm border border-gray-100">
+    <View className="flex-row bg-white dark:bg-primary-900/50 rounded-xl p-3 mb-3 shadow-sm border border-gray-100 dark:border-primary-800">
       {/* Product Image */}
-      <View className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden items-center justify-center">
+      <View className="w-20 h-20 bg-gray-100 dark:bg-primary-800/60 rounded-lg overflow-hidden items-center justify-center">
         {item.imageUrl ? (
           <Image source={{ uri: item.imageUrl }} className="w-full h-full" resizeMode="cover" />
         ) : (
@@ -164,16 +164,16 @@ export default function CartScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-primary-900">
       {/* Header */}
-      <View className="bg-white px-4 pt-4 pb-3 border-b border-gray-100">
+      <View className="bg-white dark:bg-primary-900 px-4 pt-4 pb-3 border-b border-gray-100 dark:border-primary-800">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={handleClearCart} activeOpacity={0.7}>
             <Text className="text-red-500 font-medium">تفريغ السلة</Text>
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-900">السلة</Text>
+          <Text className="text-xl font-bold text-gray-900 dark:text-gray-100">السلة</Text>
         </View>
-        <Text className="text-gray-500 text-right mt-1">
+        <Text className="text-gray-500 dark:text-gray-300 text-right mt-1">
           {items.length} منتج • {items.reduce((sum, i) => sum + i.quantity, 0)} قطعة
         </Text>
       </View>
@@ -190,21 +190,25 @@ export default function CartScreen() {
       />
 
       {/* Summary & Checkout */}
-      <View className="bg-white border-t border-gray-200 px-4 py-4 shadow-lg">
+      <View className="bg-white dark:bg-primary-900 border-t border-gray-200 dark:border-primary-800 px-4 py-4 shadow-lg">
         {/* Summary */}
         <View className="mb-4">
           <View className="flex-row justify-between mb-2">
-            <Text className="text-gray-900">{formatCurrencyShort(subtotal)}</Text>
-            <Text className="text-gray-500">المنتجات</Text>
+            <Text className="text-gray-900 dark:text-gray-100">{formatCurrencyShort(subtotal)}</Text>
+            <Text className="text-gray-500 dark:text-gray-300">المنتجات</Text>
           </View>
           <View className="flex-row justify-between mb-2">
-            <Text className="text-gray-900">{formatCurrencyShort(deliveryFee)}</Text>
-            <Text className="text-gray-500">رسوم التوصيل</Text>
+            <Text className="text-gray-900 dark:text-gray-100">{formatCurrencyShort(deliveryFee)}</Text>
+            <Text className="text-gray-500 dark:text-gray-300">رسوم التوصيل</Text>
           </View>
-          <View className="h-px bg-gray-200 my-2" />
+          <View className="h-px bg-gray-200 dark:bg-primary-800 my-2" />
           <View className="flex-row justify-between">
-            <Text className="text-primary text-xl font-bold">{formatCurrencyShort(total)}</Text>
-            <Text className="text-gray-900 font-bold text-lg">المجموع الكلي</Text>
+            <Text className="text-primary dark:text-primary-200 text-xl font-bold">
+              {formatCurrencyShort(total)}
+            </Text>
+            <Text className="text-gray-900 dark:text-gray-100 font-bold text-lg">
+              المجموع الكلي
+            </Text>
           </View>
         </View>
 

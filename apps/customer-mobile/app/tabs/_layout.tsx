@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Home, ShoppingCart, ClipboardList, User } from 'lucide-react-native';
-import { View, Text } from 'react-native';
+import { View, Text, useColorScheme } from 'react-native';
 import { colors } from '@hypermarket/design-tokens';
 
 import { useCartStore } from '../../stores/cart-store';
@@ -36,14 +36,18 @@ function CartTabIcon({ color, size }: { color: string; size: number }) {
 }
 
 export default function TabsLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary[500],
-        tabBarInactiveTintColor: colors.text.secondary,
+        tabBarActiveTintColor: isDark ? colors.primary[200] : colors.primary[500],
+        tabBarInactiveTintColor: isDark ? colors.neutral[300] : colors.text.secondary,
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: colors.border.default,
+          borderTopColor: isDark ? colors.primary[700] : colors.border.default,
+          backgroundColor: isDark ? colors.background.inverse : colors.neutral[0],
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,

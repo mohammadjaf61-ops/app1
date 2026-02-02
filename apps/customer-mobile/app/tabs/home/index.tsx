@@ -40,11 +40,15 @@ function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <View className="w-[48%] bg-white rounded-xl p-3 mb-3 border border-gray-100 shadow-sm">
-      <View className="h-24 bg-gray-100 rounded-lg mb-2 items-center justify-center">
+    <View className="w-[48%] bg-white dark:bg-primary-900/50 rounded-xl p-3 mb-3 border border-gray-100 dark:border-primary-800 shadow-sm">
+      <View className="h-24 bg-gray-100 dark:bg-primary-800/50 rounded-lg mb-2 items-center justify-center">
         <Package size={32} color={colors.text.disabled} />
       </View>
-      <Text style={{ fontFamily: fontBody }} className="text-gray-900 font-medium text-right" numberOfLines={1}>
+      <Text
+        style={{ fontFamily: fontBody }}
+        className="text-gray-900 dark:text-gray-100 font-medium text-right"
+        numberOfLines={1}
+      >
         {product.nameAr}
       </Text>
       <View className="flex-row items-center justify-between mt-2">
@@ -55,10 +59,12 @@ function ProductCard({ product }: { product: Product }) {
         >
           <Plus size={18} color="white" />
         </TouchableOpacity>
-        <Text className="text-primary font-bold">{formatCurrencyShort(product.price)}</Text>
+        <Text className="text-primary dark:text-primary-200 font-bold">
+          {formatCurrencyShort(product.price)}
+        </Text>
       </View>
       {quantityInCart > 0 && (
-        <View className="absolute top-2 left-2 bg-primary px-2 py-1 rounded-full">
+        <View className="absolute top-2 left-2 bg-primary dark:bg-primary-600 px-2 py-1 rounded-full">
           <Text className="text-white text-xs font-bold">{quantityInCart}</Text>
         </View>
       )}
@@ -92,23 +98,33 @@ export default function HomeScreen() {
   const showError = productsError && !products;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-primary-900">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="bg-white px-4 pt-4 pb-2">
+        <View className="bg-white dark:bg-primary-900 px-4 pt-4 pb-2">
           <View className="flex-row items-center justify-between">
             <StoreStatus />
-            <Text style={{ fontFamily: fontHeading }} className="text-2xl font-bold text-gray-900">مرحباً</Text>
+            <Text
+              style={{ fontFamily: fontHeading }}
+              className="text-2xl font-bold text-gray-900 dark:text-gray-100"
+            >
+              مرحباً
+            </Text>
           </View>
-          <Text style={{ fontFamily: fontBody }} className="text-gray-500 text-right">ماذا تريد أن تشتري اليوم؟</Text>
+          <Text
+            style={{ fontFamily: fontBody }}
+            className="text-gray-500 dark:text-gray-300 text-right"
+          >
+            ماذا تريد أن تشتري اليوم؟
+          </Text>
         </View>
 
         {/* Search Bar */}
-        <View className="bg-white px-4 py-3">
-          <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3">
+        <View className="bg-white dark:bg-primary-900 px-4 py-3">
+          <View className="flex-row items-center bg-gray-100 dark:bg-primary-800/60 rounded-xl px-4 py-3">
             <Search size={20} color={colors.text.secondary} />
             <TextInput
-              className="flex-1 mr-3 text-right"
+              className="flex-1 mr-3 text-right text-gray-900 dark:text-gray-100"
               placeholder="ابحث عن منتجات..."
               placeholderTextColor={colors.text.tertiary}
             />
@@ -116,27 +132,39 @@ export default function HomeScreen() {
         </View>
 
         {/* Categories */}
-        <View className="bg-white px-4 py-4 mb-2">
-          <Text style={{ fontFamily: fontHeading }} className="text-lg font-bold text-gray-900 mb-3 text-right">التصنيفات</Text>
+        <View className="bg-white dark:bg-primary-900 px-4 py-4 mb-2">
+          <Text
+            style={{ fontFamily: fontHeading }}
+            className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 text-right"
+          >
+            التصنيفات
+          </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {(categories || []).map((category) => (
               <TouchableOpacity
                 key={category.id}
-                className="bg-primary/10 rounded-xl px-4 py-3 ml-3"
+                className="bg-primary/10 dark:bg-primary-700/30 rounded-xl px-4 py-3 ml-3"
                 activeOpacity={0.7}
               >
-                <Text className="text-primary font-medium">{category.nameAr}</Text>
+                <Text className="text-primary dark:text-primary-200 font-medium">
+                  {category.nameAr}
+                </Text>
               </TouchableOpacity>
             ))}
             {isCategoriesLoading && (
-              <View className="bg-gray-100 rounded-xl px-8 py-3 ml-3" />
+              <View className="bg-gray-100 dark:bg-primary-800/60 rounded-xl px-8 py-3 ml-3" />
             )}
           </ScrollView>
         </View>
 
         {/* Featured Products */}
         <View className="px-4 py-4">
-          <Text style={{ fontFamily: fontHeading }} className="text-lg font-bold text-gray-900 mb-3 text-right">منتجات مميزة</Text>
+          <Text
+            style={{ fontFamily: fontHeading }}
+            className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 text-right"
+          >
+            منتجات مميزة
+          </Text>
 
           {/* Offline State */}
           {showOffline && (
@@ -187,9 +215,11 @@ export default function HomeScreen() {
         </View>
 
         {/* Info Banner */}
-        <View className="mx-4 mb-24 bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <Text className="text-blue-800 font-semibold text-right mb-1">توصيل سريع</Text>
-          <Text className="text-blue-700 text-sm text-right">
+        <View className="mx-4 mb-24 bg-blue-50 dark:bg-primary-800/60 border border-blue-200 dark:border-primary-700 rounded-xl p-4">
+          <Text className="text-blue-800 dark:text-gray-100 font-semibold text-right mb-1">
+            توصيل سريع
+          </Text>
+          <Text className="text-blue-700 dark:text-gray-200 text-sm text-right">
             اطلب الآن واحصل على طلبك خلال ساعات. الدفع عند الاستلام.
           </Text>
         </View>

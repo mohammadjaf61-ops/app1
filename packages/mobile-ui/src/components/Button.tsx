@@ -35,13 +35,13 @@ export interface ButtonProps extends Omit<PressableProps, 'style'> {
 
 const variantStyles: Record<ButtonVariant, { bg: string; text: string; border: string }> = {
   primary: {
-    bg: 'bg-primary',
+    bg: 'bg-primary dark:bg-primary-600',
     text: 'text-white',
     border: '',
   },
   secondary: {
-    bg: 'bg-gray-200',
-    text: 'text-gray-900',
+    bg: 'bg-gray-200 dark:bg-primary-900/60',
+    text: 'text-gray-900 dark:text-gray-100',
     border: '',
   },
   success: {
@@ -60,13 +60,13 @@ const variantStyles: Record<ButtonVariant, { bg: string; text: string; border: s
     border: '',
   },
   outline: {
-    bg: 'bg-white',
-    text: 'text-primary',
-    border: 'border-2 border-primary',
+    bg: 'bg-white dark:bg-primary-900/30',
+    text: 'text-primary dark:text-gray-100',
+    border: 'border-2 border-primary dark:border-primary-600',
   },
   ghost: {
     bg: 'bg-transparent',
-    text: 'text-primary',
+    text: 'text-primary dark:text-gray-100',
     border: '',
   },
 };

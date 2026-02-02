@@ -45,14 +45,16 @@ export function Input({
   return (
     <View style={containerStyle}>
       {label && (
-        <Text className="text-gray-700 font-medium text-right mb-2 text-base">{label}</Text>
+        <Text className="text-gray-700 dark:text-gray-200 font-medium text-right mb-2 text-base">
+          {label}
+        </Text>
       )}
       {hasIcons ? (
         <View
           className={`
             flex-row
             items-center
-            bg-gray-100
+            bg-gray-100 dark:bg-primary-900/40
             rounded-xl
             ${sizeStyle.padding}
             ${error ? 'border-2 border-red-500' : ''}
@@ -60,7 +62,7 @@ export function Input({
         >
           {rightIcon && <View className="ml-2">{rightIcon}</View>}
           <TextInput
-            className={`flex-1 ${sizeStyle.text} text-right text-gray-900`}
+            className={`flex-1 ${sizeStyle.text} text-right text-gray-900 dark:text-gray-100`}
             placeholderTextColor={colors.neutral[400]}
             style={style}
             {...props}
@@ -70,12 +72,12 @@ export function Input({
       ) : (
         <TextInput
           className={`
-            bg-gray-100
+            bg-gray-100 dark:bg-primary-900/40
             ${sizeStyle.padding}
             ${sizeStyle.text}
             rounded-xl
             text-right
-            text-gray-900
+            text-gray-900 dark:text-gray-100
             ${error ? 'border-2 border-red-500' : ''}
           `}
           placeholderTextColor={colors.neutral[400]}
